@@ -1,4 +1,4 @@
-**Micro Sprint 2 (Semana 2) – Outside Class 1 (O1)**  
+**Micro Sprint 2 (Semana 2)**  
 
 ---
 
@@ -156,6 +156,7 @@
 - Puedes hacerlo observando o pidiéndole a la persona que lo dibuje.  
 
 <img width="1920" height="1080" alt="Doodle Sketch Customer Journey Map Brainstorm" src="https://github.com/user-attachments/assets/326ff2df-fc12-4b69-988b-bb75bdca9386" />
+
 
 
 
