@@ -14,7 +14,7 @@ Marcos Rodrigo España - 202124714 - m.espanac@uniandes.edu.co
 
 Juan Felipe Puig - codigo - correo@uniandes.edu.co
 
-Jairo Andres Fierro Fierro - codigo - correo@uniandes.edu.co
+Jairo Andres Fierro Fierro - 202226326 - ja.fierro@uniandes.edu.co
 
 
 #### [Micro Sprint 2](docs/Micro-sprint2.md)
