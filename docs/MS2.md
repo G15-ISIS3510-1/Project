@@ -2,21 +2,150 @@
 
 ---
 
-##  Método 1: What? How? Why? Who?  
+## Selected Problems
 
-**Sirve para:** Documentar qué pasa en una situación y sacar posibles explicaciones.  
+1. ShareCarCo
+2. Los Andes Parking App
+3. Aula Sonora
+4. Turn Machine
 
-**Preguntas clave:**
-1. **What?** – ¿Qué está haciendo la persona? (detalles)  
-2. **How?** – ¿Cómo lo hace? (actitud, emociones)  
-3. **Why?** – ¿Por qué lo hace así? (suposiciones)  
-4. **Who?** – ¿Quién está involucrado? (perfil, rol)
-   
-ACA PONEN LO DEL METODO 1 
+## Interview Structure and Responses
+
+### Interview 1 – [Juan Esteban Diaz]
+**Problem:** ShareCarCo
+**Interviewee profile:** [e.g., Student, remote worker, commuter, etc.]
+**Interview Summary:**
+
+| # | Question | Purpose | Response |
+|---|----------|----------|---------|
+| 1 |  |  | |
+| 2 |  |  | |
+| 3 |  |  | |
+| 4 |  |  | |
+| 5 |  |  | |
+| 6 |  |  | |
+| 7 |  |  | |
+
+#### Situations
+| Situation | What? | How? | Why? | Who? |
+|-----------|-------|------|------|------|
+| 1 |  |  |  |  |
+| 2 |  |  |  |  |
+| 3 |  |  |  |  |
+
+### Interview 2 – [Juan Camilo Lopez]
+**Problem:** Los Andes Parking App
+**Interviewee profile:** Student
+**Interview Summary:**
+
+| # | Question | Purpose | Response |
+|---|----------|----------|---------|
+| 1 |  |  | |
+| 2 |  |  | |
+| 3 |  |  | |
+| 4 |  |  | |
+| 5 |  |  | |
+| 6 |  |  | |
+| 7 |  |  | |
+
+#### Situations
+| Situation | What? | How? | Why? | Who? |
+|-----------|-------|------|------|------|
+| 1 |  |  |  |  |
+| 2 |  |  |  |  |
+| 3 |  |  |  |  |
+
+### Interview 3 – [Juan Pablo Baron]
+**Problem:** Aula Sonora
+**Interviewee profile:** [e.g., Student, remote worker, commuter, etc.]
+**Interview Summary:**
+
+| # | Question | Purpose | Response |
+|---|----------|----------|---------|
+| 1 |  |  | |
+| 2 |  |  | |
+| 3 |  |  | |
+| 4 |  |  | |
+| 5 |  |  | |
+| 6 |  |  | |
+| 7 |  |  | |
+
+#### Situations
+| Situation | What? | How? | Why? | Who? |
+|-----------|-------|------|------|------|
+| 1 |  |  |  |  |
+| 2 |  |  |  |  |
+| 3 |  |  |  |  |
+
+### Interview 4 – [Member]
+**Problem:** Aula Sonora
+**Interviewee profile:** [e.g., Student, remote worker, commuter, etc.]
+**Interview Summary:**
+
+| # | Question | Purpose | Response |
+|---|----------|----------|---------|
+| 1 |  |  | |
+| 2 |  |  | |
+| 3 |  |  | |
+| 4 |  |  | |
+| 5 |  |  | |
+| 6 |  |  | |
+| 7 |  |  | |
+
+#### Situations
+| Situation | What? | How? | Why? | Who? |
+|-----------|-------|------|------|------|
+| 1 |  |  |  |  |
+| 2 |  |  |  |  |
+| 3 |  |  |  |  |
+
+### Interview 5 – [Member]
+**Problem:** Aula Sonora
+**Interviewee profile:** [e.g., Student, remote worker, commuter, etc.]
+**Interview Summary:**
+
+| # | Question | Purpose | Response |
+|---|----------|----------|---------|
+| 1 |  |  | |
+| 2 |  |  | |
+| 3 |  |  | |
+| 4 |  |  | |
+| 5 |  |  | |
+| 6 |  |  | |
+| 7 |  |  | |
+
+#### Situations
+| Situation | What? | How? | Why? | Who? |
+|-----------|-------|------|------|------|
+| 1 |  |  |  |  |
+| 2 |  |  |  |  |
+| 3 |  |  |  |  |
+
+### Interview 6 – [Member]
+**Problem:** Aula Sonora
+**Interviewee profile:** [e.g., Student, remote worker, commuter, etc.]
+**Interview Summary:**
+
+| # | Question | Purpose | Response |
+|---|----------|----------|---------|
+| 1 |  |  | |
+| 2 |  |  | |
+| 3 |  |  | |
+| 4 |  |  | |
+| 5 |  |  | |
+| 6 |  |  | |
+| 7 |  |  | |
+
+#### Situations
+| Situation | What? | How? | Why? | Who? |
+|-----------|-------|------|------|------|
+| 1 |  |  |  |  |
+| 2 |  |  |  |  |
+| 3 |  |  |  |  |
 
 ---
 
-##  Método 2: Journey Map  
+##  Journey maps
 
 **Sirve para:** Entender todo el recorrido que vive una persona en un proceso.  
 
@@ -27,6 +156,7 @@ ACA PONEN LO DEL METODO 1
 - Puedes hacerlo observando o pidiéndole a la persona que lo dibuje.  
 
 <img width="1920" height="1080" alt="Doodle Sketch Customer Journey Map Brainstorm" src="https://github.com/user-attachments/assets/326ff2df-fc12-4b69-988b-bb75bdca9386" />
+
 
 
 
