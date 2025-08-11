@@ -40,13 +40,14 @@
 
 | # | Question | Purpose | Response |
 |---|----------|----------|---------|
-| 1 |  |  | |
-| 2 |  |  | |
-| 3 |  |  | |
-| 4 |  |  | |
-| 5 |  |  | |
-| 6 |  |  | |
-| 7 |  |  | |
+| 1 | Can you tell me about the last time you parked at your university? | Understand the context and frequency of the problem |
+| 2 | What was the experience like when you arrived and looked for a spot? | Understand how to process works and what possible difficulties there could be | |
+| 3 | Could you describe a time when you had to wait in line? How did you feel? | Explore difficulties and understand feelings | |
+| 4 | What usually happens if you can’t find a parking spot quickly? | Identify actions and other behaviors | |
+| 5 | How do you currently know if there are parking spots available? | Look for other solutions and actions | |
+| 6 | What kind of information would help you decide when or where to park? | Look for possible needs | |
+| 7 | How much impact does parking have on your arrival to class or stress? | Measure the effect of the problem in the person's life | |
+
 
 #### Situations
 | Situation | What? | How? | Why? | Who? |
@@ -164,6 +165,7 @@
 **Situations:**
 
 ## Prototype
+
 
 
 
