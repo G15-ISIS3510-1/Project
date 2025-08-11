@@ -26,5 +26,7 @@ ACA PONEN LO DEL METODO 1
 - Incluye incluso detalles pequeños que puedan dar pistas.  
 - Puedes hacerlo observando o pidiéndole a la persona que lo dibuje.  
 
-FOTO
+<img width="1920" height="1080" alt="Doodle Sketch Customer Journey Map Brainstorm" src="https://github.com/user-attachments/assets/326ff2df-fc12-4b69-988b-bb75bdca9386" />
+
+
 
