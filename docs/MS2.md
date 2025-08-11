@@ -34,10 +34,9 @@
 | 3 |  |  |  |  |
 
 ### Interview 2 – [Juan Camilo Lopez]
-#### Problem:
-Los Andes Parking App
-#### Interviewee profile:
-Student
+**Problem:** Los Andes Parking App
+#### 
+**Interviewee profile:** Student
 #### Interview Summary:
 [audio]
 
@@ -169,6 +168,7 @@ Student
 **Situations:**
 
 ## Prototype
+
 
 
 
