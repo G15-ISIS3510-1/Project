@@ -157,6 +157,17 @@
 
 <img width="1920" height="1080" alt="Doodle Sketch Customer Journey Map Brainstorm" src="https://github.com/user-attachments/assets/326ff2df-fc12-4b69-988b-bb75bdca9386" />
 
+## Brainstorming
+
+**Process:**
+
+**Situations:**
+
+## Prototype
+
+
+
+
 
 
 
