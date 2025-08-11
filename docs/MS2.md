@@ -58,7 +58,7 @@
 | 4 | Someone has a parking suscription but there are no spots available | They feel angry because they have to pay more for parking | During rush hour the parking lot gave the suscription spots to others | People with parking suscriptions |
 
 ### Interview 3 – [Juan Pablo Baron]
-**Problem:** Aula Sonora
+**Problem:** Aula Sonora \n
 **Interviewee profile:** [e.g., Student, remote worker, commuter, etc.]
 **Interview Summary:** [audio]
 
@@ -166,6 +166,7 @@
 **Situations:**
 
 ## Prototype
+
 
 
 
