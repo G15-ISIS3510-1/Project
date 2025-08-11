@@ -11,8 +11,9 @@
 2. **How?** – ¿Cómo lo hace? (actitud, emociones)  
 3. **Why?** – ¿Por qué lo hace así? (suposiciones)  
 4. **Who?** – ¿Quién está involucrado? (perfil, rol)
-5. 
+   
 ACA PONEN LO DEL METODO 1 
+
 ---
 
 ##  Método 2: Journey Map  
@@ -26,3 +27,4 @@ ACA PONEN LO DEL METODO 1
 - Puedes hacerlo observando o pidiéndole a la persona que lo dibuje.  
 
 FOTO
+
