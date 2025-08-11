@@ -13,3 +13,4 @@ Juan Felipe Puig - codigo - correo@uniandes.edu.co
 Jairo Andres Fierro Fierro - codigo - correo@uniandes.edu.co
 
 
+#### [Micro Sprint 2](docs/README.md)
