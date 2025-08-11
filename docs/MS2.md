@@ -52,9 +52,10 @@
 #### Situations
 | Situation | What? | How? | Why? | Who? |
 |-----------|-------|------|------|------|
-| 1 |  |  |  |  |
-| 2 |  |  |  |  |
-| 3 |  |  |  |  |
+| 1 | A student or professor arrives on campus and sees a long line of cars at the parking entrance  | They feel anxious because the line doesn't move and there is little time left for class to start | Many students are looking for parking and its rush hour | University students, professors |
+| 2 | Someone arrives with only 5 minutes before class but finds the parking lot full | They are looking for other parking lots fast but there is traffic and there is no time | Many students are looking for spots and there is traffic because people are leaving for work | Students, professors, commuter |
+| 3 | Someone has an electric car and tries to get to the free electric car spots but has to pay parking because they are full | They feel frustrated because they had to pay the parking fee for the day | More people have electric cars so they want to get the free parking spots | People with electric cars |
+| 4 | Someone has a parking suscription but there are no spots available | They feel angry because they have to pay more for parking | During rush hour the parking lot gave the suscription spots to others | People with parking suscriptions |
 
 ### Interview 3 – [Juan Pablo Baron]
 **Problem:** Aula Sonora
@@ -165,6 +166,7 @@
 **Situations:**
 
 ## Prototype
+
 
 
 
