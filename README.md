@@ -4,6 +4,10 @@
 
 Juan Esteban Diaz Castro - 202121646 - je.diazc12@uniandes.edu.co
 
+Juan Camilo Lopez - 202122845 - jc.lopezc1@uniandes.edu.co
+
+Juan Pablo Baron - 202210502 - jp.baron@uniandes.edu.co
+
 ## SubGroup 2 - Kotlin:
 
 Marcos Rodrigo España - 202124714 - m.espanac@uniandes.edu.co
