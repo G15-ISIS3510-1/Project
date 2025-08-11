@@ -77,7 +77,7 @@
 | 2 |  |  |  |  |
 | 3 |  |  |  |  |
 
-### Interview 4 – [Member]
+### Interview 4 – [Marcos Rodrigo España]
 **Problem:** Aula Sonora
 **Interviewee profile:** [e.g., Student, remote worker, commuter, etc.]
 **Interview Summary:**
@@ -99,7 +99,7 @@
 | 2 |  |  |  |  |
 | 3 |  |  |  |  |
 
-### Interview 5 – [Member]
+### Interview 5 – [Juan Felipe Puig]
 **Problem:** Aula Sonora
 **Interviewee profile:** [e.g., Student, remote worker, commuter, etc.]
 **Interview Summary:**
@@ -121,7 +121,7 @@
 | 2 |  |  |  |  |
 | 3 |  |  |  |  |
 
-### Interview 6 – [Member]
+### Interview 6 – [Jairo Andres Fierro]
 **Problem:** Aula Sonora
 **Interviewee profile:** [e.g., Student, remote worker, commuter, etc.]
 **Interview Summary:**
@@ -156,6 +156,7 @@
 - Puedes hacerlo observando o pidiéndole a la persona que lo dibuje.  
 
 <img width="1920" height="1080" alt="Doodle Sketch Customer Journey Map Brainstorm" src="https://github.com/user-attachments/assets/326ff2df-fc12-4b69-988b-bb75bdca9386" />
+
 
 
 
