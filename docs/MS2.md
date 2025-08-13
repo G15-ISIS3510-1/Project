@@ -165,49 +165,51 @@
 
 ### Ideas
 
-**ShareCarCo:**
-- Alliances with insurance companies
-- Alliances with parking spaces
-- Alliances with tolls
-- Addittional fees for toll tag
-- Additional fees for extra services in the car
-- Additional fee for pick-up and drop-off
-- Extra charge for late drop-off
-- Invoices for extra gas/charge (App integration)
-- Invoices for tolls (App integration)
-- Additional fees for more mileage (Accelerometer)
-- Special services (moving out, wedding, birthdays)
-- Identity verification (renters and owners)
-- Localization of the car (GPS, Offline capability)
-- Alliances with hotels
-- Assitance 24/7 (Microphone, Camera)
-- Live chat with owner (Wi-Fi, App integrations)
-- Vehicle status (GPS, AirTag, Offline capability)
-- Different categories for vehicles
-- Alliances with small businesses
-- Commision based model (NFC, App integration)
-- Photos to register potential damages (Camera)
-- Real-time notifications for scheduled pick-up and drop-off (App integrations)
-  
+| Initiative | Mobile Component | Impact/Effort Quadrant |
+|------------|------------------|------------------------|
+| **ShareCarCo** |  |  |
+| Alliances with insurance companies | — |  |
+| Alliances with parking spaces | — |  |
+| Alliances with tolls | — |  |
+| Additional fees for toll tag | App integration |  |
+| Additional fees for extra services in the car | — |  |
+| Additional fee for pick-up and drop-off | — |  |
+| Extra charge for late drop-off | — |  |
+| Invoices for extra gas/charge | App integration |  |
+| Invoices for tolls | App integration |  |
+| Additional fees for more mileage | Accelerometer |  |
+| Special services – moving out, wedding, birthdays | — |  |
+| Identity verification – renters and owners | — |  |
+| Localization of the car | GPS, Offline capability |  |
+| Alliances with hotels | — |  |
+| Assistance 24/7 | Microphone, Camera |  |
+| Live chat with owner | Wi-Fi, App integration |  |
+| Vehicle status | GPS, AirTag, Offline capability |  |
+| Different categories for vehicles | — |  |
+| Alliances with small businesses | — |  |
+| Commission-based model | NFC, App integration |  |
+| Photos to register potential damages | Camera |  |
+| Real-time notifications for scheduled pick-up and drop-off | App integration |  |
+| **Los Andes Parking App** |  |  |
+| Real-time notifications for free spots | App integration |  |
+| Localization | GPS, AirTag |  |
+| Transparent parking fees | Wi-Fi |  |
+| Alliances with parking | — |  |
+| Estimated wait time in line | — |  |
+| Subscription, discounts | — |  |
+| Online payment | NFC, App integration |  |
+| Booking spots | Wi-Fi |  |
+| Estimated rush hours | App integration, Wi-Fi |  |
+| Discounts for special vehicles | — |  |
+| Assistance 24/7 with parking | Camera, Microphone |  |
 
-**Los Andes Parking App:**
-- Real-time notifications for free spots (App integration)
-- Localization (GPS, Airtag)
-- Transparent parking fees (Wi-Fi)
-- Alliances with parking
-- Estimated wait time in line 
-- Suscription, discounts
-- Online payment (NFC, App Integration)
-- Booking spots (Wi-Fi)
-- Estimated rush hours (App Integration, Wi-Fi)
-- Discounts for special vehicles
-- Assistance 24/7 with parking (Camera, Micrphone)
   
 **Process:**
 
 **Situations:**
 
 ## Prototype
+
 
 
 
