@@ -163,11 +163,50 @@
 
 ## Brainstorming
 
+### Ideas
+
+**ShareCarCo:**
+- Alliances with insurance companies
+- Alliances with parking spaces
+- Alliances with tolls
+- Addittional fees for toll tag
+- Additional fees for extra services in the car
+- Additional fee for pick-up and drop-off
+- Extra charge for late drop-off
+- Invoices for extra gas/charge
+- Invoices for tolls
+- Additional fees for more mileage
+- Special services (moving out, wedding, birthdays)
+- Identity verification (renters and owners)
+- Localization of the car
+- Alliances with hotels
+- Assitance 24/7
+- Live chat with owner
+- Vehicle status
+- Different categories for vehicles
+- Alliances with small businesses
+- Commision based model
+  
+
+**Los Andes Parking App:**
+- Real-time notifications for free spots
+- Localization
+- Transparent parking fees
+- Alliances with parking
+- Estimated wait time in line
+- Suscription, discounts
+- Online payment
+- Booking spots
+- Estimated rush hours
+- Discounts for special vehicles
+- 
+  
 **Process:**
 
 **Situations:**
 
 ## Prototype
+
 
 
 
