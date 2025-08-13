@@ -149,6 +149,8 @@
 
 ---
 
+## Interview Summary
+
 ##  Journey maps
 
 **Sirve para:** Entender todo el recorrido que vive una persona en un proceso.  
@@ -213,6 +215,11 @@
 **Situations:**
 
 ## Prototype
+
+### Video Link:
+
+### Prototype Link:
+(Figma Prototype) [https://www.figma.com/design/ZLC0NWDfGHuZlfXtYthZgD/Moviles?node-id=3-144&t=xborlKSpTysHmgKS-0]
 
 
 
