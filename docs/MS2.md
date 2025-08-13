@@ -173,39 +173,42 @@
 - Additional fees for extra services in the car
 - Additional fee for pick-up and drop-off
 - Extra charge for late drop-off
-- Invoices for extra gas/charge
-- Invoices for tolls
-- Additional fees for more mileage
+- Invoices for extra gas/charge (App integration)
+- Invoices for tolls (App integration)
+- Additional fees for more mileage (Accelerometer)
 - Special services (moving out, wedding, birthdays)
 - Identity verification (renters and owners)
-- Localization of the car
+- Localization of the car (GPS, Offline capability)
 - Alliances with hotels
-- Assitance 24/7
-- Live chat with owner
-- Vehicle status
+- Assitance 24/7 (Microphone, Camera)
+- Live chat with owner (Wi-Fi, App integrations)
+- Vehicle status (GPS, AirTag, Offline capability)
 - Different categories for vehicles
 - Alliances with small businesses
-- Commision based model
+- Commision based model (NFC, App integration)
+- Photos to register potential damages (Camera)
+- Real-time notifications for scheduled pick-up and drop-off (App integrations)
   
 
 **Los Andes Parking App:**
-- Real-time notifications for free spots
-- Localization
-- Transparent parking fees
+- Real-time notifications for free spots (App integration)
+- Localization (GPS, Airtag)
+- Transparent parking fees (Wi-Fi)
 - Alliances with parking
-- Estimated wait time in line
+- Estimated wait time in line 
 - Suscription, discounts
-- Online payment
-- Booking spots
-- Estimated rush hours
+- Online payment (NFC, App Integration)
+- Booking spots (Wi-Fi)
+- Estimated rush hours (App Integration, Wi-Fi)
 - Discounts for special vehicles
-- 
+- Assistance 24/7 with parking (Camera, Micrphone)
   
 **Process:**
 
 **Situations:**
 
 ## Prototype
+
 
 
 
