@@ -165,43 +165,47 @@
 
 ### Ideas
 
-| Initiative | Mobile Component | Impact/Effort Quadrant |
+**ShareCarCo**
+| Idea | Mobile Component | Impact/Effort Quadrant |
 |------------|------------------|------------------------|
-| **ShareCarCo** |  |  |
-| Alliances with insurance companies | — |  |
-| Alliances with parking spaces | — |  |
-| Alliances with tolls | — |  |
-| Additional fees for toll tag | App integration |  |
-| Additional fees for extra services in the car | — |  |
-| Additional fee for pick-up and drop-off | — |  |
-| Extra charge for late drop-off | — |  |
-| Invoices for extra gas/charge | App integration |  |
-| Invoices for tolls | App integration |  |
-| Additional fees for more mileage | Accelerometer |  |
-| Special services – moving out, wedding, birthdays | — |  |
-| Identity verification – renters and owners | — |  |
-| Localization of the car | GPS, Offline capability |  |
-| Alliances with hotels | — |  |
-| Assistance 24/7 | Microphone, Camera |  |
-| Live chat with owner | Wi-Fi, App integration |  |
-| Vehicle status | GPS, AirTag, Offline capability |  |
-| Different categories for vehicles | — |  |
-| Alliances with small businesses | — |  |
-| Commission-based model | NFC, App integration |  |
-| Photos to register potential damages | Camera |  |
-| Real-time notifications for scheduled pick-up and drop-off | App integration |  |
-| **Los Andes Parking App** |  |  |
-| Real-time notifications for free spots | App integration |  |
-| Localization | GPS, AirTag |  |
-| Transparent parking fees | Wi-Fi |  |
-| Alliances with parking | — |  |
-| Estimated wait time in line | — |  |
-| Subscription, discounts | — |  |
-| Online payment | NFC, App integration |  |
-| Booking spots | Wi-Fi |  |
-| Estimated rush hours | App integration, Wi-Fi |  |
-| Discounts for special vehicles | — |  |
-| Assistance 24/7 with parking | Camera, Microphone |  |
+| Alliances with insurance companies | — | High/High |
+| Alliances with parking spaces | — | High/Medium |
+| Alliances with tolls | — | High/High |
+| Additional fees for toll tag | App integration | High/Medium |
+| Additional fees for extra services in the car | — | Medium/Low |
+| Additional fee for pick-up and drop-off | — | High/Medium |
+| Extra charge for late drop-off | — | Medium/Low |
+| Invoices for extra gas/charge | App integration | Medium/Low |
+| Invoices for tolls | App integration | Medium/Low |
+| Additional fees for more mileage | Accelerometer | Medium/Low |
+| Special services – moving out, wedding, birthdays | — | High/Low |
+| Identity verification – renters and owners | — | High/High  |
+| Localization of the car | GPS, Offline capability | High/Low |
+| Alliances with hotels | — | Medium/Medium |
+| Assistance 24/7 | Microphone, Camera | High/High |
+| Live chat with owner | Wi-Fi, App integration | High/Medium |
+| Vehicle status | GPS, AirTag, Offline capability | High/High |
+| Different categories for vehicles | — | Medium/Low |
+| Alliances with small businesses | — | Medium/Low |
+| Commission-based model | NFC, App integration | High/Low |
+| Photos to register potential damages | Camera | High/Low |
+| Real-time notifications for scheduled pick-up and drop-off | App integration | High/Medium |
+
+
+**Los Andes Parking App**
+| Idea | Mobile Component | Impact/Effort Quadrant |
+|------------|------------------|------------------------|
+| Real-time notifications for free spots | App integration | High/High |
+| Localization | GPS, AirTag | High/Medium |
+| Transparent parking fees | Wi-Fi | High/Low |
+| Alliances with parking | — | High/Medium |
+| Estimated wait time in line | — | High/Medium |
+| Subscription, discounts | — | Medium/Medium |
+| Online payment | NFC, App integration | High/Low |
+| Booking spots | Wi-Fi | High/Medium |
+| Estimated rush hours | App integration, Wi-Fi | High/Low |
+| Discounts for special vehicles | — | Medium/Low |
+| Assistance 24/7 with parking | Camera, Microphone | Low/Low |
 
   
 **Process:**
@@ -209,6 +213,7 @@
 **Situations:**
 
 ## Prototype
+
 
 
 
