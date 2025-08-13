@@ -12,19 +12,19 @@
 ## Interview Structure and Responses
 
 ### Interview 1 – [Juan Esteban Diaz]
-**Problem:** ShareCarCo
-**Interviewee profile:** [e.g., Student, remote worker, commuter, etc.]
+**Problem:** Turn Machine
+**Interviewee profile:** Student
 **Interview Summary:** [audio]
 
 | # | Question | Purpose | Response |
 |---|----------|----------|---------|
-| 1 |  |  | |
-| 2 |  |  | |
-| 3 |  |  | |
-| 4 |  |  | |
-| 5 |  |  | |
-| 6 |  |  | |
-| 7 |  |  | |
+| 1 | When was the last time you had to make a queue for something? | Understand how concious is the interviewee about the problem | |
+| 2 | Can you tell me one of the worst queue you had made? | Understand the worst personal experience from the interviewee | |
+| 3 | When making a queue what do you do while waiting? Do you consider it enough to distract yourself? | Understand if the interviewee is able to distract himself during a queue | |
+| 4 | How do you feel when the queue is long? | Understand the emotions form the interviewee | |
+| 5 | Have you tried any option for avoiding to make large queues? | Understand if the interviewee has looked for any type of solution | |
+| 6 | What information would you like when going to a place and avoid making a queue | Understand what information is essential for people to know for avoid making a large queue | |
+| 7 | Why do you make queues? Would you like a solution to avoid making a queue? | Understand the motivations of the interviewee for making a queue | |
 
 #### Situations
 | Situation | What? | How? | Why? | Who? |
@@ -149,8 +149,6 @@
 
 ---
 
-## Interview Summary
-
 ##  Journey maps
 
 **Sirve para:** Entender todo el recorrido que vive una persona en un proceso.  
@@ -220,6 +218,7 @@
 
 ### Prototype Link:
 [Figma Prototype](https://www.figma.com/design/ZLC0NWDfGHuZlfXtYthZgD/Moviles?node-id=3-144&t=xborlKSpTysHmgKS-0)
+
 
 
 
