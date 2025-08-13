@@ -25,8 +25,8 @@
 | 3 | When making a queue what do you do while waiting? Do you consider it enough to distract yourself? | Understand if the interviewee is able to distract himself during a queue | |
 | 4 | How do you feel when the queue is long? | Understand the emotions form the interviewee | |
 | 5 | Have you tried any option for avoiding to make large queues? | Understand if the interviewee has looked for any type of solution | |
-| 6 | What information would you like when going to a place and avoid making a queue | Understand what information is essential for people to know for avoid making a large queue | |
-| 7 | Why do you make queues? Would you like a solution to avoid making a queue? | Understand the motivations of the interviewee for making a queue | |
+| 6 | What information would you like when going to a place and avoid making a queue? | Understand what information is essential for people to know for avoid making a large queue | |
+| 7 | Would you like a solution to avoid making a queue? | Understand the motivations of the interviewee for getting a solution to the queue problem | |
 
 #### Situations
 | Situation | What? | How? | Why? | Who? |
@@ -220,6 +220,7 @@
 
 ### Prototype Link:
 [Figma Prototype](https://www.figma.com/design/ZLC0NWDfGHuZlfXtYthZgD/Moviles?node-id=3-144&t=xborlKSpTysHmgKS-0)
+
 
 
 
