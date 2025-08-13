@@ -16,17 +16,17 @@
 #### 
 **Interviewee profile:** Student
 #### 
-**Interview Summary:** [audio]
+**Interview Summary:** [audio](https://uniandes-my.sharepoint.com/:u:/r/personal/je_diazc12_uniandes_edu_co/Documents/9no%20Semestre/M%C3%B3viles/S2%20-%20Interviews/Juan%20E%20Diaz%20C%20-%20Turn%20Machine.mp3?csf=1&web=1&nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJPbmVEcml2ZUZvckJ1c2luZXNzIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXciLCJyZWZlcnJhbFZpZXciOiJNeUZpbGVzTGlua0NvcHkifX0&e=i1SMyV)
 
 | # | Question | Purpose | Response |
 |---|----------|----------|---------|
-| 1 | When was the last time you had to make a queue for something? | Understand how concious is the interviewee about the problem | |
-| 2 | Can you tell me one of the worst queue you had made? | Understand the worst personal experience from the interviewee | |
-| 3 | When making a queue what do you do while waiting? Do you consider it enough to distract yourself? | Understand if the interviewee is able to distract himself during a queue | |
-| 4 | How do you feel when the queue is long? | Understand the emotions form the interviewee | |
-| 5 | Have you tried any option for avoiding to make large queues? | Understand if the interviewee has looked for any type of solution | |
-| 6 | What information would you like when going to a place and avoid making a queue? | Understand what information is essential for people to know for avoid making a large queue | |
-| 7 | Would you like a solution to avoid making a queue? | Understand the motivations of the interviewee for getting a solution to the queue problem | |
+| 1 | When was the last time you had to make a queue for something? | Understand how concious is the interviewee about the problem | When Maria had to went for her passport |
+| 2 | Can you tell me one of the worst queue you had made? | Understand the worst personal experience from the interviewee | For the Concert of Singer Mora in Bogotá, it was about 6 hours, very stressful |
+| 3 | When making a queue what do you do while waiting? Do you consider it enough to distract yourself? | Understand if the interviewee is able to distract himself during a queue | She tries to look for content on Instagram or TikTok, but she considers its not enough, she feels that her time is wasted |
+| 4 | How do you feel when the queue is long? | Understand the emotions form the interviewee | She feels tired and stress, she has to invest many time on a line |
+| 5 | Have you tried any option for avoiding to make large queues? | Understand if the interviewee has looked for any type of solution | She have tried to not do queues, she always looks for shorter queues |
+| 6 | What information would you like when going to a place and avoid making a queue? | Understand what information is essential for people to know for avoid making a large queue | The webpage or business should enable reservations or a state about the current queue time and length |
+| 7 | Would you like a solution to avoid making a queue? | Understand the motivations of the interviewee for getting a solution to the queue problem | Yes, it would be nice to have a solution. Look at reservations on restaurants, were you can avoid making such large queue. Its important to tell the people how long a queue is so they are well informed about the time they are gonna lose making a queue |
 
 #### Situations
 | Situation | What? | How? | Why? | Who? |
@@ -220,6 +220,7 @@
 
 ### Prototype Link:
 [Figma Prototype](https://www.figma.com/design/ZLC0NWDfGHuZlfXtYthZgD/Moviles?node-id=3-144&t=xborlKSpTysHmgKS-0)
+
 
 
 
