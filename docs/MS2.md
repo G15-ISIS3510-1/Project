@@ -1,4 +1,4 @@
-# Micro Sprint 2 (Semana 2)
+# Micro Sprint 2 (Week 2)
 
 ---
 
@@ -221,6 +221,7 @@
 
 ### Prototype Link:
 [Figma Prototype](https://www.figma.com/design/ZLC0NWDfGHuZlfXtYthZgD/Moviles?node-id=3-144&t=xborlKSpTysHmgKS-0)
+
 
 
 
