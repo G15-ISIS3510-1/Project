@@ -63,19 +63,19 @@
 | 4 | Someone has a parking suscription but there are no spots available | They feel angry because they have to pay more for parking | During rush hour the parking lot gave the suscription spots to others | People with parking suscriptions |
 
 ### Interview 3 – [Juan Pablo Baron]
-**Problem:** Aula Sonora \n
-**Interviewee profile:** [e.g., Student, remote worker, commuter, etc.]
+**Problem:** ShareCarCo \n
+**Interviewee profile:** remote worker
 **Interview Summary:** [audio]
 
 | # | Question | Purpose | Response |
 |---|----------|----------|---------|
-| 1 |  |  | |
-| 2 |  |  | |
-| 3 |  |  | |
-| 4 |  |  | |
-| 5 |  |  | |
-| 6 |  |  | |
-| 7 |  |  | |
+| 1 | Can you tell me about your current use of your car (or transportation routine if you don’t own one)? | Understand their baseline mobility habits and car ownership/use frequency. | |
+| 2 | Have you ever considered renting out your car (or renting someone else’s) when it’s not in use? Why or why not? | Explore openness to the concept and initial perceptions of peer-to-peer car rental. | |
+| 3 | What concerns or doubts would you have about letting someone else use your car? | Identify barriers such as trust, safety, insurance, and vehicle condition. | |
+| 4 | What features or guarantees would make you feel comfortable using a platform like this? | Discover key requirements for adoption (e.g., insurance coverage, vetting process, GPS tracking). | |
+| 5 | How do you currently handle situations when you need a car but don’t have access to one? | Understand the renter side’s needs, urgency, and willingness to pay. | |
+| 6 | What price or compensation would make renting out your car worthwhile for you? | Gauge the financial motivators and acceptable pricing models. | |
+| 7 | If a service like ShareCarCo was launched in your city tomorrow, what would make you try it immediately—or what would stop you? | Identify strongest motivators and deal-breakers for adoption. | |
 
 #### Situations
 | Situation | What? | How? | Why? | Who? |
@@ -83,6 +83,7 @@
 | 1 |  |  |  |  |
 | 2 |  |  |  |  |
 | 3 |  |  |  |  |
+| 4 |  |  |  |  |
 
 ### Interview 4 – [Marcos Rodrigo España]
 **Problem:** Aula Sonora
@@ -221,6 +222,7 @@
 
 ### Prototype Link:
 [Figma Prototype](https://www.figma.com/design/ZLC0NWDfGHuZlfXtYthZgD/Moviles?node-id=3-144&t=xborlKSpTysHmgKS-0)
+
 
 
 
