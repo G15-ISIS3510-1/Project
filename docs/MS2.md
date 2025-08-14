@@ -23,7 +23,7 @@
 | 1 | When was the last time you had to make a queue for something? | Understand how concious is the interviewee about the problem | When Maria had to went for her passport |
 | 2 | Can you tell me one of the worst queue you had made? | Understand the worst personal experience from the interviewee | For the Concert of Singer Mora in Bogotá, it was about 6 hours, very stressful |
 | 3 | When making a queue what do you do while waiting? Do you consider it enough to distract yourself? | Understand if the interviewee is able to distract himself during a queue | She tries to look for content on Instagram or TikTok, but she considers its not enough, she feels that her time is wasted |
-| 4 | How do you feel when the queue is long? | Understand the emotions form the interviewee | She feels tired and stress, she has to invest many time on a line |
+| 4 | How do you feel when the queue is long? | Understand the emotions form the interviewee | She feels tired and stressed, she has to invest many time on a line |
 | 5 | Have you tried any option for avoiding to make large queues? | Understand if the interviewee has looked for any type of solution | She have tried to not do queues, she always looks for shorter queues |
 | 6 | What information would you like when going to a place and avoid making a queue? | Understand what information is essential for people to know for avoid making a large queue | The webpage or business should enable reservations or a state about the current queue time and length |
 | 7 | Would you like a solution to avoid making a queue? | Understand the motivations of the interviewee for getting a solution to the queue problem | Yes, it would be nice to have a solution. Look at reservations on restaurants, were you can avoid making such large queue. Its important to tell the people how long a queue is so they are well informed about the time they are gonna lose making a queue |
@@ -31,9 +31,10 @@
 #### Situations
 | Situation | What? | How? | Why? | Who? |
 |-----------|-------|------|------|------|
-| 1 |  |  |  |  |
-| 2 |  |  |  |  |
-| 3 |  |  |  |  |
+| 1 | Sometimes queues are so long, taking almost hours | People that wait on the line tend to rage and stress out as they feel uncomfortable the lines are so long | Sometimes there are just too many people in a queue, thus making the experience worse | All people who make a queue and have other important stuff to attend |
+| 2 | In restaurants queues have many people | People in the queue feel uneasy because they are hungry and can’t wait more time, making them go to another restaurant to eat as fast as possible | Many people on the queue don’t use the time to think of what they want to order and tables are often full | People that wait in queue for getting service in a restaurant |
+| 3 | Concert queues tend to be so long many people end up wasting hours of their day | People get angry, they feel that waiting for a paid seat is horrible and a completely unnecessary thing | Some stadiums collapse when there is so many people waiting for service | People of every age are the ones that make concert queues, because they are afraid they’ll lose their seats |
+| 4 | While making a large queue there is no permanent distraction option | Some people start to look at their phones and later on they get tired or stressed | Many people look on Instagram or TikTok content to disconnect from the queue, but they end up getting tired of looking at their phone | Younger people, as they are the ones that are able to use more social media |
 
 ### Interview 2 – [Juan Camilo Lopez]
 **Problem:** Los Andes Parking App
@@ -220,6 +221,7 @@
 
 ### Prototype Link:
 [Figma Prototype](https://www.figma.com/design/ZLC0NWDfGHuZlfXtYthZgD/Moviles?node-id=3-144&t=xborlKSpTysHmgKS-0)
+
 
 
 
