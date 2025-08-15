@@ -155,13 +155,13 @@
 
 ##  Journey maps
 
-**Sirve para:** Entender todo el recorrido que vive una persona en un proceso.  
+**It is used to:** Understand the entire journey that a person experiences in a process.
 
-**Pasos:**
-- Elige un proceso (ej: buscar un libro, pedir comida).  
-- Divide en etapas: qué hace, dónde, con quién, cómo se siente.  
-- Incluye incluso detalles pequeños que puedan dar pistas.  
-- Puedes hacerlo observando o pidiéndole a la persona que lo dibuje.  
+**Steps:**
+- Choose a process (e.g., looking for a book, ordering food).
+- Divide it into steps: what they do, where, with whom, how they feel.
+- Include even small details that can give clues.
+- You can do this by observing or asking the person to draw it.
 
 <img width="1920" height="1080" alt="Doodle Sketch Customer Journey Map Brainstorm" src="https://github.com/user-attachments/assets/326ff2df-fc12-4b69-988b-bb75bdca9386" />
 
@@ -222,6 +222,7 @@
 
 ### Prototype Link:
 [Figma Prototype](https://www.figma.com/design/ZLC0NWDfGHuZlfXtYthZgD/Moviles?node-id=3-144&t=xborlKSpTysHmgKS-0)
+
 
 
 
