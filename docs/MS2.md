@@ -110,18 +110,20 @@
 
 ### Interview 5 – [Juan Felipe Puig]
 **Problem:** Aula Sonora
-**Interviewee profile:** [e.g., Student, remote worker, commuter, etc.]
-**Interview Summary:** [audio]
+**Interviewee profile:** Student 
+**Interview Summary:** [audio](https://github.com/user-attachments/assets/6634c7c1-e5ae-4303-8ab5-843d9b4ba13e)
+
+
 
 | # | Question | Purpose | Response |
 |---|----------|----------|---------|
-| 1 |Can you tell me about the last time you wanted to review something from a class? How did you do it?|  | |
-| 2 |How do you currently take and organize your notes?  |  | |
-| 3 |Can you describe a time when you missed an important explanation in class? What happened?|  | |
-| 4 |What kind of tools or resources would help you better capture and revisit class content?|  | |
-| 5 |How useful would it be to have an app with AI that make you key points of your classes?  |  | |
-| 6 |How likely would you be to use a feature that lets you add voice or text notes to specific points in a recording?  |  | |
-| 7 |What concerns would you have about using such an app (e.g., privacy, permissions, ease of use)?  |  | |
+| 1 |Can you tell me about the last time you wanted to review something from a class? How did you do it?|Understand the student’s current strategies for reviewing material and identify gaps or inefficiencies the app could address.  |Review classes by searching in sources from school were theres is a center of information with content from each class |
+| 2 |How do you currently take and organize your notes?  | Learn about their current note-taking system | Takes notes using a notebook by subject with notes like bulletpoints with relevant ideas |
+| 3 |Can you describe a time when you missed an important explanation in class? What happened?| Identify frustration points that the app could solve |Happens a lot of times in classes while taking notes because the teacher goes to fast and this slows the learning process |
+| 4 |What kind of tools or resources would help you better capture and revisit class content?| Get direct input from students about features they would value, so the solution aligns with real needs. | Summaries of the class with the main ideas and recordings from the teachers|
+| 5 |How useful would it be to have an app with AI that make you key points of your classes?  | Evaluate the appeal of the interactive notes and AI content |It would be amazing because it would help to be at the pace of the class |
+| 6 |How likely would you be to use a feature that lets you add voice or text notes to specific points in a recording?  |  |Can give the ideas and share them with the class|
+| 7 |What concerns would you have about using such an app?  | Identify adoption barriers and perceived risks. |If many people share the ideas, it could cause confusion with the content |
 
 #### Situations
 | Situation | What? | How? | Why? | Who? |
@@ -222,6 +224,7 @@
 
 ### Prototype Link:
 [Figma Prototype](https://www.figma.com/design/ZLC0NWDfGHuZlfXtYthZgD/Moviles?node-id=3-144&t=xborlKSpTysHmgKS-0)
+
 
 
 
