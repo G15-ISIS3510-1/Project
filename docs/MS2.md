@@ -136,7 +136,7 @@
 ### Interview 6 – [Jairo Andres Fierro]
 #### **Problem:** Aula Sonora
 #### **Interviewee profile:** Student
-#### **Interview Summary:** [audio](https://uniandes-my.sharepoint.com/:v:/g/personal/je_diazc12_uniandes_edu_co/EZtWREOiFuJMhuA0y4cdRFYBrmgjKrNhi67unlFnhuX_-w?e=jAGsC8)
+#### **Interview:** [audio](https://uniandes-my.sharepoint.com/:v:/g/personal/je_diazc12_uniandes_edu_co/EZtWREOiFuJMhuA0y4cdRFYBrmgjKrNhi67unlFnhuX_-w?e=jAGsC8)
 
 | # | Question | Purpose | Response |
 |---|----------|----------|---------|
@@ -157,6 +157,8 @@
 ---
 
 ##   Interview summary with the most relevant audio segments of each interview.
+
+#### **INTERVIEW SUMMARY:** [audio]
 
 ---
 
@@ -229,6 +231,7 @@
 
 ### Prototype Link:
 [Figma Prototype](https://www.figma.com/design/ZLC0NWDfGHuZlfXtYthZgD/Moviles?node-id=3-144&t=xborlKSpTysHmgKS-0)
+
 
 
 
