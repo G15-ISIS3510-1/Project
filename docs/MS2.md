@@ -41,17 +41,16 @@
 #### 
 **Interviewee profile:** Student
 #### 
-**Interview Summary:** [audio]
+**Interview Summary:** [[audio]](https://uniandes-my.sharepoint.com/personal/je_diazc12_uniandes_edu_co/_layouts/15/stream.aspx?id=%2Fpersonal%2Fje%5Fdiazc12%5Funiandes%5Fedu%5Fco%2FDocuments%2F9no%20Semestre%2FM%C3%B3viles%2FS2%20%2D%20Interviews%2FInterviewLosAndesParkingApp%2Em4a&referrer=StreamWebApp%2EWeb&referrerScenario=AddressBarCopied%2Eview%2Ee64559e1%2D4928%2D49f0%2Da1bf%2D22fd05996043)
 
 | # | Question | Purpose | Response |
 |---|----------|----------|---------|
-| 1 | Can you tell me about the last time you parked at your university? | Understand the context and frequency of the problem |
-| 2 | What was the experience like when you arrived and looked for a spot? | Understand how to process works and what possible difficulties there could be | |
-| 3 | Could you describe a time when you had to wait in line? How did you feel? | Explore difficulties and understand feelings | |
-| 4 | What usually happens if you can’t find a parking spot quickly? | Identify actions and other behaviors | |
-| 5 | How do you currently know if there are parking spots available? | Look for other solutions and actions | |
-| 6 | What kind of information would help you decide when or where to park? | Look for possible needs | |
-| 7 | How much impact does parking have on your arrival to class or stress? | Measure the effect of the problem in the person's life | |
+| 1 | Can you tell me about the last time you parked at your university? | Understand the context and frequency of the problem | Complicated to find a place to park, last time was difficult due to the rush hours |
+| 2 | What was the experience like when you arrived and looked for a spot? | Understand how to process works and what possible difficulties there could be | Stressed and angry due to the little time left for class |
+| 3 | Could you describe a time when you had to wait in line? How did you feel? | Explore difficulties and understand feelings | Waited 10-15 mins and she felt stressed, anxious and tired. She listens to podcasts, music, or studies |
+| 4 | What usually happens if you can’t find a parking spot quickly? | Identify actions and other behaviors | She continues waiting because she can't leave the car in the street. She get's angry and she needs to get to class, but the car is the priority |
+| 5 | How do you currently know if there are parking spots available? | Look for other solutions and actions | She doesn't know. She knows there are spots for electric cars and she thought arriving early meant available spaces, but know they are always full  |
+| 6 | What kind of information would help you decide when or where to park? | Look for possible needs | Depending on the day of the week and time of her classes. Also the parking fees are important. Security is also a must. |
 
 
 #### Situations
@@ -224,6 +223,7 @@
 
 ### Prototype Link:
 [Figma Prototype](https://www.figma.com/design/ZLC0NWDfGHuZlfXtYthZgD/Moviles?node-id=3-144&t=xborlKSpTysHmgKS-0)
+
 
 
 
