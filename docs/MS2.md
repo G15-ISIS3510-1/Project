@@ -63,27 +63,28 @@
 | 4 | Someone has a parking suscription but there are no spots available | They feel angry because they have to pay more for parking | During rush hour the parking lot gave the suscription spots to others | People with parking suscriptions |
 
 ### Interview 3 – [Juan Pablo Baron]
-**Problem:** ShareCarCo \n
-**Interviewee profile:** remote worker
-**Interview Summary:** [audio]
+**Problem:** ShareCarCo  
+**Interviewee profile:** Remote worker (London-based)  
+**Interview Summary:** Full transcript in audio files
 
 | # | Question | Purpose | Response |
 |---|----------|----------|---------|
-| 1 | Can you tell me about your current use of your car (or transportation routine if you don’t own one)? | Understand their baseline mobility habits and car ownership/use frequency. | |
-| 2 | Have you ever considered renting out your car (or renting someone else’s) when it’s not in use? Why or why not? | Explore openness to the concept and initial perceptions of peer-to-peer car rental. | |
-| 3 | What concerns or doubts would you have about letting someone else use your car? | Identify barriers such as trust, safety, insurance, and vehicle condition. | |
-| 4 | What features or guarantees would make you feel comfortable using a platform like this? | Discover key requirements for adoption (e.g., insurance coverage, vetting process, GPS tracking). | |
-| 5 | How do you currently handle situations when you need a car but don’t have access to one? | Understand the renter side’s needs, urgency, and willingness to pay. | |
-| 6 | What price or compensation would make renting out your car worthwhile for you? | Gauge the financial motivators and acceptable pricing models. | |
-| 7 | If a service like ShareCarCo was launched in your city tomorrow, what would make you try it immediately—or what would stop you? | Identify strongest motivators and deal-breakers for adoption. | |
+| 1 | Can you tell me about your current use of your car (or transportation routine if you don’t own one)? | Understand their baseline mobility habits and car ownership/use frequency. | Works remotely, rarely uses a car. Primarily uses it for countryside trips. Within London prefers public transport (Tube) due to crowding, or walking/cycling. Car use is mainly on weekends, occasionally with his girlfriend to dine out. |
+| 2 | Have you ever considered renting out your car (or renting someone else’s) when it’s not in use? Why or why not? | Explore openness to the concept and initial perceptions of peer-to-peer car rental. | Has not considered it because he is unsure if companies offering that service exist nowadays. |
+| 3 | What concerns or doubts would you have about letting someone else use your car? | Identify barriers such as trust, safety, insurance, and vehicle condition. | Main concern is cleanliness and whether the person would take proper care of the car. Lack of trust in strangers, uncertainty about their cleanliness and responsibility. |
+| 4 | What features or guarantees would make you feel comfortable using a platform like this? | Discover key requirements for adoption (e.g., insurance coverage, vetting process, GPS tracking). | Assurance that the car will be returned completely clean (e.g., vacuumed) and in good condition. Ability to choose renters based on ratings/reviews within the app. |
+| 5 | How do you currently handle situations when you need a car but don’t have access to one? | Understand the renter side’s needs, urgency, and willingness to pay. | In the city: uses bike or Tube. For countryside: takes train or rents a car if distance is far from city center. |
+| 6 | What price or compensation would make renting out your car worthwhile for you? | Gauge the financial motivators and acceptable pricing models. | Depends on frequency. Would accept ~£100 per trip up to four times a month, or annual equivalent of £45K–50K if frequent. |
+| 7 | If a service like ShareCarCo was launched in your city tomorrow, what would make you try it immediately—or what would stop you? | Identify strongest motivators and deal-breakers for adoption. | As a client: lower fares than London’s current services, faster and more reliable. As an owner: assurance of car’s return in clean and good condition, with a full tank. |
 
 #### Situations
 | Situation | What? | How? | Why? | Who? |
 |-----------|-------|------|------|------|
-| 1 |  |  |  |  |
-| 2 |  |  |  |  |
-| 3 |  |  |  |  |
-| 4 |  |  |  |  |
+| 1 | Owner rarely uses car during weekdays | Prefers Tube and walking to avoid city traffic | City is crowded, car is inefficient for daily commute | Remote worker in London |
+| 2 | Hesitation to rent out car | Avoids renting to strangers without trust or proof of responsibility | Fears damage or poor maintenance of vehicle | Car owner concerned about cleanliness and care |
+| 3 | Needs a vehicle for countryside trips | Rents a car or uses train when personal car not available | Trips are occasional and distance sometimes exceeds convenient train reach | Remote worker, occasional traveler |
+| 4 | Willing to use platform if conditions met | Would adopt service if cleaning and vetting guarantees are provided | Wants assurance of safe return and positive user history | Potential P2P car-sharing participant |
+
 
 ### Interview 4 – [Marcos Rodrigo España]
 **Problem:** Aula Sonora
@@ -222,6 +223,7 @@
 
 ### Prototype Link:
 [Figma Prototype](https://www.figma.com/design/ZLC0NWDfGHuZlfXtYthZgD/Moviles?node-id=3-144&t=xborlKSpTysHmgKS-0)
+
 
 
 
