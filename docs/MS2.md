@@ -156,6 +156,10 @@
 
 ---
 
+##   Interview summary with the most relevant audio segments of each interview.
+
+---
+
 ##  Journey maps
 
 **It is used to:** Understand the entire journey that a person experiences in a process.
@@ -225,6 +229,7 @@
 
 ### Prototype Link:
 [Figma Prototype](https://www.figma.com/design/ZLC0NWDfGHuZlfXtYthZgD/Moviles?node-id=3-144&t=xborlKSpTysHmgKS-0)
+
 
 
 
