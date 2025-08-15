@@ -148,9 +148,10 @@
 #### Situations
 | Situation | What? | How? | Why? | Who? |
 |-----------|-------|------|------|------|
-| 1 |  |  |  |  |
-| 2 |  |  |  |  |
-| 3 |  |  |  |  |
+| 1 | Students record parts of classes with permission | They use a mobile app to capture clear audio | They want to review explanations later | University students |
+| 2 | Tag important moments in conferences | The AI detects topics and timestamps automatically | It helps organize and quickly locate content | University students |
+| 3 | Some class topics are forgotten | Many students pay more attention instead of taking notes | Some topics are not written by students | University students |
+| 4 | It is faster to save recordings of the topic | Using the mobile application | It's an easy way to save recordings | University students |
 
 ---
 
@@ -223,6 +224,7 @@
 
 ### Prototype Link:
 [Figma Prototype](https://www.figma.com/design/ZLC0NWDfGHuZlfXtYthZgD/Moviles?node-id=3-144&t=xborlKSpTysHmgKS-0)
+
 
 
 
