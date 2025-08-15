@@ -137,13 +137,11 @@
 
 | # | Question | Purpose | Response |
 |---|----------|----------|---------|
-| 1 |  |  | |
-| 2 |  |  | |
-| 3 |  |  | |
-| 4 |  |  | |
-| 5 |  |  | |
-| 6 |  |  | |
-| 7 |  |  | |
+| 1 | How do you usually take notes during class? | Understand the behavior and current status of note-taking. | He takes his notes, although there aren't many, on a sheet of paper with a pencil, depending on what he considers important from the teacher's explanation. |
+| 2 | Have you ever recorded a class? | Know if it is common for people to record classes and thus know if it is a necessity. | He tried it once, but it didn't work, but he doesn't usually record lectures. |
+| 3 | Do you think the teacher would give you permission to record the class? | Validating a key condition for the Sound Classroom solution to work. | He doesn't think he should ask permission to record the class in most cases if he's not going to make it public and it's just for his friends, there shouldn't be a problem. Otherwise, he should ask the teacher, but he thinks most teachers would say yes. |
+| 4 | Would you like to receive the notes in a notebook, or would you prefer audio? | Validate the student's preference between a traditional method (written notes) and the method proposed by the solution (audio recordings), to understand which one is more widely accepted. | He doesn't like either format. |
+| 5 | What format would you prefer to receive the notes in? | Openly explore which formats are most useful for the student to receive notes. | He prefers a more visual format. |
 
 #### Situations
 | Situation | What? | How? | Why? | Who? |
@@ -224,6 +222,7 @@
 
 ### Prototype Link:
 [Figma Prototype](https://www.figma.com/design/ZLC0NWDfGHuZlfXtYthZgD/Moviles?node-id=3-144&t=xborlKSpTysHmgKS-0)
+
 
 
 
