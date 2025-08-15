@@ -105,9 +105,9 @@
 #### Situations
 | Situation | What? | How? | Why? | Who? |
 |-----------|-------|------|------|------|
-| 1 |  |  |  |  |
-| 2 |  |  |  |  |
-| 3 |  |  |  |  |
+| 1 | Arrives at campus and finds his usual parking area full | Drives around to different sections, sometimes ending up in the farthest one, taking 5–15 minutes | Peak hours cause high demand, and there is no real-time spot availability information |Students and staff who drive to campus |
+| 2 |Spends over 20 minutes searching for parking  |Eventually gives up, parks on the street, and worries about safety while being late to class  |Campus parking is saturated and lacks a quick way to confirm availability before arrival  |Students with time-sensitive commitments  |
+| 3 | Adjusts arrival time to secure parking | Leaves home 20 minutes earlier or goes directly to distant parking sections |Planning ahead is necessary to avoid long searches during rush hours  | Students with regular class schedules |
 
 ### Interview 5 – [Juan Felipe Puig]
 **Problem:** Aula Sonora
@@ -231,6 +231,7 @@
 
 ### Prototype Link:
 [Figma Prototype](https://www.figma.com/design/ZLC0NWDfGHuZlfXtYthZgD/Moviles?node-id=3-144&t=xborlKSpTysHmgKS-0)
+
 
 
 
