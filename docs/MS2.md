@@ -86,19 +86,19 @@
 
 
 ### Interview 4 – [Marcos Rodrigo España]
-**Problem:** Aula Sonora
-**Interviewee profile:** [e.g., Student, remote worker, commuter, etc.]
+**Problem:** Los Andes Parking App
+**Interviewee profile:** [Student]
 **Interview Summary:** [audio]
 
 | # | Question | Purpose | Response |
 |---|----------|----------|---------|
-| 1 |  |  | |
-| 2 |  |  | |
-| 3 |  |  | |
-| 4 |  |  | |
-| 5 |  |  | |
-| 6 |  |  | |
-| 7 |  |  | |
+| 1 |Can you walk me through what happens from the moment you decide to go to the parking lot until you find a spot? |Understand the sequence of actions and identify pain points in the process | |
+| 2 | Have you ever turned around and left because parking was too difficult? What happened? |Discover extreme cases and decision-making triggers  | |
+| 3 |What are the busiest times for parking in your experience?  | Identify patterns and high-demand periods | |
+| 4 |Do you usually plan your arrival time based on parking availability? How?  |Explore proactive behaviors and strategies  | |
+| 5 |Can you describe the last time you found a parking spot easily? What was different that day? |Identify positive experiences and possible success factors  | |
+| 6 |If you could change one thing about the parking system at your university, what would it be?  |Capture user needs and potential improvement ideas  | |
+| 7 |Have you ever used alternative transportation to avoid parking issues? Why or why not?  |Understand substitution behaviors and motivations  | |
 
 #### Situations
 | Situation | What? | How? | Why? | Who? |
@@ -223,6 +223,7 @@
 
 ### Prototype Link:
 [Figma Prototype](https://www.figma.com/design/ZLC0NWDfGHuZlfXtYthZgD/Moviles?node-id=3-144&t=xborlKSpTysHmgKS-0)
+
 
 
 
