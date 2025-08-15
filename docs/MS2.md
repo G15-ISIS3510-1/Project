@@ -94,13 +94,13 @@
 
 | # | Question | Purpose | Response |
 |---|----------|----------|---------|
-| 1 |Can you walk me through what happens from the moment you decide to go to the parking lot until you find a spot? |Understand the sequence of actions and identify pain points in the process | |
-| 2 | Have you ever turned around and left because parking was too difficult? What happened? |Discover extreme cases and decision-making triggers  | |
-| 3 |What are the busiest times for parking in your experience?  | Identify patterns and high-demand periods | |
-| 4 |Do you usually plan your arrival time based on parking availability? How?  |Explore proactive behaviors and strategies  | |
-| 5 |Can you describe the last time you found a parking spot easily? What was different that day? |Identify positive experiences and possible success factors  | |
-| 6 |If you could change one thing about the parking system at your university, what would it be?  |Capture user needs and potential improvement ideas  | |
-| 7 |Have you ever used alternative transportation to avoid parking issues? Why or why not?  |Understand substitution behaviors and motivations  | |
+| 1 |Can you walk me through what happens from the moment you decide to go to the parking lot until you find a spot? |Understand the sequence of actions and identify pain points in the process |I check my usual area, and if it’s full, I drive around. Sometimes I end up in the farthest section, taking 5–15 minutes.|
+| 2 | Have you ever turned around and left because parking was too difficult? What happened? |Discover extreme cases and decision-making triggers  |Yes, once I searched for 20 minutes, gave up, parked on the street, and arrived late while worrying about safety. |
+| 3 |What are the busiest times for parking in your experience?  | Identify patterns and high-demand periods |Around 7:30–8:00 am and 1:00 pm, when most people arrive for classes.|
+| 4 |Do you usually plan your arrival time based on parking availability? How?  |Explore proactive behaviors and strategies  |Yes, I try to get there 20 minutes early. If not, I go straight to the far area.|
+| 5 |Can you describe the last time you found a parking spot easily? What was different that day? |Identify positive experiences and possible success factors  |During midterms, fewer people were on campus, so I found a spot right away in my usual area.|
+| 6 |If you could change one thing about the parking system at your university, what would it be?  |Capture user needs and potential improvement ideas  |A real-time system showing available spaces.|
+| 7 |Have you ever used alternative transportation to avoid parking issues? Why or why not?  |Understand substitution behaviors and motivations  |Yes, I sometimes take the bus during big events, but I prefer driving for flexibility.|
 
 #### Situations
 | Situation | What? | How? | Why? | Who? |
@@ -225,6 +225,7 @@
 
 ### Prototype Link:
 [Figma Prototype](https://www.figma.com/design/ZLC0NWDfGHuZlfXtYthZgD/Moviles?node-id=3-144&t=xborlKSpTysHmgKS-0)
+
 
 
 
