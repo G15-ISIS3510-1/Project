@@ -119,7 +119,7 @@
 | 2 |How do you currently take and organize your notes?  |  | |
 | 3 |Can you describe a time when you missed an important explanation in class? What happened?|  | |
 | 4 |What kind of tools or resources would help you better capture and revisit class content?|  | |
-| 5 |How useful would it be to have short, topic-based audio clips from lectures?  |  | |
+| 5 |How useful would it be to have an app with AI that make you key points of your classes?  |  | |
 | 6 |How likely would you be to use a feature that lets you add voice or text notes to specific points in a recording?  |  | |
 | 7 |What concerns would you have about using such an app (e.g., privacy, permissions, ease of use)?  |  | |
 
@@ -222,6 +222,7 @@
 
 ### Prototype Link:
 [Figma Prototype](https://www.figma.com/design/ZLC0NWDfGHuZlfXtYthZgD/Moviles?node-id=3-144&t=xborlKSpTysHmgKS-0)
+
 
 
 
