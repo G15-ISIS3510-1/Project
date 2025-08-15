@@ -122,15 +122,15 @@
 | 3 |Can you describe a time when you missed an important explanation in class? What happened?| Identify frustration points that the app could solve |Happens a lot of times in classes while taking notes because the teacher goes to fast and this slows the learning process |
 | 4 |What kind of tools or resources would help you better capture and revisit class content?| Get direct input from students about features they would value, so the solution aligns with real needs. | Summaries of the class with the main ideas and recordings from the teachers|
 | 5 |How useful would it be to have an app with AI that make you key points of your classes?  | Evaluate the appeal of the interactive notes and AI content |It would be amazing because it would help to be at the pace of the class |
-| 6 |How likely would you be to use a feature that lets you add voice or text notes to specific points in a recording?  |  |Can give the ideas and share them with the class|
+| 6 |How likely would you be to use a feature that lets you add voice or text notes to specific points in a recording?  | Know how useful would it be the feature of adding own voice recordings |Can give the ideas and share them with the class|
 | 7 |What concerns would you have about using such an app?  | Identify adoption barriers and perceived risks. |If many people share the ideas, it could cause confusion with the content |
 
 #### Situations
 | Situation | What? | How? | Why? | Who? |
 |-----------|-------|------|------|------|
-| 1 |  |  |  |  |
-| 2 |  |  |  |  |
-| 3 |  |  |  |  |
+| 1 | The student writes notes by hand in a notebook or types long paragraphs in a text document during class. | They focus intensely on copying information, sometimes missing the context or examples while writing. Their head is down most of the time, and they rarely make eye contact with the professor. | Writing everything manually is time-consuming, and students struggle to capture both completeness and accuracy in real time. | The student, possibly classmates doing the same, and the teacher delivering the lecture. |
+| 2 | The professor moves quickly from one topic to another while explaining complex concepts. | The student writes frantically, skipping words and abbreviating heavily. They show signs of stress and frustration when unable to keep up. | The pace of the lecture outstrips the student’s note-taking speed, causing important details to be lost. | The student and the professor in a live classroom setting. |
+| 3 | The student recalls that the professor gave a valuable example or explanation but it wasn’t written down in the notes. | They try to reconstruct it from memory or ask classmates, but the details are vague and inconsistent. | Spoken insights disappear if not documented, and memory fades quickly without a recording to revisit. | The student, classmates (who may or may not remember the same details), and the professor as the source of the information. |
 
 ### Interview 6 – [Jairo Andres Fierro]
 #### **Problem:** Aula Sonora
@@ -224,6 +224,7 @@
 
 ### Prototype Link:
 [Figma Prototype](https://www.figma.com/design/ZLC0NWDfGHuZlfXtYthZgD/Moviles?node-id=3-144&t=xborlKSpTysHmgKS-0)
+
 
 
 
