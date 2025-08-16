@@ -157,7 +157,7 @@
 
 ##   Interview summary with the most relevant audio segments of each interview.
 
-#### **INTERVIEW SUMMARY:** [audio]
+#### **INTERVIEW SUMMARY:** [audio](https://uniandes-my.sharepoint.com/:v:/g/personal/ja_fierro_uniandes_edu_co/EaUODjWIwL1Nt0j3zxzlmvEBBIMVrAwNuRWlfdKeFvPs3Q?nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJTdHJlYW1XZWJBcHAiLCJyZWZlcnJhbFZpZXciOiJTaGFyZURpYWxvZy1MaW5rIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXcifX0%3D&e=a36KPi)
 
 ---
 
@@ -230,6 +230,7 @@
 
 ### Prototype Link:
 [Figma Prototype](https://www.figma.com/design/ZLC0NWDfGHuZlfXtYthZgD/Moviles?node-id=3-144&t=xborlKSpTysHmgKS-0)
+
 
 
 
