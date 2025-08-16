@@ -90,8 +90,7 @@
 #### 
 **Interviewee profile:** [Student]
 #### 
-**Interview Summary:** [https://uniandes-my.sharepoint.com/:u:/r/personal/je_diazc12_uniandes_edu_co/Documents/9no%20Semestre/M%C3%B3viles/S2%20-%20Interviews/Interview%20Marcos%20.m4a?csf=1&web=1&e=afyT9H&nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJTdHJlYW1XZWJBcHAiLCJyZWZlcnJhbFZpZXciOiJTaGFyZURpYWxvZy1MaW5rIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXcifX0%3D]
-
+**Interview Summary:** [audio](https://uniandes-my.sharepoint.com/:u:/r/personal/je_diazc12_uniandes_edu_co/Documents/9no%20Semestre/M%C3%B3viles/S2%20-%20Interviews/Interview%20Marcos%20.m4a?csf=1&web=1&e=afyT9H&nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJTdHJlYW1XZWJBcHAiLCJyZWZlcnJhbFZpZXciOiJTaGFyZURpYWxvZy1MaW5rIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXcifX0%3D)
 | # | Question | Purpose | Response |
 |---|----------|----------|---------|
 | 1 |Can you walk me through what happens from the moment you decide to go to the parking lot until you find a spot? |Understand the sequence of actions and identify pain points in the process |I check my usual area, and if it’s full, I drive around. Sometimes I end up in the farthest section, taking 5–15 minutes.|
