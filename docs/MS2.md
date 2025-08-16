@@ -173,6 +173,10 @@ https://www.canva.com/design/DAGwGXIkgOY/WS3biZpIWu3yXwzRQMToEA/edit?utm_content
 - Include even small details that can give clues.
 - You can do this by observing or asking the person to draw it.
 
+**Turn Machine**
+<img width="1241" height="698" alt="image" src="https://github.com/user-attachments/assets/e752d8fd-d7f8-4d3f-99b2-ca9498045a09" />
+
+
 **ShareCarCo:**
 <img width="1300" height="731" alt="image" src="https://github.com/user-attachments/assets/83e78b74-5612-4606-9e5c-04c1bb474055" />
 
@@ -241,6 +245,7 @@ https://www.canva.com/design/DAGwGXIkgOY/WS3biZpIWu3yXwzRQMToEA/edit?utm_content
 
 ### Prototype Link:
 [Figma Prototype](https://www.figma.com/design/ZLC0NWDfGHuZlfXtYthZgD/Moviles?node-id=3-144&t=xborlKSpTysHmgKS-0)
+
 
 
 
