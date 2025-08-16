@@ -241,10 +241,11 @@ https://www.canva.com/design/DAGwGXIkgOY/WS3biZpIWu3yXwzRQMToEA/edit?utm_content
 
 ## Prototype
 
-### Video Link:
+### Video Link: [Video](https://uniandes-my.sharepoint.com/:v:/g/personal/ja_fierro_uniandes_edu_co/EQ35c7bGaHpDtMGFbr24auUBN8obiFm6hv1bn8VYnrsBkQ?e=9LZHqO&nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJTdHJlYW1XZWJBcHAiLCJyZWZlcnJhbFZpZXciOiJTaGFyZURpYWxvZy1MaW5rIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXcifX0%3D)
 
 ### Prototype Link:
 [Figma Prototype](https://www.figma.com/design/ZLC0NWDfGHuZlfXtYthZgD/Moviles?node-id=3-144&t=xborlKSpTysHmgKS-0)
+
 
 
 
