@@ -171,7 +171,13 @@
 - Include even small details that can give clues.
 - You can do this by observing or asking the person to draw it.
 
-<img width="1920" height="1080" alt="Doodle Sketch Customer Journey Map Brainstorm" src="https://github.com/user-attachments/assets/326ff2df-fc12-4b69-988b-bb75bdca9386" />
+**ShareCarCo:**
+<img width="1300" height="731" alt="image" src="https://github.com/user-attachments/assets/83e78b74-5612-4606-9e5c-04c1bb474055" />
+
+**Los Andes Parking App:**
+<img width="467" height="424" alt="image" src="https://github.com/user-attachments/assets/c77a7a61-ef19-4bf4-88af-4cdd23888830" />
+
+
 
 ## Brainstorming
 
@@ -203,6 +209,8 @@
 | Photos to register potential damages | Camera | High/Low |
 | Real-time notifications for scheduled pick-up and drop-off | App integration | High/Medium |
 
+<img width="888" height="506" alt="image" src="https://github.com/user-attachments/assets/ec7f7657-060c-4e0f-9eee-e85aa84a57d5" />
+
 
 **Los Andes Parking App**
 | Idea | Mobile Component | Impact/Effort Quadrant |
@@ -230,6 +238,7 @@
 
 ### Prototype Link:
 [Figma Prototype](https://www.figma.com/design/ZLC0NWDfGHuZlfXtYthZgD/Moviles?node-id=3-144&t=xborlKSpTysHmgKS-0)
+
 
 
 
