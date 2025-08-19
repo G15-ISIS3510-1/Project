@@ -20,3 +20,4 @@ Jairo Andres Fierro Fierro - 202226326 - ja.fierro@uniandes.edu.co
 ### MS Deliverables - Wiki:
 
 #### [MS2](docs/MS2.md)
+#### [MS3](https://github.com/G15-ISIS3510-1/Project/wiki/MS3)
