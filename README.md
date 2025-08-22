@@ -12,7 +12,7 @@ Juan Pablo Baron - 202210502 - jp.baron@uniandes.edu.co
 
 Marcos Rodrigo España - 202124714 - m.espanac@uniandes.edu.co
 
-Juan Felipe Puig - codigo - correo@uniandes.edu.co
+Juan Felipe Puig - 202221336 - j.puig@uniandes.edu.co
 
 Jairo Andres Fierro Fierro - 202226326 - ja.fierro@uniandes.edu.co
 
