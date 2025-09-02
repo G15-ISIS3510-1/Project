@@ -1,0 +1,178 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum BookingStatus {
+  pending
+  confirmed
+  active
+  completed
+  cancelled
+}
+
+enum UserStatus {
+  active
+  suspended
+}
+
+enum DriverLicenseStatus {
+  pending
+  verified
+}
+
+enum PaymentStatus {
+  authorized
+  captured
+  refunded
+  failed
+}
+
+// Modelos
+model User {
+  user_id                String             @id @default(cuid())
+  role                   String             // host | renter | both
+  name                   String
+  email                  String             @unique
+  password               String
+  phone                  String
+  driver_license_status  DriverLicenseStatus @default(pending)
+  status                 UserStatus         @default(active)
+  created_at             DateTime           @default(now())
+
+  // Relaciones
+  owned_vehicles         Vehicle[]          // Como host
+  renter_bookings        Booking[]          @relation("RenterBookings")
+  host_bookings          Booking[]          @relation("HostBookings")
+  payments               Payment[]
+
+  @@map("users")
+}
+
+model Vehicle {
+  vehicle_id     String   @id @default(cuid())
+  owner_id       String
+  make           String
+  model          String
+  year           Int
+  plate          String   @unique
+  seats          Int
+  transmission   String   // AT/MT/CVT/EV
+  fuel_type      String   // gas/diesel/hybrid/ev
+  mileage        Int
+  status         String   // active|inactive|pending_review
+  lat            Float    // -90..90
+  lng            Float    // -180..180
+  created_at     DateTime @default(now())
+
+  // Relaciones
+  owner          User     @relation(fields: [owner_id], references: [user_id], onDelete: Cascade)
+  availability   VehicleAvailability[]
+  pricing        Pricing?
+  bookings       Booking[]
+
+  @@map("vehicles")
+}
+
+model VehicleAvailability {
+  availability_id String   @id @default(cuid())
+  vehicle_id      String
+  start_ts        DateTime
+  end_ts          DateTime
+  type            String   // available|blocked|maintenance
+  notes           String?
+
+  // Relaciones
+  vehicle         Vehicle  @relation(fields: [vehicle_id], references: [vehicle_id], onDelete: Cascade)
+
+  @@map("vehicle_availability")
+}
+
+model Pricing {
+  pricing_id     String   @id @default(cuid())
+  vehicle_id     String   @unique
+  daily_price    Float
+  min_days       Int      @default(1)
+  max_days       Int?
+  currency       String   @default("USD")
+  last_updated   DateTime @default(now())
+
+  // Relaciones
+  vehicle        Vehicle  @relation(fields: [vehicle_id], references: [vehicle_id], onDelete: Cascade)
+
+  @@map("pricing")
+}
+
+model InsurancePlan {
+  insurance_plan_id String   @id @default(cuid())  // Cambiado de uuid a String
+  name              String
+  deductible        Float
+  daily_cost        Float
+  coverage_summary  String
+  active            Boolean @default(true)
+
+  // Relaciones
+  bookings          Booking[]
+
+  @@map("insurance_plans")
+}
+
+model Booking {
+  booking_id                    String        @id @default(cuid())
+  vehicle_id                    String
+  renter_id                     String
+  host_id                       String
+  insurance_plan_id             String?
+  start_ts                      DateTime
+  end_ts                        DateTime
+  status                        BookingStatus @default(pending)
+
+  // Snapshots económicos
+  daily_price_snapshot          Float
+  insurance_daily_cost_snapshot Float?
+  subtotal                      Float
+  fees                          Float         @default(0)
+  taxes                         Float         @default(0)
+  total                         Float
+  currency                      String        @default("USD")
+
+  // Estado del vehículo
+  odo_start                     Int?
+  odo_end                       Int?
+  fuel_start                    Int?          // 0-100
+  fuel_end                      Int?          // 0-100
+
+  created_at                    DateTime      @default(now())
+
+  // Relaciones
+  vehicle                       Vehicle       @relation(fields: [vehicle_id], references: [vehicle_id], onDelete: Cascade)
+  renter                        User         @relation("RenterBookings", fields: [renter_id], references: [user_id], onDelete: Cascade)
+  host                          User         @relation("HostBookings", fields: [host_id], references: [user_id], onDelete: Cascade)
+  insurance_plan                InsurancePlan? @relation(fields: [insurance_plan_id], references: [insurance_plan_id])
+  payments                      Payment[]
+
+  @@map("bookings")
+}
+
+model Payment {
+  payment_id   String        @id @default(cuid())
+  booking_id   String
+  payer_id     String
+  amount       Float
+  currency     String        @default("USD")
+  status       PaymentStatus
+  provider     String        // ej. stripe, adyen
+  provider_ref String?
+  created_at   DateTime      @default(now())
+
+  // Relaciones
+  booking      Booking       @relation(fields: [booking_id], references: [booking_id], onDelete: Cascade)
+  payer        User          @relation(fields: [payer_id], references: [user_id], onDelete: Cascade)
+
+  @@map("payments")
+}
