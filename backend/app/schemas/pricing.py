@@ -10,10 +10,9 @@ class PricingBase(BaseModel):
     currency: str = Field(default="USD", min_length=3, max_length=3, description="Moneda (USD, EUR, etc.)")
 
 class PricingCreate(PricingBase):
+    vehicle_id: str = Field(..., description="ID del vehículo")
     # No incluir pricing_id (se genera automáticamente)
-    # No incluir vehicle_id (se obtiene del vehículo)
     # No incluir last_updated (se genera automáticamente)
-    pass
 
 class PricingUpdate(BaseModel):
     daily_price: Optional[float] = Field(None, gt=0, description="Precio diario del vehículo")

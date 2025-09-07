@@ -3,18 +3,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from contextlib import asynccontextmanager
 from app.core.config import settings
-from app.routers import auth, users, vehicles
+from app.routers import auth, users, vehicles, pricing, vehicle_availability
 import uvicorn
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
-    print("🚀 Iniciando aplicación FastAPI...")
-    print(f"📊 Modo debug: {settings.debug}")
-    print(f"🌐 CORS origins: {settings.cors_origins}")
+    print("Iniciando aplicación FastAPI...")
+    print(f"Modo debug: {settings.debug}")
+    print(f"CORS origins: {settings.cors_origins}")
     yield
-    # Shutdown
-    print("🛑 Cerrando aplicación...")
+    print(" Cerrando aplicación...")
 
 # Crear aplicación FastAPI
 app = FastAPI(
@@ -34,16 +33,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Middleware de seguridad
 app.add_middleware(
     TrustedHostMiddleware,
-    allowed_hosts=["*"]  # En producción, especifica hosts específicos
+    allowed_hosts=["*"]  
 )
 
-# Incluir routers
 app.include_router(auth.router, prefix="/api")
 app.include_router(users.router, prefix="/api")
 app.include_router(vehicles.router, prefix="/api")
+app.include_router(pricing.router, prefix="/api/pricing")
+app.include_router(vehicle_availability.router, prefix="/api/vehicle-availability")
 
 # Rutas básicas
 @app.get("/")

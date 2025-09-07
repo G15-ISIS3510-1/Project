@@ -52,6 +52,24 @@ python main.py
 - **PUT /api/vehicles/{id}** - Actualizar vehículo
 - **DELETE /api/vehicles/{id}** - Eliminar vehículo (soft delete)
 
+### 💰 Pricing
+- **GET /api/pricing/** - Listar precios
+- **POST /api/pricing/** - Crear precio para vehículo
+- **GET /api/pricing/{id}** - Obtener precio por ID
+- **GET /api/pricing/vehicle/{id}** - Obtener precio por vehículo
+- **PUT /api/pricing/{id}** - Actualizar precio
+- **DELETE /api/pricing/{id}** - Eliminar precio
+
+### 📅 Vehicle Availability
+- **GET /api/vehicle-availability/** - Listar disponibilidades
+- **POST /api/vehicle-availability/** - Crear disponibilidad
+- **GET /api/vehicle-availability/{id}** - Obtener disponibilidad por ID
+- **GET /api/vehicle-availability/vehicle/{id}** - Obtener disponibilidades por vehículo
+- **GET /api/vehicle-availability/search/available** - Buscar vehículos disponibles
+- **PUT /api/vehicle-availability/{id}** - Actualizar disponibilidad
+- **DELETE /api/vehicle-availability/{id}** - Eliminar disponibilidad
+- **DELETE /api/vehicle-availability/vehicle/{id}** - Eliminar todas las disponibilidades de un vehículo
+
 ### 🧪 Test Scenarios
 - **Create Second Vehicle** - Crear segundo vehículo
 - **Test Duplicate Plate** - Probar validación de placa duplicada
@@ -72,11 +90,26 @@ python main.py
 5. **Update Vehicle** - Actualizar información
 6. **Create Second Vehicle** - Crear otro vehículo
 
-### 3. Pruebas de validación:
+### 3. Pruebas de precios:
+1. **Create Pricing** - Crear precio para el vehículo (se guarda automáticamente el pricing_id)
+2. **Get All Pricings** - Verificar que aparezca en la lista
+3. **Get Pricing by ID** - Obtener precio específico
+4. **Get Pricing by Vehicle ID** - Obtener precio del vehículo
+5. **Update Pricing** - Actualizar precio
+
+### 4. Pruebas de disponibilidad:
+1. **Create Availability** - Crear disponibilidad (se guarda automáticamente el availability_id)
+2. **Get All Availabilities** - Verificar que aparezca en la lista
+3. **Get Availability by ID** - Obtener disponibilidad específica
+4. **Get Availabilities by Vehicle** - Ver disponibilidades del vehículo
+5. **Search Available Vehicles** - Buscar vehículos disponibles en fechas específicas
+6. **Update Availability** - Actualizar disponibilidad
+
+### 5. Pruebas de validación:
 1. **Test Duplicate Plate** - Debería fallar con error 400
 2. **Test Invalid Data** - Debería fallar con errores de validación
 
-### 4. Pruebas de usuarios:
+### 6. Pruebas de usuarios:
 1. **Get All Users** - Listar usuarios
 2. **Get User by ID** - Obtener usuario específico
 3. **Update User** - Actualizar información del usuario
@@ -87,6 +120,8 @@ La colección incluye scripts que guardan automáticamente:
 - `access_token` - Token JWT después del login
 - `user_id` - ID del usuario después del registro
 - `vehicle_id` - ID del vehículo después de crearlo
+- `pricing_id` - ID del precio después de crearlo
+- `availability_id` - ID de la disponibilidad después de crearla
 
 ## 📝 Ejemplos de Respuestas
 
@@ -132,6 +167,31 @@ La colección incluye scripts que guardan automáticamente:
 }
 ```
 
+### ✅ Precio creado:
+```json
+{
+    "vehicle_id": "52e91856-4bb1-44a4-bb72-319ceab66afc",
+    "daily_price": 50.0,
+    "min_days": 1,
+    "max_days": 30,
+    "currency": "USD",
+    "pricing_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "last_updated": "2025-09-02T20:32:00.000000Z"
+}
+```
+
+### ✅ Disponibilidad creada:
+```json
+{
+    "vehicle_id": "52e91856-4bb1-44a4-bb72-319ceab66afc",
+    "start_ts": "2024-01-01T09:00:00Z",
+    "end_ts": "2024-01-05T18:00:00Z",
+    "type": "available",
+    "notes": "Disponible para alquiler",
+    "availability_id": "b2c3d4e5-f6g7-8901-bcde-f23456789012"
+}
+```
+
 ## ⚠️ Notas Importantes
 
 1. **Autenticación**: Todos los endpoints (excepto auth y health) requieren token JWT
@@ -139,6 +199,10 @@ La colección incluye scripts que guardan automáticamente:
 3. **Soft Delete**: Los usuarios y vehículos se marcan como inactivos, no se eliminan físicamente
 4. **Placas únicas**: No se pueden crear vehículos con placas duplicadas
 5. **Propiedad**: Solo puedes modificar/eliminar tus propios vehículos
+6. **Relación 1:1**: Cada vehículo puede tener solo un precio
+7. **Disponibilidad**: Los vehículos pueden tener múltiples períodos de disponibilidad
+8. **Conflictos de horarios**: El sistema previene solapamientos en las disponibilidades
+9. **Búsqueda inteligente**: Usa fechas ISO para buscar vehículos disponibles
 
 ## 🐛 Troubleshooting
 
