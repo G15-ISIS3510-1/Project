@@ -1,0 +1,1179 @@
+{
+	"info": {
+		"_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+		"name": "Car Sharing API - FastAPI",
+		"description": "Colección de Postman para la API de Car Sharing (Turo-like) desarrollada con FastAPI",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Health Check",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/health",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"health"
+							]
+						},
+						"description": "Verificar que el servidor esté funcionando correctamente"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Register User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    pm.environment.set('user_id', response.user_id);",
+									"    console.log('User ID saved:', response.user_id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Juan Pérez\",\n    \"email\": \"juan@example.com\",\n    \"phone\": \"1234567890\",\n    \"role\": \"host\",\n    \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/register",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"register"
+							]
+						},
+						"description": "Registrar un nuevo usuario en el sistema"
+					},
+					"response": []
+				},
+				{
+					"name": "Login User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    pm.environment.set('access_token', response.access_token);",
+									"    console.log('Access token saved:', response.access_token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"juan@example.com\",\n    \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						},
+						"description": "Iniciar sesión y obtener token de acceso"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "Get All Users",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/users/?skip=0&limit=100",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"users",
+								""
+							],
+							"query": [
+								{
+									"key": "skip",
+									"value": "0"
+								},
+								{
+									"key": "limit",
+									"value": "100"
+								}
+							]
+						},
+						"description": "Obtener lista de usuarios (requiere autenticación)"
+					},
+					"response": []
+				},
+				{
+					"name": "Get User by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/users/{{user_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"{{user_id}}"
+							]
+						},
+						"description": "Obtener un usuario específico por ID"
+					},
+					"response": []
+				},
+				{
+					"name": "Update User",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Juan Carlos Pérez\",\n    \"phone\": \"0987654321\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/users/{{user_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"{{user_id}}"
+							]
+						},
+						"description": "Actualizar información del usuario"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete User (Soft Delete)",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/users/{{user_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"{{user_id}}"
+							]
+						},
+						"description": "Eliminar usuario (soft delete - cambia status a suspended)"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Vehicles",
+			"item": [
+				{
+					"name": "Get All Vehicles",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/vehicles/?skip=0&limit=100",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"vehicles",
+								""
+							],
+							"query": [
+								{
+									"key": "skip",
+									"value": "0"
+								},
+								{
+									"key": "limit",
+									"value": "100"
+								}
+							]
+						},
+						"description": "Obtener lista de vehículos"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Vehicle",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    pm.environment.set('vehicle_id', response.vehicle_id);",
+									"    console.log('Vehicle ID saved:', response.vehicle_id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"make\": \"Toyota\",\n    \"model\": \"Corolla\",\n    \"year\": 2020,\n    \"plate\": \"ABC123\",\n    \"seats\": 5,\n    \"transmission\": \"AT\",\n    \"fuel_type\": \"gas\",\n    \"mileage\": 50000,\n    \"status\": \"active\",\n    \"lat\": 40.7128,\n    \"lng\": -74.0060\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/vehicles/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"vehicles",
+								""
+							]
+						},
+						"description": "Crear un nuevo vehículo"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Vehicle by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/vehicles/{{vehicle_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"vehicles",
+								"{{vehicle_id}}"
+							]
+						},
+						"description": "Obtener un vehículo específico por ID"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Vehicles by Owner",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/vehicles/owner/{{user_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"vehicles",
+								"owner",
+								"{{user_id}}"
+							]
+						},
+						"description": "Obtener vehículos de un propietario específico"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Vehicle",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"mileage\": 55000,\n    \"status\": \"active\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/vehicles/{{vehicle_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"vehicles",
+								"{{vehicle_id}}"
+							]
+						},
+						"description": "Actualizar información del vehículo"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Vehicle (Soft Delete)",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/vehicles/{{vehicle_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"vehicles",
+								"{{vehicle_id}}"
+							]
+						},
+						"description": "Eliminar vehículo (soft delete - cambia status a inactive)"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Pricing",
+			"item": [
+				{
+					"name": "Get All Pricings",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/pricing/?skip=0&limit=100",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"pricing",
+								""
+							],
+							"query": [
+								{
+									"key": "skip",
+									"value": "0"
+								},
+								{
+									"key": "limit",
+									"value": "100"
+								}
+							]
+						},
+						"description": "Obtener lista de precios"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Pricing",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    pm.environment.set('pricing_id', response.pricing_id);",
+									"    console.log('Pricing ID saved:', response.pricing_id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"vehicle_id\": \"{{vehicle_id}}\",\n    \"daily_price\": 50.00,\n    \"min_days\": 1,\n    \"max_days\": 30,\n    \"currency\": \"USD\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/pricing/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"pricing",
+								""
+							]
+						},
+						"description": "Crear precio para un vehículo"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Pricing by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/pricing/{{pricing_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"pricing",
+								"{{pricing_id}}"
+							]
+						},
+						"description": "Obtener precio específico por ID"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Pricing by Vehicle ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/pricing/vehicle/{{vehicle_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"pricing",
+								"vehicle",
+								"{{vehicle_id}}"
+							]
+						},
+						"description": "Obtener precio de un vehículo específico"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Pricing",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"daily_price\": 60.00,\n    \"min_days\": 2,\n    \"max_days\": 15\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/pricing/{{pricing_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"pricing",
+								"{{pricing_id}}"
+							]
+						},
+						"description": "Actualizar precio"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Pricing",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/pricing/{{pricing_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"pricing",
+								"{{pricing_id}}"
+							]
+						},
+						"description": "Eliminar precio"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Vehicle Availability",
+			"item": [
+				{
+					"name": "Get All Availabilities",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/vehicle-availability/?skip=0&limit=100",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"vehicle-availability",
+								""
+							],
+							"query": [
+								{
+									"key": "skip",
+									"value": "0"
+								},
+								{
+									"key": "limit",
+									"value": "100"
+								}
+							]
+						},
+						"description": "Obtener lista de disponibilidades de vehículos"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Availability",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    pm.environment.set('availability_id', response.availability_id);",
+									"    console.log('Availability ID saved:', response.availability_id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"vehicle_id\": \"{{vehicle_id}}\",\n    \"start_ts\": \"2024-01-01T09:00:00Z\",\n    \"end_ts\": \"2024-01-05T18:00:00Z\",\n    \"type\": \"available\",\n    \"notes\": \"Disponible para alquiler\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/vehicle-availability/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"vehicle-availability",
+								""
+							]
+						},
+						"description": "Crear nueva disponibilidad de vehículo"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Availability by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/vehicle-availability/{{availability_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"vehicle-availability",
+								"{{availability_id}}"
+							]
+						},
+						"description": "Obtener disponibilidad específica por ID"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Availabilities by Vehicle",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/vehicle-availability/vehicle/{{vehicle_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"vehicle-availability",
+								"vehicle",
+								"{{vehicle_id}}"
+							]
+						},
+						"description": "Obtener todas las disponibilidades de un vehículo específico"
+					},
+					"response": []
+				},
+				{
+					"name": "Search Available Vehicles",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/vehicle-availability/search/available?start_ts=2024-01-01T09:00:00Z&end_ts=2024-01-05T18:00:00Z",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"vehicle-availability",
+								"search",
+								"available"
+							],
+							"query": [
+								{
+									"key": "start_ts",
+									"value": "2024-01-01T09:00:00Z"
+								},
+								{
+									"key": "end_ts",
+									"value": "2024-01-05T18:00:00Z"
+								}
+							]
+						},
+						"description": "Buscar vehículos disponibles en un rango de fechas"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Availability",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"start_ts\": \"2024-01-02T09:00:00Z\",\n    \"end_ts\": \"2024-01-06T18:00:00Z\",\n    \"type\": \"blocked\",\n    \"notes\": \"Vehículo en mantenimiento\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/vehicle-availability/{{availability_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"vehicle-availability",
+								"{{availability_id}}"
+							]
+						},
+						"description": "Actualizar disponibilidad"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Availability",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/vehicle-availability/{{availability_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"vehicle-availability",
+								"{{availability_id}}"
+							]
+						},
+						"description": "Eliminar disponibilidad"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete All Availabilities by Vehicle",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/vehicle-availability/vehicle/{{vehicle_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"vehicle-availability",
+								"vehicle",
+								"{{vehicle_id}}"
+							]
+						},
+						"description": "Eliminar todas las disponibilidades de un vehículo"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Test Scenarios",
+			"item": [
+				{
+					"name": "Create Second Vehicle",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"make\": \"Honda\",\n    \"model\": \"Civic\",\n    \"year\": 2021,\n    \"plate\": \"XYZ789\",\n    \"seats\": 5,\n    \"transmission\": \"CVT\",\n    \"fuel_type\": \"hybrid\",\n    \"mileage\": 30000,\n    \"status\": \"active\",\n    \"lat\": 40.7589,\n    \"lng\": -73.9851\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/vehicles/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"vehicles",
+								""
+							]
+						},
+						"description": "Crear un segundo vehículo para pruebas"
+					},
+					"response": []
+				},
+				{
+					"name": "Test Duplicate Plate",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"make\": \"Ford\",\n    \"model\": \"Focus\",\n    \"year\": 2019,\n    \"plate\": \"ABC123\",\n    \"seats\": 5,\n    \"transmission\": \"MT\",\n    \"fuel_type\": \"gas\",\n    \"mileage\": 60000,\n    \"status\": \"active\",\n    \"lat\": 40.7505,\n    \"lng\": -73.9934\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/vehicles/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"vehicles",
+								""
+							]
+						},
+						"description": "Probar validación de placa duplicada (debería fallar)"
+					},
+					"response": []
+				},
+				{
+					"name": "Test Invalid Data",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"make\": \"\",\n    \"model\": \"Test\",\n    \"year\": 1800,\n    \"plate\": \"TEST\",\n    \"seats\": 0,\n    \"transmission\": \"INVALID\",\n    \"fuel_type\": \"invalid\",\n    \"mileage\": -1000,\n    \"status\": \"invalid\",\n    \"lat\": 200,\n    \"lng\": 200\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/vehicles/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"vehicles",
+								""
+							]
+						},
+						"description": "Probar validaciones de datos (debería fallar con errores de validación)"
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "user_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "vehicle_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "pricing_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "availability_id",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
