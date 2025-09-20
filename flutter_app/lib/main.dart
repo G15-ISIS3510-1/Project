@@ -14,7 +14,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Qovo Login',
       theme: ThemeData(
-        scaffoldBackgroundColor: const Color(0xFFF0F1F3),
+        scaffoldBackgroundColor: const Color.fromARGB(255, 247, 247, 247),
         fontFamily: 'Poppins',
         useMaterial3: true,
       ),

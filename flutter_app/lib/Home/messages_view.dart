@@ -96,7 +96,11 @@ class _MessagesViewState extends State<MessagesView>
             padding: const EdgeInsets.symmetric(horizontal: _p24),
             sliver: SliverList.separated(
               itemCount: _items.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              separatorBuilder: (_, __) => const Divider(
+                height: 0.8, // 👈 mínimo
+                thickness: 0.8,
+                color: Color(0xFFFAFAFA), // 👈 stroke sutil entre cards
+              ),
               itemBuilder: (_, i) => MessageCard(item: _items[i]),
             ),
           ),
@@ -134,64 +138,49 @@ class MessageCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-      ),
+    return InkWell(
+      onTap: () {},
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        // 👇 más padding arriba/abajo
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 16),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Avatar placeholder
+            // Avatar redondo
             Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF3F4F6),
-                borderRadius: BorderRadius.circular(10),
+              width: 52,
+              height: 52,
+              decoration: const BoxDecoration(
+                color: Color(0xFFF3F4F6),
+                shape: BoxShape.circle, // 👈 redondo
               ),
               child: const Icon(Icons.image_outlined, color: Color(0xFFB8BDC7)),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 14),
 
             // Name + preview
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // name + time
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          item.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: text.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: Colors.black87,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        item.time,
-                        style: text.bodySmall?.copyWith(
-                          color: Colors.black45,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
+                  Text(
+                    item.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: text.titleMedium?.copyWith(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black87,
+                    ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   Text(
                     item.preview,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: text.bodyMedium?.copyWith(
-                      color: Colors.black45,
+                      fontSize: 15,
+                      color: Colors.black54,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -201,22 +190,39 @@ class MessageCard extends StatelessWidget {
 
             const SizedBox(width: 12),
 
-            // Unread badge (si > 0)
-            if (item.unread > 0)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF007AFF),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  '${item.unread}',
-                  style: text.labelMedium?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
+            // Hora + badge
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  item.time,
+                  style: text.bodySmall?.copyWith(
+                    fontSize: 13,
+                    color: Colors.black45,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-              ),
+                const SizedBox(height: 8),
+                if (item.unread > 0)
+                  Container(
+                    width: 26,
+                    height: 26,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF007AFF),
+                      shape: BoxShape.circle,
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      '${item.unread}',
+                      style: text.labelMedium?.copyWith(
+                        fontSize: 13,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ],
         ),
       ),
