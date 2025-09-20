@@ -33,12 +33,16 @@ class _HostViewState extends State<HostView> {
         padding: EdgeInsets.fromLTRB(32, 32, 32, 76 + 12 + bottomInset + 8),
         children: [
           Center(
-            child: Text(
-              'QOVO',
-              style: const TextStyle(
-                fontSize: 48,
-                fontWeight: FontWeight.w400,
-                letterSpacing: -7,
+            child: Transform.scale(
+              scaleY: 0.82,
+              child: const Text(
+                'QOVO',
+                style: TextStyle(
+                  fontSize: 48,
+                  fontWeight: FontWeight.w400,
+                  color: Colors.black,
+                  letterSpacing: -7.0,
+                ),
               ),
             ),
           ),

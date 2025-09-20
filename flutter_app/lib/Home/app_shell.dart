@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/Home/host_view.dart';
+import 'package:flutter_app/Home/settings/account_view.dart';
 import 'package:flutter_app/Home/widgets/bottom_bar.dart';
 import 'package:flutter_app/Home/home_view.dart';
 import 'package:flutter_app/Home/trips_view.dart';
@@ -24,7 +25,7 @@ class _AppShellState extends State<AppShell> {
     TripsView(),
     MessagesView(),
     HostView(),
-    _Stub('Account'),
+    AccountView(),
   ];
 
   @override

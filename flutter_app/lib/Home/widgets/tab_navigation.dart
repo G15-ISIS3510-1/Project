@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/Home/home_view.dart';
 import 'package:flutter_app/Home/host_view.dart';
+import 'package:flutter_app/Home/settings/account_view.dart';
 import 'package:flutter_app/Home/trips_view.dart';
 import 'package:flutter_app/Home/messages_view.dart';
 // (luego agregas Messages/Host/Account cuando existan)
@@ -31,6 +32,10 @@ void goToTab(BuildContext context, int index) {
         MaterialPageRoute(builder: (_) => const HostView()),
       );
       break;
-    // case 4: Navigator.pushReplacement(... AccountView());
+    case 4:
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const AccountView()),
+      );
   }
 }
