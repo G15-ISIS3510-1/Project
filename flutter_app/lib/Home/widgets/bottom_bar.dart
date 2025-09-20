@@ -48,19 +48,19 @@ class BottomBar extends StatelessWidget {
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        Colors.white.withOpacity(0.50),
-                        Colors.white.withOpacity(0.18),
+                        Colors.white.withOpacity(0.30),
+                        Colors.white.withOpacity(0.12),
                       ],
                     ),
                     border: Border.all(
-                      color: Colors.white.withOpacity(0.35),
+                      color: Colors.white.withOpacity(0.20),
                       width: 1,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.10),
+                        color: Colors.black.withOpacity(0.06),
                         blurRadius: 24,
-                        offset: const Offset(0, 8),
+                        offset: const Offset(0, 6),
                       ),
                     ],
                   ),
@@ -128,10 +128,12 @@ class BottomBar extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   for (var i = 0; i < items.length; i++)
-                    _GlassItem(
-                      item: items[i],
-                      active: i == currentIndex,
-                      onTap: () => onTap?.call(i),
+                    Expanded(
+                      child: _GlassItem(
+                        item: items[i],
+                        active: i == currentIndex,
+                        onTap: () => onTap?.call(i),
+                      ),
                     ),
                 ],
               ),
@@ -156,8 +158,7 @@ class _GlassItem extends StatelessWidget {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
-      child: SizedBox(
-        width: 72,
+      child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

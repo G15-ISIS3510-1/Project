@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/Home/home_view.dart';
+import 'package:flutter_app/Home/app_shell.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -25,7 +26,9 @@ class _LoginScreenState extends State<LoginScreen> {
     print('Email: $email, Password: $password');
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => const HomeView()),
+      MaterialPageRoute(
+        builder: (_) => const AppShell(), // 👈 tu nuevo shell
+      ),
     );
   }
 

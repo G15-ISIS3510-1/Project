@@ -26,7 +26,7 @@ class _CategoryChipsState extends State<CategoryChips> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              selectedColor: const Color(0xFF007AFF),
+              selectedColor: const Color(0xFF4DA2FF),
               labelStyle: TextStyle(
                 color: selected == i ? Colors.white : Colors.black87,
                 fontWeight: FontWeight.w500,

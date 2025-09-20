@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 import 'widgets/bottom_bar.dart';
 import 'widgets/category_chips.dart';
 import 'widgets/car_card.dart';
-import 'settings/account_view.dart'; 
+import 'settings/account_view.dart';
+import 'package:flutter_app/home/widgets/tab_navigation.dart';
+
+import 'package:flutter_app/Home/widgets/search_bar.dart' as qovo;
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -14,25 +17,45 @@ class HomeView extends StatefulWidget {
 class _HomeViewState extends State<HomeView> {
   int _current = 0;
 
+  static const double kBarHeight = 76;
+  static const double kBarVPad = 12;
+
   // ------- MOCK DATA -------
   final List<_CarItem> _mockCars = const [
-    _CarItem(title: 'Mercedes Blue 2023', rating: 4.8, transmission: 'Automatic', price: 176037.11),
-    _CarItem(title: 'BMW X5 2022',         rating: 4.7, transmission: 'Automatic', price: 132499.00),
-    _CarItem(title: 'Audi A4 2021',        rating: 4.6, transmission: 'Manual',    price: 92499.99),
+    _CarItem(
+      title: 'Mercedes Blue 2023',
+      rating: 4.8,
+      transmission: 'Automatic',
+      price: 176037.11,
+    ),
+    _CarItem(
+      title: 'BMW X5 2022',
+      rating: 4.7,
+      transmission: 'Automatic',
+      price: 132499.00,
+    ),
+    _CarItem(
+      title: 'Audi A4 2021',
+      rating: 4.6,
+      transmission: 'Manual',
+      price: 92499.99,
+    ),
   ];
+  // margen vertical inferior
 
   @override
   Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).padding.bottom;
     const double p24 = 24;
     const double p16 = 16;
 
     // ——— tabs (keep bottom bar persistent) ———
     final tabs = <Widget>[
-      _HomeTab(p24: p24, p16: p16, cars: _mockCars),           // Home
-      const Center(child: Text('Trip')),                        // Trip (placeholder)
-      const Center(child: Text('Messages')),                    // Messages
-      const Center(child: Text('Host')),                        // Host
-      const AccountView(),                                      // Account 👈 NEW
+      _HomeTab(p24: p24, p16: p16, cars: _mockCars), // Home
+      const Center(child: Text('Trip')), // Trip (placeholder)
+      const Center(child: Text('Messages')), // Messages
+      const Center(child: Text('Host')), // Host
+      const AccountView(), // Account 👈 NEW
     ];
 
     return Scaffold(
@@ -103,7 +126,14 @@ class _HomeTab extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   const CategoryChips(
-                    items: ['Cars', 'SUVs', 'Minivans', 'Trucks', 'Vans', 'Luxury'],
+                    items: [
+                      'Cars',
+                      'SUVs',
+                      'Minivans',
+                      'Trucks',
+                      'Vans',
+                      'Luxury',
+                    ],
                   ),
                 ],
               ),
