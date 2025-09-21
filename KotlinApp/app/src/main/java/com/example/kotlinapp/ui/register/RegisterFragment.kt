@@ -67,6 +67,11 @@ class RegisterFragment : Fragment() {
             // Navegar de vuelta al login
             findNavController().popBackStack()
         }
+        
+        binding.termsLink.setOnClickListener {
+            // Navegar a términos y condiciones
+            findNavController().navigate(R.id.action_register_to_terms)
+        }
     }
     
     private fun performRegister() {
