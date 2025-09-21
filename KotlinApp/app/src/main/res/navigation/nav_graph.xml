@@ -26,7 +26,19 @@
         android:id="@+id/registerFragment"
         android:name="com.example.kotlinapp.ui.register.RegisterFragment"
         android:label="Register"
-        tools:layout="@layout/fragment_register" />
+        tools:layout="@layout/fragment_register">
+        
+        <action
+            android:id="@+id/action_register_to_terms"
+            app:destination="@id/termsConditionsFragment" />
+    </fragment>
+
+    <!-- Terms and Conditions Fragment -->
+    <fragment
+        android:id="@+id/termsConditionsFragment"
+        android:name="com.example.kotlinapp.ui.terms.TermsConditionsFragment"
+        android:label="Terms &amp; Conditions"
+        tools:layout="@layout/fragment_terms_conditions" />
 
     <!-- Home Fragment -->
     <fragment
