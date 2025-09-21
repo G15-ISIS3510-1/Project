@@ -1,6 +1,8 @@
 // lib/settings/account_view.dart
 import 'package:flutter/material.dart';
 import 'profile_settings_view.dart';
+import 'currency_view.dart';
+import 'legal_view.dart';
 
 class AccountView extends StatelessWidget {
   const AccountView({super.key});
@@ -76,9 +78,23 @@ class AccountView extends StatelessWidget {
                   const SizedBox(height: 16),
                   pillButton(Icons.mail_outline, 'Inbox'),
                   const SizedBox(height: 16),
-                  pillButton(Icons.currency_pound, 'Currency'),
+                  pillButton(
+                    Icons.currency_pound,
+                    'Currency',
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const CurrencyView()),
+                    ),
+                  ),
                   const SizedBox(height: 16),
-                  pillButton(Icons.info_outline, 'Legal'),
+                  pillButton(
+                    Icons.info_outline,
+                    'Legal',
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const LegalView()),
+                    ),
+                  ),
 
                   const SizedBox(height: 28),
 
