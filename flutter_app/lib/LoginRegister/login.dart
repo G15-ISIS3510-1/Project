@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app/Home/home_view.dart';
+import 'package:flutter_app/Home/app_shell.dart';
 import 'package:flutter_app/LoginRegister/register.dart';
+
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -23,6 +26,12 @@ class _LoginScreenState extends State<LoginScreen> {
     final String email = _emailController.text;
     final String password = _passwordController.text;
     print('Email: $email, Password: $password');
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const AppShell(), // 👈 tu nuevo shell
+      ),
+    );
   }
 
   @override
@@ -39,13 +48,18 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              const Center(
-                child: Text(
-                  'QOVO',
-                  style: TextStyle(
-                    fontSize: 64,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black,
+              Center(
+                child: Transform.scale(
+                  scaleY: 0.82,
+                  scaleX: 1.0,
+                  child: const Text(
+                    'QOVO',
+                    style: TextStyle(
+                      fontSize: 64,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black,
+                      letterSpacing: -7.0,
+                    ),
                   ),
                 ),
               ),
