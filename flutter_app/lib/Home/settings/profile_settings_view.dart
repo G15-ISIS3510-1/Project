@@ -1,5 +1,6 @@
 // lib/settings/profile_settings_view.dart
 import 'package:flutter/material.dart';
+import '../Profile/visited_places.dart';
 
 class ProfileSettingsView extends StatelessWidget {
   const ProfileSettingsView({super.key});
@@ -121,7 +122,18 @@ class ProfileSettingsView extends StatelessWidget {
                     // Pills
                     pillButton(Icons.directions_car_filled_rounded, 'Add Car'),
                     const SizedBox(height: 16),
-                    pillButton(Icons.place_outlined, 'Visited Places'),
+                    pillButton(
+                      Icons.place_outlined,
+                      'Visited Places',
+                      onTap: () {
+                        // Navigate to the VisitedPlacesScreen when tapped
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const VisitedPlacesScreen(),
+                          ),
+                        );
+                      },
+                    ),
                     const SizedBox(height: 16),
                     pillButton(Icons.notifications_none_rounded, 'Communications'),
                     const SizedBox(height: 16),
