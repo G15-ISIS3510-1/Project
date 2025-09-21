@@ -15,7 +15,18 @@
         <action
             android:id="@+id/action_login_to_home"
             app:destination="@id/homeFragment" />
+            
+        <action
+            android:id="@+id/action_login_to_register"
+            app:destination="@id/registerFragment" />
     </fragment>
+
+    <!-- Register Fragment -->
+    <fragment
+        android:id="@+id/registerFragment"
+        android:name="com.example.kotlinapp.ui.register.RegisterFragment"
+        android:label="Register"
+        tools:layout="@layout/fragment_register" />
 
     <!-- Home Fragment -->
     <fragment

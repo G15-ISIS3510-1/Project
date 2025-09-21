@@ -1,4 +1,4 @@
-package com.example.kotlinapp.ui.login
+package com.example.kotlinapp.ui.register
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -9,22 +9,22 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.example.kotlinapp.R
-import com.example.kotlinapp.databinding.FragmentLoginBinding
+import com.example.kotlinapp.databinding.FragmentRegisterBinding
 import com.google.android.material.textfield.TextInputLayout
 
-class LoginFragment : Fragment() {
+class RegisterFragment : Fragment() {
     
-    private var _binding: FragmentLoginBinding? = null
+    private var _binding: FragmentRegisterBinding? = null
     private val binding get() = _binding!!
     
-    private val viewModel: LoginViewModel by viewModels()
+    private val viewModel: RegisterViewModel by viewModels()
     
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentLoginBinding.inflate(inflater, container, false)
+        _binding = FragmentRegisterBinding.inflate(inflater, container, false)
         return binding.root
     }
     
@@ -35,58 +35,48 @@ class LoginFragment : Fragment() {
     }
     
     private fun setupObservers() {
-        viewModel.loginState.observe(viewLifecycleOwner) { state ->
+        viewModel.registerState.observe(viewLifecycleOwner) { state ->
             when (state) {
-                is LoginState.Success -> {
+                is RegisterState.Success -> {
                     showSuccess(state.message)
-                    // Navegar a la siguiente pantalla
-                    findNavController().navigate(R.id.action_login_to_home)
+                    // Navegar de vuelta al login
+                    findNavController().popBackStack()
                 }
-                is LoginState.Error -> {
+                is RegisterState.Error -> {
                     showError(state.message)
                 }
                 null -> {
+                    // Estado limpio
                 }
             }
         }
         
         viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
             binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
-            binding.loginButton.isEnabled = !isLoading
-            binding.loginButton.text = if (isLoading) "Signing in..." else "Sign in"
+            binding.registerButton.isEnabled = !isLoading
+            binding.registerButton.text = if (isLoading) "Creating account..." else "Sign up"
         }
     }
     
     private fun setupClickListeners() {
-        binding.loginButton.setOnClickListener {
-            performLogin()
+        binding.registerButton.setOnClickListener {
+            performRegister()
         }
         
-        binding.signUpText.setOnClickListener {
-            // Navegar a pantalla de registro
-            findNavController().navigate(R.id.action_login_to_register)
+        binding.signInText.setOnClickListener {
+            // Navegar de vuelta al login
+            findNavController().popBackStack()
         }
     }
     
-    private fun performLogin() {
+    private fun performRegister() {
+        val name = binding.nameEditText.text.toString().trim()
         val email = binding.emailEditText.text.toString().trim()
         val password = binding.passwordEditText.text.toString().trim()
+        val confirmPassword = binding.confirmPasswordEditText.text.toString().trim()
         
         clearErrors()
-        
-        when {
-            email.isEmpty() -> {
-                showFieldError(binding.emailInputLayout, "Email is required")
-                return
-            }
-            password.isEmpty() -> {
-                showFieldError(binding.passwordInputLayout, "Password is required")
-                return
-            }
-            else -> {
-                viewModel.login(email, password)
-            }
-        }
+        viewModel.register(name, email, password, confirmPassword)
     }
     
     private fun showSuccess(message: String) {
@@ -97,13 +87,11 @@ class LoginFragment : Fragment() {
         Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
     }
     
-    private fun showFieldError(inputLayout: TextInputLayout, message: String) {
-        inputLayout.error = message
-    }
-    
     private fun clearErrors() {
+        binding.nameInputLayout.error = null
         binding.emailInputLayout.error = null
         binding.passwordInputLayout.error = null
+        binding.confirmPasswordInputLayout.error = null
     }
     
     override fun onDestroyView() {
