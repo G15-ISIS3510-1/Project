@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/Home/home_view.dart';
 import 'package:flutter_app/Home/app_shell.dart';
+import 'package:flutter_app/LoginRegister/register.dart';
+
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -127,7 +129,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(width: 4),
                   GestureDetector(
                     onTap: () {
-                      print('Sign up tapped!');
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(
+                          builder: (context) => const RegisterScreen(),
+                        ),
+                      );
                     },
                     child: const Text(
                       'Sign up',
