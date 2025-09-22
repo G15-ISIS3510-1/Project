@@ -126,7 +126,12 @@ class MessagesFragment : Fragment() {
                             navController.navigate(R.id.hostFragment)
                         }
                     }
-                    BottomTab.Account -> Toast.makeText(requireContext(), "Account", Toast.LENGTH_SHORT).show() //pendiente
+                    BottomTab.Account -> {
+                        val navController = findNavController()
+                        if (navController.currentDestination?.id != R.id.accountFragment) {
+                            navController.navigate(R.id.accountFragment)
+                        }
+                    }
                 }
             }
         }

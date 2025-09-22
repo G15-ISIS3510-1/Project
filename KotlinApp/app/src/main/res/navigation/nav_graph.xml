@@ -61,4 +61,11 @@
         android:label="Host"
         tools:layout="@layout/fragment_host" />
 
+        <!-- Account Fragment -->
+    <fragment
+        android:id="@+id/accountFragment"
+        android:name="com.example.kotlinapp.ui.account.AccountFragment"
+        android:label="Account"
+        tools:layout="@layout/fragment_account" />
+
 </navigation>
