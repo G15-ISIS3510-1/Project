@@ -39,8 +39,8 @@ class LoginFragment : Fragment() {
             when (state) {
                 is LoginState.Success -> {
                     showSuccess(state.message)
-                    // Navegar a la siguiente pantalla
-                    findNavController().navigate(R.id.action_login_to_home)
+                    // Navegar messages
+                    findNavController().navigate(R.id.messagesFragment)
                 }
                 is LoginState.Error -> {
                     showError(state.message)
