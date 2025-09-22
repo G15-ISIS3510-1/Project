@@ -8,21 +8,20 @@ class VisitedPlacesScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Center(
-          child: Transform.scale(
-            scaleY: 0.82,
-            scaleX: 1.0,
-            child: const Text(
-              'QOVO',
-              style: TextStyle(
-                fontSize: 64,
-                fontWeight: FontWeight.w500,
-                color: Colors.black,
-                letterSpacing: -7.0,
-              ),
+        title: Transform.scale(
+          scaleY: 0.82,
+          scaleX: 1.0,
+          child: const Text(
+            'QOVO',
+            style: TextStyle(
+              fontSize: 64,
+              fontWeight: FontWeight.w500,
+              color: Colors.black,
+              letterSpacing: -7.0,
             ),
           ),
         ),
+        centerTitle: true,
         toolbarHeight: 80,
         backgroundColor: Colors.white,
         elevation: 0,
