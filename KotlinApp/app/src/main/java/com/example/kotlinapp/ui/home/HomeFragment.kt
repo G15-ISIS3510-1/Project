@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
+import com.example.kotlinapp.R
 import com.example.kotlinapp.databinding.FragmentHomeBinding
 
 class HomeFragment : Fragment() {

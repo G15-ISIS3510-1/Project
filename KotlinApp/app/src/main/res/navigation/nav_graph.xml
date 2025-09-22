@@ -47,4 +47,11 @@
         android:label="Home"
         tools:layout="@layout/fragment_home" />
 
+    <!-- Messages Fragment -->
+    <fragment
+        android:id="@+id/messagesFragment"
+        android:name="com.example.kotlinapp.ui.messages.MessagesFragment"
+        android:label="Messages"
+        tools:layout="@layout/fragment_messages" />
+
 </navigation>
