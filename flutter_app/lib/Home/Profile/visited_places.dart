@@ -8,7 +8,7 @@ class VisitedPlacesScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Transform.scale(  // Remove the `Center` widget here
+        title: Transform.scale(
           scaleY: 0.82,
           scaleX: 1.0,
           child: const Text(
