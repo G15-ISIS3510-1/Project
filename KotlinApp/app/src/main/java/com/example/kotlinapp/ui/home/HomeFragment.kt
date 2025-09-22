@@ -46,7 +46,12 @@ class HomeFragment : Fragment() {
                             if (nav.currentDestination?.id != R.id.hostFragment) nav.navigate(R.id.hostFragment)
                         }
                         BottomTab.Trip -> { /* TODO when exists */ }
-                        BottomTab.Account -> { /* TODO when exists */ }
+                                            BottomTab.Account -> {
+                        val navController = findNavController()
+                        if (navController.currentDestination?.id != R.id.accountFragment) {
+                            navController.navigate(R.id.accountFragment)
+                        }
+                    }
                     }
                 }
             )
