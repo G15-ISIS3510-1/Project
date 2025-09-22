@@ -87,7 +87,7 @@
         android:paddingTop="8dp"
         android:paddingBottom="8dp"
         app:layout_constraintTop_toBottomOf="@id/searchCard"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/bottomBarCompose"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
@@ -100,5 +100,18 @@
             android:paddingEnd="16dp"/>
 
     </ScrollView>
+
+    <!-- Compose Bottom Bar -->
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/bottomBarCompose"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        android:paddingStart="0dp"
+        android:paddingEnd="0dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constrainedWidth="true"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

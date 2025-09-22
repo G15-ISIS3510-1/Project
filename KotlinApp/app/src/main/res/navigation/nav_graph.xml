@@ -54,4 +54,11 @@
         android:label="Messages"
         tools:layout="@layout/fragment_messages" />
 
+    <!-- Host Fragment -->
+    <fragment
+        android:id="@+id/hostFragment"
+        android:name="com.example.kotlinapp.ui.host.HostFragment"
+        android:label="Host"
+        tools:layout="@layout/fragment_host" />
+
 </navigation>

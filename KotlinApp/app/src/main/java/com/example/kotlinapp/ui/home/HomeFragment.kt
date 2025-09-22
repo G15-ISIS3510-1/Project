@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.compose.ui.platform.ComposeView
 import androidx.navigation.fragment.findNavController
 import com.example.kotlinapp.R
 import com.example.kotlinapp.databinding.FragmentHomeBinding
@@ -25,12 +26,30 @@ class HomeFragment : Fragment() {
     
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        setupClickListeners()
+        setupCompose()
     }
     
-    private fun setupClickListeners() {
-        binding.logoutButton.setOnClickListener {
-            findNavController().popBackStack()
+    private fun setupCompose() {
+        val composeView: ComposeView = view?.findViewById(R.id.homeCompose) ?: return
+        composeView.setContent {
+            HomeScreen(
+                onCardClick = { /* TODO: navigate to detail */ },
+                onBottomClick = { tab ->
+                    when (tab) {
+                        BottomTab.Home -> Unit
+                        BottomTab.Messages -> {
+                            val nav = findNavController()
+                            if (nav.currentDestination?.id != R.id.messagesFragment) nav.navigate(R.id.messagesFragment)
+                        }
+                        BottomTab.Host -> {
+                            val nav = findNavController()
+                            if (nav.currentDestination?.id != R.id.hostFragment) nav.navigate(R.id.hostFragment)
+                        }
+                        BottomTab.Trip -> { /* TODO when exists */ }
+                        BottomTab.Account -> { /* TODO when exists */ }
+                    }
+                }
+            )
         }
     }
     

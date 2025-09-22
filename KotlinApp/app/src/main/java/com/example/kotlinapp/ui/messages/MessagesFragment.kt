@@ -8,6 +8,10 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.compose.ui.platform.ComposeView
+import com.example.kotlinapp.ui.navigation.BottomTab
+import com.example.kotlinapp.ui.navigation.PillBottomNavBar
+import androidx.navigation.fragment.findNavController
 import com.example.kotlinapp.R
 import com.example.kotlinapp.databinding.FragmentMessagesBinding
 
@@ -29,6 +33,7 @@ class MessagesFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         setupMessages()
         setupSearch()
+        setupBottomBar()
     }
 
     private fun setupMessages() {
@@ -93,6 +98,36 @@ class MessagesFragment : Fragment() {
                 true
             } else {
                 false
+            }
+        }
+    }
+
+    private fun setupBottomBar() {
+        val composeView: ComposeView = binding.bottomBarCompose
+        composeView.setContent {
+            PillBottomNavBar(selectedTab = BottomTab.Messages) { tab ->
+                when (tab) {
+                    BottomTab.Home -> {
+                        val navController = findNavController()
+                        if (navController.currentDestination?.id != R.id.homeFragment) {
+                            navController.navigate(R.id.homeFragment)
+                        }
+                    }
+                    BottomTab.Trip -> Toast.makeText(requireContext(), "Trip", Toast.LENGTH_SHORT).show() //ya esta
+                    BottomTab.Messages -> {
+                        val navController = findNavController()
+                        if (navController.currentDestination?.id != R.id.messagesFragment) {
+                            navController.navigate(R.id.messagesFragment)
+                        }
+                    }
+                    BottomTab.Host -> {
+                        val navController = findNavController()
+                        if (navController.currentDestination?.id != R.id.hostFragment) {
+                            navController.navigate(R.id.hostFragment)
+                        }
+                    }
+                    BottomTab.Account -> Toast.makeText(requireContext(), "Account", Toast.LENGTH_SHORT).show() //pendiente
+                }
             }
         }
     }
