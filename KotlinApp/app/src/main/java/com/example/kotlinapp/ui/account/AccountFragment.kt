@@ -40,8 +40,7 @@ class AccountFragment : Fragment() {
         }
 
         binding.btnVisitedPlaces.setOnClickListener {
-            Toast.makeText(requireContext(), "Visited Places clicked", Toast.LENGTH_SHORT).show()
-            // TODO: Navigate to visited places screen
+            findNavController().navigate(R.id.action_account_to_visitedPlaces)
         }
 
         binding.btnCommunications.setOnClickListener {
