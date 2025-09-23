@@ -50,8 +50,7 @@ class AccountFragment : Fragment() {
         }
 
         binding.btnPayment.setOnClickListener {
-            Toast.makeText(requireContext(), "Payment clicked", Toast.LENGTH_SHORT).show()
-            // TODO: Navigate to payment screen
+            findNavController().navigate(R.id.action_account_to_payment)
         }
 
         binding.btnSwitchAccount.setOnClickListener {
