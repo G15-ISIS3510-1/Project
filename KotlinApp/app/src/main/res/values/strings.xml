@@ -29,4 +29,11 @@
     <string name="inbox">Inbox</string>
     <string name="currency">Currency</string>
     <string name="legal">Legal</string>
+
+
+    <string name="tab_all">All</string>
+    <string name="tab_favorites">Favorites</string>
+    <string name="tab_tagged">Tagged</string>
+    <string name="place_image">Place image</string>
+    <string name="back">Back</string>
 </resources>
