@@ -62,10 +62,17 @@
         tools:layout="@layout/fragment_host" />
 
         <!-- Account Fragment -->
-    <fragment
-        android:id="@+id/accountFragment"
-        android:name="com.example.kotlinapp.ui.account.AccountFragment"
-        android:label="Account"
-        tools:layout="@layout/fragment_account" />
+        <fragment
+            android:id="@+id/accountFragment"
+            android:name="com.example.kotlinapp.ui.account.AccountFragment"
+            android:label="Account">
+            <action
+                android:id="@+id/action_account_to_payment"
+                app:destination="@id/paymentFragment" />
+        </fragment>
 
+        <fragment
+            android:id="@+id/paymentFragment"
+            android:name="com.example.kotlinapp.ui.payment.PaymentFragment"
+            android:label="Payments" />
 </navigation>

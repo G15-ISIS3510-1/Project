@@ -12,7 +12,6 @@
     <string name="user_name_example">Juan Pablo Baron</string>
     <string name="user_phone_example">3152403373</string>
     <string name="user_email_example">juanpa.baron18@gmail.com</string>
-    <string name="logo_wordmark">QOVO</string>
 
     <!-- Botones principales -->
     <string name="add_car">Add Car</string>
@@ -24,4 +23,10 @@
     <string name="switch_account">Switch Account</string>
     <string name="sign_out">Sign Out</string>
     <string name="go_back">Go Back</string>
+
+    <string name="logo_wordmark">QOVO</string>
+    <string name="settings">Settings</string>
+    <string name="inbox">Inbox</string>
+    <string name="currency">Currency</string>
+    <string name="legal">Legal</string>
 </resources>
