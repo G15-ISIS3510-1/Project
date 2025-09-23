@@ -36,4 +36,12 @@
     <string name="tab_tagged">Tagged</string>
     <string name="place_image">Place image</string>
     <string name="back">Back</string>
+
+    <string name="preferred_currency">Preferred Currency</string>
+
+    <!-- Texto central de cada fila -->
+    <string name="usd_row">United States Dollar · USD</string>
+    <string name="eur_row">Euro · EUR</string>
+    <string name="gbp_row">British Pound · GBP</string>
+    <string name="cop_row">Colombian Peso · COP</string>
 </resources>

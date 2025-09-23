@@ -3,6 +3,7 @@ package com.example.kotlinapp.ui.payment
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import com.example.kotlinapp.R
 import com.example.kotlinapp.databinding.FragmentPaymentBinding
 
@@ -22,7 +23,9 @@ class PaymentFragment : Fragment(R.layout.fragment_payment) {
         binding.tvVersion.text = "v.$versionName"
 
         // TODO: listeners si estas opciones abren otras pantallas
-        // binding.btnSettings.setOnClickListener { ... }
+        binding.btnCurrency.setOnClickListener {
+            findNavController().navigate(R.id.action_payment_to_currency)
+        }
     }
 
     override fun onDestroyView() {
