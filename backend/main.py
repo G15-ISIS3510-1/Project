@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from contextlib import asynccontextmanager
 from app.core.config import settings
-from app.routers import auth, users, vehicles, pricing, vehicle_availability
+from app.routers import auth, users, vehicles, pricing, vehicle_availability, messages, conversations
 import uvicorn
 
 @asynccontextmanager
@@ -42,7 +42,10 @@ app.include_router(auth.router, prefix="/api")
 app.include_router(users.router, prefix="/api")
 app.include_router(vehicles.router, prefix="/api")
 app.include_router(pricing.router, prefix="/api/pricing")
+app.include_router(pricing.router, prefix="/api/pricing")
 app.include_router(vehicle_availability.router, prefix="/api/vehicle-availability")
+app.include_router(messages.router, prefix="/messages")
+app.include_router(conversations.router, prefix="/conversations")
 
 # Rutas básicas
 @app.get("/")

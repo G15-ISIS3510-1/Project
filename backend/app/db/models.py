@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, Float, DateTime, Boolean, ForeignKey, Enum, Text
+from sqlalchemy import JSON, Column, Index, String, Integer, Float, DateTime, Boolean, ForeignKey, Enum, Text, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.db.base import Base
@@ -45,6 +45,22 @@ class User(Base):
     renter_bookings = relationship("Booking", back_populates="renter", foreign_keys="Booking.renter_id")
     host_bookings = relationship("Booking", back_populates="host", foreign_keys="Booking.host_id")
     payments = relationship("Payment", back_populates="payer")
+
+    # --- Mensajería ---
+    sent_messages = relationship(
+        "Message",
+        back_populates="sender",
+        foreign_keys="Message.sender_id",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+    received_messages = relationship(
+        "Message",
+        back_populates="receiver",
+        foreign_keys="Message.receiver_id",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
 
 class Vehicle(Base):
     __tablename__ = "vehicles"
@@ -162,3 +178,56 @@ class Payment(Base):
     # Relaciones
     booking = relationship("Booking", back_populates="payments")
     payer = relationship("User", back_populates="payments")
+
+class Message(Base):
+    __tablename__ = "messages"
+
+    message_id = Column(String, primary_key=True, index=True)
+    sender_id = Column(String, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False, index=True)
+    receiver_id = Column(String, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False, index=True)
+
+    content = Column(Text, nullable=False)
+
+    # 👇 Agrega el FK real a conversations; deja SET NULL si borran la conversación
+    conversation_id = Column(
+        String,
+        ForeignKey("conversations.conversation_id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
+    meta = Column("metadata", JSON, nullable=True)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
+    read_at = Column(DateTime(timezone=True), nullable=True, index=True)
+
+    # Relaciones
+    sender = relationship("User", back_populates="sent_messages", foreign_keys=[sender_id])
+    receiver = relationship("User", back_populates="received_messages", foreign_keys=[receiver_id])
+
+    # 👇 Relación inversa con Conversation
+    conversation = relationship("Conversation", back_populates="messages")
+
+    __table_args__ = (
+        Index("ix_messages_thread_order", "sender_id", "receiver_id", "created_at"),
+        Index("ix_messages_unread", "receiver_id", "read_at"),
+    )
+
+class Conversation(Base):
+    __tablename__ = "conversations"
+
+    conversation_id = Column(String, primary_key=True, index=True)
+    user_low_id = Column(String, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False, index=True)
+    user_high_id = Column(String, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False, index=True)
+    title = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    last_message_at = Column(DateTime(timezone=True), nullable=True, index=True)
+
+    # 👇 relación clara con back_populates (sin primaryjoin manual)
+    messages = relationship("Message", back_populates="conversation")
+
+    __table_args__ = (
+        UniqueConstraint("user_low_id", "user_high_id", name="uq_conversation_direct_pair"),
+        Index("ix_conversations_user_pair", "user_low_id", "user_high_id"),
+        Index("ix_conversations_last_message_at", "last_message_at"),
+    )
