@@ -1,9 +1,17 @@
 // lib/main.dart
+
 import 'package:flutter/material.dart';
-import 'package:flutter_app/LoginRegister/login.dart';
+import 'package:provider/provider.dart';
+import 'LoginRegister/login.dart';
+import 'host_mode_provider.dart'; // Make sure this path is correct
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => HostModeProvider(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {

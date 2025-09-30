@@ -1,5 +1,8 @@
 // lib/settings/account_view.dart
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../host_mode_provider.dart';
+
 import 'profile_settings_view.dart';
 import 'currency_view.dart';
 import 'legal_view.dart';
@@ -11,6 +14,8 @@ class AccountView extends StatelessWidget {
   Widget build(BuildContext context) {
     const double p24 = 24;
     const double p16 = 16;
+
+    final isHost = context.watch<HostModeProvider>().isHostMode;
 
     Widget pillButton(IconData icon, String label, {VoidCallback? onTap}) {
       return SizedBox(
@@ -31,9 +36,7 @@ class AccountView extends StatelessWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
-            side: const BorderSide(
-              color: Color(0xFFE5E7EB),
-            ), // mismo borde sutil que en las cards
+            side: const BorderSide(color: Color(0xFFE5E7EB)),
             elevation: 0,
           ),
         ),
@@ -49,7 +52,7 @@ class AccountView extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Logo con el mismo estilo que HomeView
+                  // Logo
                   Center(
                     child: Transform.scale(
                       scaleY: 0.82,
@@ -64,15 +67,34 @@ class AccountView extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 16),
 
-                  // inside AccountView -> pill list
+                  // Show phrase only when Host Mode is ON
+                  if (isHost) ...[
+                    const Center(
+                      child: Text(
+                        'Host mode is ON',
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: Colors.black54,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+
+                  const SizedBox(height: 16),
+
+                  // Pill buttons
                   pillButton(
                     Icons.settings,
                     'Settings',
                     onTap: () => Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const ProfileSettingsView()),
+                      MaterialPageRoute(
+                        builder: (_) => const ProfileSettingsView(),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -98,7 +120,26 @@ class AccountView extends StatelessWidget {
 
                   const SizedBox(height: 28),
 
-                  // Versión (alineada a la izquierda)
+                  // Host Mode Toggle
+                  Consumer<HostModeProvider>(
+                    builder: (context, hostProvider, _) {
+                      return SwitchListTile.adaptive(
+                        title: const Text(
+                          'Host Mode',
+                          style: TextStyle(fontSize: 16, color: Colors.black87),
+                        ),
+                        value: hostProvider.isHostMode,
+                        onChanged: (value) {
+                          hostProvider.setHostMode(value);
+                        },
+                        activeColor: Colors.black87,
+                        contentPadding: EdgeInsets.zero,
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Version label
                   const Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
@@ -111,11 +152,12 @@ class AccountView extends StatelessWidget {
             ),
           ),
 
-          // Espacio para que no choque con la bottom bar “glass”
+          // Bottom spacing for bottom bar
           const SliverToBoxAdapter(child: SizedBox(height: 92)),
         ],
       ),
     );
   }
 }
+
 // fin de lib/settings/account_view.dart
