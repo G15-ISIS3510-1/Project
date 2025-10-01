@@ -69,6 +69,23 @@ class AccountView extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
 
+                  Consumer<HostModeProvider>(
+                    builder: (context, hostProvider, _) {
+                      return SwitchListTile.adaptive(
+                        title: const Text(
+                          'Host Mode',
+                          style: TextStyle(fontSize: 16, color: Colors.black87),
+                        ),
+                        value: hostProvider.isHostMode,
+                        onChanged: (value) {
+                          hostProvider.setHostMode(value);
+                        },
+                        activeThumbColor: Colors.green,
+                        contentPadding: EdgeInsets.zero,
+                      );
+                    },
+                  ),
+
                   // Show phrase only when Host Mode is ON
                   if (isHost) ...[
                     const Center(
@@ -98,8 +115,6 @@ class AccountView extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  pillButton(Icons.mail_outline, 'Inbox'),
-                  const SizedBox(height: 16),
                   pillButton(
                     Icons.currency_pound,
                     'Currency',
@@ -121,23 +136,6 @@ class AccountView extends StatelessWidget {
                   const SizedBox(height: 28),
 
                   // Host Mode Toggle
-                  Consumer<HostModeProvider>(
-                    builder: (context, hostProvider, _) {
-                      return SwitchListTile.adaptive(
-                        title: const Text(
-                          'Host Mode',
-                          style: TextStyle(fontSize: 16, color: Colors.black87),
-                        ),
-                        value: hostProvider.isHostMode,
-                        onChanged: (value) {
-                          hostProvider.setHostMode(value);
-                        },
-                        activeColor: Colors.black87,
-                        contentPadding: EdgeInsets.zero,
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 16),
 
                   // Version label
                   const Align(

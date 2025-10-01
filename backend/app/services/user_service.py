@@ -13,26 +13,55 @@ class UserService:
     async def create_user(self, user_data: UserCreate) -> User:
         """Crear un nuevo usuario con lógica de negocio"""
         # Verificar si el email ya existe
-        existing_user = await self.get_user_by_email(user_data.email)
-        if existing_user:
+        desired_role = (user_data.role or "renter").lower()
+        if desired_role not in ("renter", "host", "both"):
+            raise ValueError("Rol inválido. Debe ser 'renter' o 'host' o 'both'.")
+
+        existing  = await self.get_user_by_email(user_data.email)
+
+        if not existing:
+            # Crear nuevo
+            hashed = get_password_hash(user_data.password)
+            role_to_set = "both" if desired_role == "both" else desired_role
+            user = User(
+                user_id=str(uuid.uuid4()),
+                name=user_data.name,
+                email=user_data.email,
+                phone=user_data.phone,
+                role=role_to_set,
+                password=hashed,
+                status="active",
+            )
+            self.db.add(user)
+            await self.db.commit()
+            await self.db.refresh(user)
+            return user, "created"        
+        
+        if not verify_password(user_data.password, existing.password):
             raise ValueError("El email ya está registrado")
+
+        current_role = (existing.role or "renter").lower()
         
-        hashed_password = get_password_hash(user_data.password)
+        if current_role == "both":
+            return existing, "already_registered"
+
+        if current_role == desired_role:
+            return existing, "already_registered"
         
-        # Crear usuario
-        user = User(
-            user_id=str(uuid.uuid4()),
-            name=user_data.name,
-            email=user_data.email,
-            phone=user_data.phone,
-            role=user_data.role,
-            password=hashed_password
-        )
+        if {current_role, desired_role} == {"renter", "host"}:
+            existing.role = "both"
+            await self.db.commit()
+            await self.db.refresh(existing)
+            return existing, "upgraded_to_both"
         
-        self.db.add(user)
-        await self.db.commit()
-        await self.db.refresh(user)
-        return user
+        if desired_role == "both" and current_role in {"renter", "host"}:
+            existing.role = "both"
+            await self.db.commit()
+            await self.db.refresh(existing)
+            return existing, "upgraded_to_both"                        
+
+        # Fallback
+        return existing, "already_registered"
     
     async def get_user_by_id(self, user_id: str) -> Optional[User]:
         """Obtener usuario por ID"""

@@ -1,3 +1,4 @@
+// lib/LoginRegister/register.dart
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -10,10 +11,6 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  // ⚠️ CAMBIA ESTA BASE SEGÚN DÓNDE CORRA EL BACKEND:
-  // Android Emulador: http://10.0.2.2:8000
-  // iOS Simulator:    http://localhost:8000
-  // Dispositivo real: http://IP_DE_TU_PC:8000
   final String baseUrl = const String.fromEnvironment(
     'API_BASE',
     defaultValue: 'http://10.0.2.2:8000',
@@ -24,6 +21,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailC = TextEditingController();
   final _phoneC = TextEditingController();
   final _passwordC = TextEditingController();
+
+  // 👇 nuevo: estado para el rol (renter por defecto)
+  String _role = 'renter';
+
   bool _loading = false;
 
   @override
@@ -50,27 +51,52 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => _loading = true);
     try {
       final url = Uri.parse('$baseUrl/api/auth/register');
-      // Para evitar email duplicado en pruebas:
+
+      // Para evitar email duplicado en pruebas (opcional):
       final uniq = DateTime.now().millisecondsSinceEpoch;
+      final email = _emailC.text.trim().isEmpty
+          ? 'user$uniq@mail.com'
+          : _emailC.text.trim();
+
+      final body = {
+        'name': _nameC.text.trim(),
+        'email': email,
+        'password': _passwordC.text,
+        'phone': _phoneC.text.trim().isEmpty ? null : _phoneC.text.trim(),
+        // 👇 enviamos el rol elegido
+        'role': _role, // valores esperados: 'renter' | 'host'
+      };
+
       final res = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'name': _nameC.text.trim(),
-          'email': _emailC.text.trim().isEmpty
-              ? 'user$uniq@mail.com'
-              : _emailC.text.trim(),
-          'password': _passwordC.text,
-          'phone': _phoneC.text.trim().isEmpty ? null : _phoneC.text.trim(),
-          'role': 'host',
-        }),
+        body: jsonEncode(body),
       );
 
       if (!mounted) return;
-      if (res.statusCode == 200 || res.statusCode == 201) {
+      if (res.statusCode == 201) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('✅ Registro exitoso')));
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+        );
+      } else if (res.statusCode == 200) {
+        // upgraded_to_both
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✅ Tu cuenta ahora es BOTH (renter + host)'),
+          ),
+        );
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+        );
+      } else if (res.statusCode == 409) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Ya estás registrado con ese rol. Inicia sesión.'),
+          ),
+        );
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const LoginScreen()),
         );
@@ -149,6 +175,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ? 'Mínimo 6 caracteres'
                       : null,
                 ),
+                const SizedBox(height: 16.0),
+
+                // 👇 Selector de rol
+                DropdownButtonFormField<String>(
+                  value: _role,
+                  decoration: _dec('Role'),
+                  items: const [
+                    DropdownMenuItem(value: 'renter', child: Text('Renter')),
+                    DropdownMenuItem(value: 'host', child: Text('Host')),
+                  ],
+                  onChanged: (v) => setState(() => _role = v ?? 'renter'),
+                ),
+
                 const SizedBox(height: 24.0),
 
                 ElevatedButton(
