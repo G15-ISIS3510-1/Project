@@ -18,8 +18,14 @@ class _AddVehicleViewState extends State<AddVehicleView> {
   final _yearC = TextEditingController();
   final _priceC = TextEditingController();
   final _imageUrlC = TextEditingController();
-
+  final _plateC = TextEditingController();
+  final _seatsC = TextEditingController(text: '5');
+  final _mileageC = TextEditingController(text: '0');
+  final _latC = TextEditingController(text: '0');
+  final _lngC = TextEditingController(text: '0');
   String _transmission = 'AT'; // AT = automática, MT = manual
+  String _fuelType = 'gas'; // gasoline|diesel|hybrid|electric
+  String _status = 'active'; // available|unavailable
   bool _loading = false;
 
   @override
@@ -30,6 +36,12 @@ class _AddVehicleViewState extends State<AddVehicleView> {
     _yearC.dispose();
     _priceC.dispose();
     _imageUrlC.dispose();
+
+    _plateC.dispose();
+    _seatsC.dispose();
+    _mileageC.dispose();
+    _latC.dispose();
+    _lngC.dispose();
     super.dispose();
   }
 
@@ -47,27 +59,33 @@ class _AddVehicleViewState extends State<AddVehicleView> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
     try {
-      final created = await VehicleService.createVehicle(
+      final vehicleId = await VehicleService.createVehicle(
         title: _titleC.text.trim(),
         make: _makeC.text.trim(),
         model: _modelC.text.trim(),
-        year: int.tryParse(_yearC.text.trim()),
+        year: int.parse(_yearC.text.trim()),
         transmission: _transmission, // 'AT' | 'MT'
         pricePerDay: double.parse(_priceC.text.trim()),
-        // imageUrl: _imageUrlC.text.trim().isEmpty ? null : _imageUrlC.text.trim(), // si tu API lo soporta
+        imageUrl: _imageUrlC.text.trim().isEmpty
+            ? null
+            : _imageUrlC.text.trim(),
+
+        // 👇 nuevos requeridos por el backend
+        plate: _plateC.text.trim().toUpperCase(),
+        seats: int.parse(_seatsC.text.trim()),
+        fuelType: _fuelType,
+        mileage: int.parse(_mileageC.text.trim()),
+        status: _status,
+        lat: double.parse(_latC.text.trim()),
+        lng: double.parse(_lngC.text.trim()),
       );
 
       if (!mounted) return;
-      if (created) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('✅ Vehicle created')));
-        Navigator.pop(context, true);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('❌ Could not create vehicle')),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('✅ Vehicle + pricing created')),
+      );
+      Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -157,6 +175,93 @@ class _AddVehicleViewState extends State<AddVehicleView> {
                       if (p == null || p <= 0) return 'Invalid price';
                       return null;
                     },
+                  ),
+                  const SizedBox(height: 12),
+
+                  TextFormField(
+                    controller: _plateC,
+                    decoration: _dec('Plate (e.g., ABC123)'),
+                    textCapitalization: TextCapitalization.characters,
+                    validator: (v) =>
+                        (v == null || v.trim().isEmpty) ? 'Required' : null,
+                  ),
+                  const SizedBox(height: 12),
+
+                  TextFormField(
+                    controller: _seatsC,
+                    decoration: _dec('Seats (e.g., 5)'),
+                    keyboardType: TextInputType.number,
+                    validator: (v) => (int.tryParse(v ?? '') == null)
+                        ? 'Invalid seats'
+                        : null,
+                  ),
+                  const SizedBox(height: 12),
+
+                  DropdownButtonFormField<String>(
+                    value: _fuelType,
+                    decoration: _dec('Fuel type'),
+                    items: const [
+                      DropdownMenuItem(value: 'gas', child: Text('Gasoline')),
+                      DropdownMenuItem(value: 'diesel', child: Text('Diesel')),
+                      DropdownMenuItem(value: 'hybrid', child: Text('Hybrid')),
+                      DropdownMenuItem(value: 'ev', child: Text('Electric')),
+                    ],
+                    onChanged: (v) => setState(() => _fuelType = v ?? 'gas'),
+                  ),
+                  const SizedBox(height: 12),
+
+                  TextFormField(
+                    controller: _mileageC,
+                    decoration: _dec('Mileage (km)'),
+                    keyboardType: TextInputType.number,
+                    validator: (v) => (int.tryParse(v ?? '') == null)
+                        ? 'Invalid mileage'
+                        : null,
+                  ),
+                  const SizedBox(height: 12),
+
+                  DropdownButtonFormField<String>(
+                    value: _status,
+                    decoration: _dec('Status'),
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'active',
+                        child: Text('Available'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'inactive',
+                        child: Text('Unavailable'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'pending_review',
+                        child: Text('Pending Review'),
+                      ),
+                    ],
+                    onChanged: (v) => setState(() => _status = v ?? 'active'),
+                  ),
+                  const SizedBox(height: 12),
+
+                  TextFormField(
+                    controller: _latC,
+                    decoration: _dec('Latitude'),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    validator: (v) => (double.tryParse(v ?? '') == null)
+                        ? 'Invalid latitude'
+                        : null,
+                  ),
+                  const SizedBox(height: 12),
+
+                  TextFormField(
+                    controller: _lngC,
+                    decoration: _dec('Longitude'),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    validator: (v) => (double.tryParse(v ?? '') == null)
+                        ? 'Invalid longitude'
+                        : null,
                   ),
                   const SizedBox(height: 12),
 

@@ -49,35 +49,59 @@ class VehicleService {
   }
 
   // 👇 NUEVO
-  static Future<bool> createVehicle({
+  static Future<String> createVehicle({
     required String title,
     required String make,
     required String model,
-    required int? year,
+    required int year,
     required String transmission, // 'AT' | 'MT'
     required double pricePerDay,
+    required String plate,
+    required int seats,
+    required String fuelType, // 'gasoline'|'diesel'|'hybrid'|'electric'
+    required int mileage,
+    required String status, // 'available'|'unavailable' ...
+    required double lat,
+    required double lng,
     String? imageUrl,
   }) async {
+    final uri = Uri.parse('$baseUrl/vehicles/'); // ajusta si es otro path
+    final headers = {
+      'Content-Type': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+
+    // 👇 snake_case para FastAPI/Pydantic
     final body = {
       'title': title,
       'make': make,
       'model': model,
       'year': year,
-      'transmission': transmission,
-      'pricePerDay': pricePerDay,
-      if (imageUrl != null && imageUrl.isNotEmpty) 'imageUrl': imageUrl,
-      // Idealmente el backend toma el owner desde el token.
-      // Si tu API exige ownerId explícito, agrega: 'ownerId': currentUserId
+      'transmission': transmission, // OK
+      'price_per_day': pricePerDay, // 👈 snake_case
+      'plate': plate,
+      'seats': seats,
+      'fuel_type': fuelType, // 👈 requerido
+      'mileage': mileage,
+      'status': status,
+      'lat': lat,
+      'lng': lng,
+      if (imageUrl != null && imageUrl.isNotEmpty) 'image_url': imageUrl,
     };
 
-    final res = await http.post(
-      Uri.parse('$baseUrl/vehicles'),
-      headers: _headers,
-      body: json.encode(body),
-    );
+    final res = await http.post(uri, headers: headers, body: jsonEncode(body));
+    if (res.statusCode != 201 && res.statusCode != 200) {
+      throw Exception('Create vehicle ${res.statusCode}: ${res.body}');
+    }
 
-    if (res.statusCode == 200 || res.statusCode == 201) return true;
-    throw Exception('Create vehicle ${res.statusCode}: ${res.body}');
+    final decoded = jsonDecode(res.body);
+    if (decoded is Map && decoded['vehicle_id'] is String) {
+      return decoded['vehicle_id'] as String;
+    }
+    // If your backend returns the whole object under a different key, adapt here.
+    throw Exception(
+      'Vehicle created but vehicle_id missing in response: ${res.body}',
+    );
   }
 
   static Future<Vehicle> getById(String vehicleId) async {
