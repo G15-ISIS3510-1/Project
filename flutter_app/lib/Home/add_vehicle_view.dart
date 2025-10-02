@@ -96,7 +96,7 @@ class _AddVehicleViewState extends State<AddVehicleView> {
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('✅ Vehicle + pricing created')),
+        const SnackBar(content: Text('Vehicle + pricing created')),
       );
       Navigator.pop(context, true);
     } catch (e) {
