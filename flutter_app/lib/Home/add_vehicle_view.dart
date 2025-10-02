@@ -1,4 +1,3 @@
-// lib/features/vehicles/add_vehicle_view.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_app/features/vehicles/vehicle_service.dart';
 
@@ -23,9 +22,10 @@ class _AddVehicleViewState extends State<AddVehicleView> {
   final _mileageC = TextEditingController(text: '0');
   final _latC = TextEditingController(text: '0');
   final _lngC = TextEditingController(text: '0');
+
   String _transmission = 'AT'; // AT = automática, MT = manual
-  String _fuelType = 'gas'; // gasoline|diesel|hybrid|electric
-  String _status = 'active'; // available|unavailable
+  String _fuelType = 'gas'; // gasoline|diesel|hybrid|ev
+  String _status = 'active'; // active|inactive|pending_review
   bool _loading = false;
 
   @override
@@ -36,7 +36,6 @@ class _AddVehicleViewState extends State<AddVehicleView> {
     _yearC.dispose();
     _priceC.dispose();
     _imageUrlC.dispose();
-
     _plateC.dispose();
     _seatsC.dispose();
     _mileageC.dispose();
@@ -45,32 +44,47 @@ class _AddVehicleViewState extends State<AddVehicleView> {
     super.dispose();
   }
 
-  InputDecoration _dec(String hint) => InputDecoration(
-    hintText: hint,
-    filled: true,
-    fillColor: Colors.white,
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12.0),
-      borderSide: BorderSide.none,
-    ),
-  );
+  InputDecoration _dec(BuildContext context, String hint) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return InputDecoration(
+      hintText: hint,
+      filled: true,
+      fillColor:
+          theme.inputDecorationTheme.fillColor ??
+          (theme.brightness == Brightness.dark
+              ? const Color(0xFF1C2230)
+              : scheme.surface),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12.0),
+        borderSide: BorderSide(color: scheme.outlineVariant),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12.0),
+        borderSide: BorderSide(color: scheme.outlineVariant),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12.0),
+        borderSide: BorderSide(color: scheme.primary, width: 1.4),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+    );
+  }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
     try {
-      final vehicleId = await VehicleService.createVehicle(
+      await VehicleService.createVehicle(
         title: _titleC.text.trim(),
         make: _makeC.text.trim(),
         model: _modelC.text.trim(),
         year: int.parse(_yearC.text.trim()),
-        transmission: _transmission, // 'AT' | 'MT'
+        transmission: _transmission,
         pricePerDay: double.parse(_priceC.text.trim()),
         imageUrl: _imageUrlC.text.trim().isEmpty
             ? null
             : _imageUrlC.text.trim(),
-
-        // 👇 nuevos requeridos por el backend
         plate: _plateC.text.trim().toUpperCase(),
         seats: int.parse(_seatsC.text.trim()),
         fuelType: _fuelType,
@@ -80,7 +94,6 @@ class _AddVehicleViewState extends State<AddVehicleView> {
         lng: double.parse(_lngC.text.trim()),
       );
 
-      if (!mounted) return;
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('✅ Vehicle + pricing created')),
@@ -99,12 +112,15 @@ class _AddVehicleViewState extends State<AddVehicleView> {
   @override
   Widget build(BuildContext context) {
     const p = EdgeInsets.symmetric(horizontal: 24.0);
+    final scheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Add Vehicle'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
-        elevation: 0,
+        // Deja que el tema defina colores/elevación:
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+        foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
+        elevation: Theme.of(context).appBarTheme.elevation ?? 0,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -117,28 +133,31 @@ class _AddVehicleViewState extends State<AddVehicleView> {
                 children: [
                   TextFormField(
                     controller: _titleC,
-                    decoration: _dec('Title (e.g., Toyota Corolla 2020)'),
+                    decoration: _dec(
+                      context,
+                      'Title (e.g., Toyota Corolla 2020)',
+                    ),
                     validator: (v) =>
                         (v == null || v.trim().isEmpty) ? 'Required' : null,
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: _makeC,
-                    decoration: _dec('Make (e.g., Toyota)'),
+                    decoration: _dec(context, 'Make (e.g., Toyota)'),
                     validator: (v) =>
                         (v == null || v.trim().isEmpty) ? 'Required' : null,
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: _modelC,
-                    decoration: _dec('Model (e.g., Corolla)'),
+                    decoration: _dec(context, 'Model (e.g., Corolla)'),
                     validator: (v) =>
                         (v == null || v.trim().isEmpty) ? 'Required' : null,
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: _yearC,
-                    decoration: _dec('Year (e.g., 2020)'),
+                    decoration: _dec(context, 'Year (e.g., 2020)'),
                     keyboardType: TextInputType.number,
                     validator: (v) {
                       final y = int.tryParse(v ?? '');
@@ -155,7 +174,7 @@ class _AddVehicleViewState extends State<AddVehicleView> {
                   // Transmission
                   DropdownButtonFormField<String>(
                     value: _transmission,
-                    decoration: _dec('Transmission'),
+                    decoration: _dec(context, 'Transmission'),
                     items: const [
                       DropdownMenuItem(value: 'AT', child: Text('Automatic')),
                       DropdownMenuItem(value: 'MT', child: Text('Manual')),
@@ -166,7 +185,7 @@ class _AddVehicleViewState extends State<AddVehicleView> {
 
                   TextFormField(
                     controller: _priceC,
-                    decoration: _dec('Price per day (USD)'),
+                    decoration: _dec(context, 'Price per day (USD)'),
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
                     ),
@@ -180,7 +199,7 @@ class _AddVehicleViewState extends State<AddVehicleView> {
 
                   TextFormField(
                     controller: _plateC,
-                    decoration: _dec('Plate (e.g., ABC123)'),
+                    decoration: _dec(context, 'Plate (e.g., ABC123)'),
                     textCapitalization: TextCapitalization.characters,
                     validator: (v) =>
                         (v == null || v.trim().isEmpty) ? 'Required' : null,
@@ -189,7 +208,7 @@ class _AddVehicleViewState extends State<AddVehicleView> {
 
                   TextFormField(
                     controller: _seatsC,
-                    decoration: _dec('Seats (e.g., 5)'),
+                    decoration: _dec(context, 'Seats (e.g., 5)'),
                     keyboardType: TextInputType.number,
                     validator: (v) => (int.tryParse(v ?? '') == null)
                         ? 'Invalid seats'
@@ -199,7 +218,7 @@ class _AddVehicleViewState extends State<AddVehicleView> {
 
                   DropdownButtonFormField<String>(
                     value: _fuelType,
-                    decoration: _dec('Fuel type'),
+                    decoration: _dec(context, 'Fuel type'),
                     items: const [
                       DropdownMenuItem(value: 'gas', child: Text('Gasoline')),
                       DropdownMenuItem(value: 'diesel', child: Text('Diesel')),
@@ -212,7 +231,7 @@ class _AddVehicleViewState extends State<AddVehicleView> {
 
                   TextFormField(
                     controller: _mileageC,
-                    decoration: _dec('Mileage (km)'),
+                    decoration: _dec(context, 'Mileage (km)'),
                     keyboardType: TextInputType.number,
                     validator: (v) => (int.tryParse(v ?? '') == null)
                         ? 'Invalid mileage'
@@ -222,7 +241,7 @@ class _AddVehicleViewState extends State<AddVehicleView> {
 
                   DropdownButtonFormField<String>(
                     value: _status,
-                    decoration: _dec('Status'),
+                    decoration: _dec(context, 'Status'),
                     items: const [
                       DropdownMenuItem(
                         value: 'active',
@@ -243,7 +262,7 @@ class _AddVehicleViewState extends State<AddVehicleView> {
 
                   TextFormField(
                     controller: _latC,
-                    decoration: _dec('Latitude'),
+                    decoration: _dec(context, 'Latitude'),
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
                     ),
@@ -255,7 +274,7 @@ class _AddVehicleViewState extends State<AddVehicleView> {
 
                   TextFormField(
                     controller: _lngC,
-                    decoration: _dec('Longitude'),
+                    decoration: _dec(context, 'Longitude'),
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
                     ),
@@ -267,28 +286,39 @@ class _AddVehicleViewState extends State<AddVehicleView> {
 
                   TextFormField(
                     controller: _imageUrlC,
-                    decoration: _dec('Image URL (optional)'),
+                    decoration: _dec(context, 'Image URL (optional)'),
                   ),
 
                   const SizedBox(height: 20),
+
                   SizedBox(
                     width: double.infinity,
                     height: 48,
-                    child: ElevatedButton(
+                    child: FilledButton(
                       onPressed: _loading ? null : _submit,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.black,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                      style: ButtonStyle(
+                        minimumSize: const MaterialStatePropertyAll(
+                          Size.fromHeight(48),
+                        ),
+                        shape: MaterialStatePropertyAll(
+                          RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        backgroundColor: MaterialStateProperty.resolveWith((
+                          states,
+                        ) {
+                          final scheme = Theme.of(context).colorScheme;
+                          if (states.contains(MaterialState.disabled)) {
+                            return scheme.onSurface.withOpacity(0.12);
+                          }
+                          return scheme.primary;
+                        }),
+                        foregroundColor: MaterialStatePropertyAll(
+                          Theme.of(context).colorScheme.onPrimary,
                         ),
                       ),
-                      child: Text(
-                        _loading ? 'Saving…' : 'Save vehicle',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                        ),
-                      ),
+                      child: Text(_loading ? 'Saving…' : 'Save vehicle'),
                     ),
                   ),
                 ],

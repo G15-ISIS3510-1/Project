@@ -55,6 +55,8 @@ class _HostHomeViewState extends State<HostHomeView>
     super.build(context);
     final bottomInset = MediaQuery.of(context).padding.bottom;
     final isHost = context.watch<HostModeProvider>().isHostMode;
+    final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
 
     return SafeArea(
       top: true,
@@ -71,13 +73,12 @@ class _HostHomeViewState extends State<HostHomeView>
                   Center(
                     child: Transform.scale(
                       scaleY: 0.82,
-                      child: const Text(
+                      child: Text(
                         'QOVO',
-                        style: TextStyle(
+                        style: text.displaySmall?.copyWith(
                           fontSize: 48,
-                          fontWeight: FontWeight.w400,
-                          color: Colors.black,
-                          letterSpacing: -7.0,
+                          fontWeight: FontWeight.w600,
+                          color: scheme.onBackground,
                         ),
                       ),
                     ),
@@ -99,8 +100,8 @@ class _HostHomeViewState extends State<HostHomeView>
                   if (isHost)
                     Text(
                       'You are in Host mode',
-                      style: TextStyle(
-                        color: Colors.black54,
+                      style: text.bodyMedium?.copyWith(
+                        color: scheme.onSurfaceVariant,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -196,24 +197,32 @@ class _AddCarCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final text = theme.textTheme;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(14),
+      splashColor: scheme.primary.withOpacity(0.08),
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFFF8FAFF),
+          color: theme.cardColor, // antes: Color(0xFFF8FAFF)
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
+          border: Border.all(color: scheme.outlineVariant), // antes: 0xFFE5E7EB
         ),
         padding: const EdgeInsets.all(16),
         child: Row(
-          children: const [
-            Icon(Icons.add_circle_outline, size: 28, color: Colors.black87),
-            SizedBox(width: 12),
+          children: [
+            Icon(Icons.add_circle_outline, size: 28, color: scheme.primary),
+            const SizedBox(width: 12),
             Expanded(
               child: Text(
                 'Add a new car to your listings',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                style: text.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: scheme.onSurface,
+                ),
               ),
             ),
           ],
@@ -228,26 +237,29 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
+          Icon(
             Icons.directions_car_filled_rounded,
             size: 64,
-            color: Colors.black26,
+            color: scheme.onSurfaceVariant,
           ),
           const SizedBox(height: 12),
-          const Text(
+          Text(
             'No cars listed yet',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            style: text.titleMedium?.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Tap the card above to add your first car.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.black54),
+            style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
           ),
         ],
       ),

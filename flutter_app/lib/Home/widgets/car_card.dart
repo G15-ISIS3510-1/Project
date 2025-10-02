@@ -20,37 +20,38 @@ class CarCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final text = theme.textTheme;
 
     return Material(
-      color: Colors.white,
+      color: theme.cardColor,
       borderRadius: BorderRadius.circular(16),
       elevation: 0,
       child: Container(
         decoration: BoxDecoration(
+          color: theme.cardColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
+          border: Border.all(color: scheme.outlineVariant),
         ),
         child: Column(
           children: [
-            // Imagen (placeholder gris)
+            // Imagen (placeholder)
             Stack(
               children: [
                 AspectRatio(
                   aspectRatio: 16 / 9,
                   child: Container(
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF3F4F6),
+                      color: scheme.surfaceVariant,
                       borderRadius: const BorderRadius.vertical(
                         top: Radius.circular(16),
                       ),
                     ),
-                    child: const Center(
-                      child: Icon(
-                        Icons.image_outlined,
-                        size: 56,
-                        color: Color(0xFFB8BDC7),
-                      ),
+                    child: Icon(
+                      Icons.image_outlined,
+                      size: 56,
+                      color: scheme.onSurfaceVariant,
                     ),
                   ),
                 ),
@@ -64,16 +65,16 @@ class CarCard extends StatelessWidget {
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.9),
+                        color: scheme.surface.withOpacity(0.90),
                         shape: BoxShape.circle,
-                        border: Border.all(color: const Color(0xFFE5E7EB)),
+                        border: Border.all(color: scheme.outlineVariant),
                       ),
                       child: Icon(
                         isFavorite
                             ? Icons.favorite_rounded
                             : Icons.favorite_border_rounded,
                         size: 20,
-                        color: isFavorite ? Colors.red : Colors.black87,
+                        color: isFavorite ? Colors.redAccent : scheme.onSurface,
                       ),
                     ),
                   ),
@@ -95,21 +96,23 @@ class CarCard extends StatelessWidget {
                           title,
                           style: text.titleMedium?.copyWith(
                             fontWeight: FontWeight.w700,
+                            color: scheme.onSurface,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       const SizedBox(width: 8),
-                      const Icon(
+                      Icon(
                         Icons.star_rate_rounded,
                         size: 18,
-                        color: Colors.amber,
+                        color: Colors.amber.shade600,
                       ),
                       Text(
                         rating.toStringAsFixed(1),
                         style: text.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w600,
+                          color: scheme.onSurface,
                         ),
                       ),
                     ],
@@ -122,7 +125,7 @@ class CarCard extends StatelessWidget {
                       Text(
                         transmission,
                         style: text.bodyMedium?.copyWith(
-                          color: Colors.black54,
+                          color: scheme.onSurfaceVariant,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -131,6 +134,7 @@ class CarCard extends StatelessWidget {
                         _asCurrency(price),
                         style: text.titleMedium?.copyWith(
                           fontWeight: FontWeight.w800,
+                          color: scheme.onSurface,
                         ),
                       ),
                     ],
@@ -145,7 +149,6 @@ class CarCard extends StatelessWidget {
   }
 
   String _asCurrency(double v) {
-    // Muestra separadores de miles con dos decimales
     final s = v.toStringAsFixed(2);
     final parts = s.split('.');
     final thousands = parts[0].replaceAllMapped(

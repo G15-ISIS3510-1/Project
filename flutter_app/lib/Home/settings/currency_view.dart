@@ -9,10 +9,15 @@ class CurrencyView extends StatefulWidget {
 
 class _CurrencyViewState extends State<CurrencyView> {
   final _currencies = const [
-    _Currency(flag: '🇺🇸', name: 'United States Dollar', code: 'USD', symbol: r'$'),
-    _Currency(flag: '🇪🇺', name: 'Euro',                 code: 'EUR', symbol: '€'),
-    _Currency(flag: '🇬🇧', name: 'British Pound',        code: 'GBP', symbol: '£'),
-    _Currency(flag: '🇨🇴', name: 'Colombian Peso',       code: 'COP', symbol: r'$'),
+    _Currency(
+      flag: '🇺🇸',
+      name: 'United States Dollar',
+      code: 'USD',
+      symbol: r'$',
+    ),
+    _Currency(flag: '🇪🇺', name: 'Euro', code: 'EUR', symbol: '€'),
+    _Currency(flag: '🇬🇧', name: 'British Pound', code: 'GBP', symbol: '£'),
+    _Currency(flag: '🇨🇴', name: 'Colombian Peso', code: 'COP', symbol: r'$'),
   ];
 
   int selected = 0; // USD preselected
@@ -21,16 +26,25 @@ class _CurrencyViewState extends State<CurrencyView> {
   Widget build(BuildContext context) {
     const double p24 = 24;
     const double p16 = 16;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final text = theme.textTheme;
 
     Widget symbolPill(String symbol) => Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: const Color(0xFFE5E7EB)),
-          ),
-          child: Text(symbol, style: const TextStyle(fontWeight: FontWeight.w600)),
-        );
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: scheme.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: scheme.outlineVariant),
+      ),
+      child: Text(
+        symbol,
+        style: text.bodyLarge?.copyWith(
+          fontWeight: FontWeight.w600,
+          color: scheme.onSurface,
+        ),
+      ),
+    );
 
     Widget currencyButton(int i, _Currency c) {
       final bool isSelected = i == selected;
@@ -39,9 +53,13 @@ class _CurrencyViewState extends State<CurrencyView> {
         child: OutlinedButton(
           onPressed: () => setState(() => selected = i),
           style: OutlinedButton.styleFrom(
-            backgroundColor: isSelected ? Colors.white : const Color(0xFFF2F2F7),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            side: const BorderSide(color: Color(0xFFE5E7EB)),
+            backgroundColor: isSelected
+                ? scheme.surface
+                : scheme.surfaceVariant,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            side: BorderSide(color: scheme.outlineVariant),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           ),
           child: Row(
@@ -51,10 +69,9 @@ class _CurrencyViewState extends State<CurrencyView> {
               Expanded(
                 child: Text(
                   '${c.name} · ${c.code}',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    color: Colors.black87,
+                  style: text.bodyLarge?.copyWith(
                     fontWeight: FontWeight.w600,
+                    color: scheme.onSurface,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -77,26 +94,25 @@ class _CurrencyViewState extends State<CurrencyView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // X close on its own row
+                    // X close
                     IconButton(
-                      icon: const Icon(Icons.close, color: Colors.black87),
+                      icon: Icon(Icons.close, color: scheme.onSurface),
                       onPressed: () => Navigator.pop(context),
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
                     ),
                     const SizedBox(height: 12),
 
-                    // Title (left aligned)
-                    const Text(
+                    // Title
+                    Text(
                       'Preferred Currency',
-                      style: TextStyle(
-                        fontSize: 24,
+                      style: text.headlineSmall?.copyWith(
                         fontWeight: FontWeight.w600,
-                        color: Colors.black87,
+                        color: scheme.onBackground,
                       ),
                     ),
                     const SizedBox(height: 12),
-                    const Divider(thickness: 2, color: Colors.black87),
+                    Divider(thickness: 2, color: scheme.outlineVariant),
                     const SizedBox(height: 16),
 
                     // Currency options
@@ -108,8 +124,6 @@ class _CurrencyViewState extends State<CurrencyView> {
                 ),
               ),
             ),
-
-            // Bottom spacer for glass bottom bar
             const SliverToBoxAdapter(child: SizedBox(height: 92)),
           ],
         ),

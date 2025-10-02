@@ -30,6 +30,8 @@ class _TripsViewState extends State<TripsView> {
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).padding.bottom;
+    final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
 
     return Scaffold(
       extendBody: true,
@@ -51,12 +53,13 @@ class _TripsViewState extends State<TripsView> {
                           Center(
                             child: Transform.scale(
                               scaleY: 0.82,
-                              child: const Text(
+                              child: Text(
                                 'QOVO',
-                                style: TextStyle(
+                                style: text.displaySmall?.copyWith(
                                   fontSize: 48,
                                   fontWeight: FontWeight.w400,
-                                  color: Colors.black,
+                                  // usa onBackground según tema
+                                  color: scheme.onBackground.withOpacity(0.95),
                                   letterSpacing: -7.0,
                                 ),
                               ),

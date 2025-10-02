@@ -162,7 +162,8 @@ class _MessagesViewState extends State<MessagesView>
   Widget build(BuildContext context) {
     super.build(context);
     final bottomInset = MediaQuery.of(context).padding.bottom;
-
+    final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
     return SafeArea(
       top: true,
       bottom: false,
@@ -172,15 +173,19 @@ class _MessagesViewState extends State<MessagesView>
             child: Padding(
               padding: const EdgeInsets.fromLTRB(_p24, _p24, _p24, 12),
               child: Column(
-                children: const [
+                children: [
                   Center(
-                    child: Text(
-                      'QOVO',
-                      style: TextStyle(
-                        fontSize: 48,
-                        fontWeight: FontWeight.w400,
-                        color: Colors.black,
-                        letterSpacing: -7.0,
+                    child: Transform.scale(
+                      scaleY: 0.82,
+                      child: Text(
+                        'QOVO',
+                        style: text.displaySmall?.copyWith(
+                          fontSize: 48,
+                          fontWeight: FontWeight.w400,
+                          // usa onBackground según tema
+                          color: scheme.onBackground.withOpacity(0.95),
+                          letterSpacing: -7.0,
+                        ),
                       ),
                     ),
                   ),

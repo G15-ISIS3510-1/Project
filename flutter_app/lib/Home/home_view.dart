@@ -21,7 +21,6 @@ class _HomeViewState extends State<HomeView>
 
   late Future<List<Vehicle>> _future;
 
-  // Cache de futures para no pedir el pricing del mismo vehículo varias veces
   final Map<String, Future<Pricing?>> _pricingFutures = {};
 
   @override
@@ -36,6 +35,8 @@ class _HomeViewState extends State<HomeView>
   Widget build(BuildContext context) {
     super.build(context);
     final bottomInset = MediaQuery.of(context).padding.bottom;
+    final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
 
     return SafeArea(
       top: true,
@@ -52,21 +53,22 @@ class _HomeViewState extends State<HomeView>
                   Center(
                     child: Transform.scale(
                       scaleY: 0.82,
-                      child: const Text(
+                      child: Text(
                         'QOVO',
-                        style: TextStyle(
+                        style: text.displaySmall?.copyWith(
                           fontSize: 48,
                           fontWeight: FontWeight.w400,
-                          color: Colors.black,
+                          // usa onBackground según tema
+                          color: scheme.onBackground.withOpacity(0.95),
                           letterSpacing: -7.0,
                         ),
                       ),
                     ),
                   ),
-                  SizedBox(height: 20),
-                  qovo.SearchBar(),
-                  SizedBox(height: 16),
-                  CategoryChips(
+                  const SizedBox(height: 20),
+                  const qovo.SearchBar(),
+                  const SizedBox(height: 16),
+                  const CategoryChips(
                     items: [
                       'Cars',
                       'SUVs',
@@ -81,7 +83,7 @@ class _HomeViewState extends State<HomeView>
             ),
           ),
 
-          // Lista de vehículos (con pricing real por ítem)
+          // Lista de vehículos
           SliverFillRemaining(
             hasScrollBody: true,
             child: FutureBuilder<List<Vehicle>>(
@@ -110,29 +112,24 @@ class _HomeViewState extends State<HomeView>
                   itemBuilder: (_, i) {
                     final v = vehicles[i];
 
-                    // traducimos "AT"/"MT" si te llega así; si no, usa v.transmission directo
                     final transLabel = (v.transmission == 'AT')
                         ? 'Automatic'
                         : (v.transmission == 'MT' ? 'Manual' : v.transmission);
 
-                    // pido/cacho el pricing para este vehículo
                     final fut = _pricingFutures[v.vehicle_id] ??=
                         PricingService.getByVehicle(v.vehicle_id);
 
                     return FutureBuilder<Pricing?>(
                       future: fut,
                       builder: (context, pSnap) {
-                        // si hay error de pricing, solo mostramos fallback
                         final price =
                             (pSnap.data?.dailyPrice ?? v.pricePerDay ?? 80.0);
 
                         return CarCard(
                           title: v.title,
-                          rating:
-                              v.rating ??
-                              4.7, // fallback si tu API no manda rating
+                          rating: v.rating ?? 4.7,
                           transmission: transLabel,
-                          price: price, // 👈 SIEMPRE double no nulo
+                          price: price,
                           onFavoriteToggle: () {},
                         );
                       },
@@ -143,7 +140,7 @@ class _HomeViewState extends State<HomeView>
             ),
           ),
 
-          // espacio para el bottom bar del shell
+          // espacio para la bottom bar
           SliverToBoxAdapter(
             child: SizedBox(height: 76 + 12 + bottomInset + 8),
           ),

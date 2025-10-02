@@ -16,7 +16,6 @@ class UserProfile {
   const UserProfile({required this.name, required this.email, this.phone});
 
   factory UserProfile.fromJson(Map<String, dynamic> j) {
-    // Ajusta los campos según tu /me (ejemplos típicos abajo)
     return UserProfile(
       name: (j['name'] ?? j['full_name'] ?? j['username'] ?? '').toString(),
       email: (j['email'] ?? '').toString(),
@@ -53,9 +52,7 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
       throw Exception('No hay access_token. Inicia sesión nuevamente.');
     }
 
-    final uri = Uri.parse(
-      '$baseUrl/api/auth/me',
-    ); // ajusta si tu ruta es distinta
+    final uri = Uri.parse('$baseUrl/api/auth/me');
     final res = await http.get(
       uri,
       headers: {'Authorization': 'Bearer $token'},
@@ -65,7 +62,6 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
       final data = jsonDecode(res.body) as Map<String, dynamic>;
       return UserProfile.fromJson(data);
     } else if (res.statusCode == 401) {
-      // token inválido/expirado: limpiamos y mandamos a login
       await _signOut(context, showMessage: false);
       throw Exception('Sesión expirada. Vuelve a iniciar sesión.');
     } else {
@@ -100,27 +96,32 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
   @override
   Widget build(BuildContext context) {
     const double p24 = 24;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final text = theme.textTheme;
 
+    // Botón “pill” consistente con tema
     Widget pillButton(IconData icon, String label, {VoidCallback? onTap}) {
       return SizedBox(
         width: double.infinity,
         child: OutlinedButton.icon(
           onPressed: onTap ?? () {},
-          icon: Icon(icon, size: 18, color: Colors.black87),
+          icon: Icon(icon, size: 18, color: scheme.onSurface),
           label: Padding(
             padding: const EdgeInsets.symmetric(vertical: 12.0),
             child: Text(
               label,
-              style: const TextStyle(fontSize: 16, color: Colors.black87),
+              style: text.bodyLarge?.copyWith(color: scheme.onSurface),
             ),
           ),
           style: OutlinedButton.styleFrom(
-            backgroundColor: Colors.white,
+            backgroundColor: theme.cardColor,
+            overlayColor: scheme.primary.withOpacity(0.06),
             padding: const EdgeInsets.symmetric(horizontal: 16),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
-            side: const BorderSide(color: Color(0xFFE5E7EB)),
+            side: BorderSide(color: scheme.outlineVariant),
             elevation: 0,
           ),
         ),
@@ -128,21 +129,23 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
     }
 
     final outlineNeutral = OutlinedButton.styleFrom(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.cardColor,
+      overlayColor: scheme.primary.withOpacity(0.06),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      side: const BorderSide(color: Color(0xFFE5E7EB)),
+      side: BorderSide(color: scheme.outlineVariant),
       padding: const EdgeInsets.symmetric(vertical: 12),
-      textStyle: const TextStyle(fontSize: 14),
-      foregroundColor: Colors.black87,
+      textStyle: text.bodyMedium,
+      foregroundColor: scheme.onSurface,
     );
 
     final outlineDestructive = OutlinedButton.styleFrom(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.cardColor,
+      overlayColor: scheme.error.withOpacity(0.06),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      side: const BorderSide(color: Color(0xFFEE5A5A)),
+      side: BorderSide(color: scheme.error),
       padding: const EdgeInsets.symmetric(vertical: 12),
-      textStyle: const TextStyle(fontSize: 14),
-      foregroundColor: const Color(0xFFEE5A5A),
+      textStyle: text.bodyMedium,
+      foregroundColor: scheme.error,
     );
 
     return Scaffold(
@@ -156,24 +159,25 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.close, color: Colors.black87),
+                      icon: Icon(Icons.close, color: scheme.onSurface),
                       onPressed: () => Navigator.pop(context),
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
                     ),
                     const SizedBox(height: 12),
 
-                    const Text(
+                    Text(
                       'Settings',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
+                      style: text.headlineLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: scheme.onBackground,
+                        // sin letterSpacing negativo
+                        // opcionalmente: height: 1.1,
                       ),
                     ),
 
                     const SizedBox(height: 12),
-                    const Divider(thickness: 2, color: Colors.black87),
+                    Divider(thickness: 2, color: scheme.outlineVariant),
                     const SizedBox(height: 16),
 
                     // ======= Perfil dinámico =======
@@ -182,9 +186,9 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
                       builder: (context, snap) {
                         if (snap.connectionState == ConnectionState.waiting) {
                           return Row(
-                            children: [
-                              const Expanded(child: _ProfileSkeleton()),
-                              const SizedBox(width: 12),
+                            children: const [
+                              Expanded(child: _ProfileSkeleton()),
+                              SizedBox(width: 12),
                               _AvatarBox(),
                             ],
                           );
@@ -195,15 +199,17 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
                             children: [
                               Text(
                                 'No se pudo cargar el perfil',
-                                style: const TextStyle(
-                                  color: Colors.redAccent,
+                                style: text.bodyMedium?.copyWith(
+                                  color: scheme.error,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
                               const SizedBox(height: 6),
                               Text(
                                 snap.error.toString(),
-                                style: const TextStyle(color: Colors.black54),
+                                style: text.bodySmall?.copyWith(
+                                  color: scheme.onSurfaceVariant,
+                                ),
                               ),
                               const SizedBox(height: 8),
                               OutlinedButton.icon(
@@ -212,6 +218,7 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
                                 ),
                                 icon: const Icon(Icons.refresh),
                                 label: const Text('Reintentar'),
+                                style: outlineNeutral,
                               ),
                             ],
                           );
@@ -226,23 +233,23 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
                                 children: [
                                   Text(
                                     p.name.isEmpty ? 'Usuario' : p.name,
-                                    style: const TextStyle(
-                                      fontSize: 18,
+                                    style: text.titleLarge?.copyWith(
                                       fontWeight: FontWeight.w700,
+                                      color: scheme.onSurface,
                                     ),
                                   ),
                                   const SizedBox(height: 6),
                                   Text(
                                     p.phone ?? '—',
-                                    style: const TextStyle(
-                                      color: Colors.black54,
+                                    style: text.bodyMedium?.copyWith(
+                                      color: scheme.onSurfaceVariant,
                                     ),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
                                     p.email,
-                                    style: const TextStyle(
-                                      color: Colors.black54,
+                                    style: text.bodyMedium?.copyWith(
+                                      color: scheme.onSurfaceVariant,
                                     ),
                                   ),
                                 ],
@@ -280,7 +287,7 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
                     pillButton(Icons.credit_card_rounded, 'Payment'),
 
                     const SizedBox(height: 16),
-                    const Divider(thickness: 2, color: Colors.black87),
+                    Divider(thickness: 2, color: scheme.outlineVariant),
                     const SizedBox(height: 16),
 
                     SizedBox(
@@ -308,15 +315,18 @@ class _AvatarBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
     return Container(
       width: 64,
       height: 64,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF2B2B2B), width: 3),
+        border: Border.all(color: scheme.outline, width: 3),
       ),
-      child: const Icon(Icons.image, size: 28, color: Colors.black87),
+      child: Icon(Icons.image, size: 28, color: scheme.onSurface),
     );
   }
 }
@@ -326,11 +336,13 @@ class _ProfileSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
     Widget box({double h = 14, double w = 160}) => Container(
       width: w,
       height: h,
       decoration: BoxDecoration(
-        color: const Color(0xFFF3F4F6),
+        color: scheme.surfaceVariant,
         borderRadius: BorderRadius.circular(6),
       ),
     );

@@ -13,6 +13,9 @@ class _CategoryChipsState extends State<CategoryChips> {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final isSelected = (int i) => selected == i;
+
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.only(bottom: 8),
@@ -21,17 +24,19 @@ class _CategoryChipsState extends State<CategoryChips> {
           for (int i = 0; i < widget.items.length; i++) ...[
             ChoiceChip(
               label: Text(widget.items[i]),
-              selected: selected == i,
+              selected: isSelected(i),
               onSelected: (v) => setState(() => selected = v ? i : null),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              selectedColor: const Color(0xFF4DA2FF),
+              selectedColor: scheme.primaryContainer,
+              backgroundColor: scheme.surfaceVariant,
               labelStyle: TextStyle(
-                color: selected == i ? Colors.white : Colors.black87,
-                fontWeight: FontWeight.w500,
+                color: isSelected(i)
+                    ? scheme.onPrimaryContainer
+                    : scheme.onSurface,
+                fontWeight: FontWeight.w600,
               ),
-              backgroundColor: const Color(0xFFF3F4F6),
               side: BorderSide.none,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             ),

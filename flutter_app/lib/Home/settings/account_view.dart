@@ -7,10 +7,10 @@ import 'profile_settings_view.dart';
 import 'currency_view.dart';
 import 'legal_view.dart';
 
-// 👇 importa tus providers/apis reales
 import '../../data/users_api.dart';
 import '../../LoginRegister/register.dart';
 import '../../main.dart' show AuthProvider;
+import '../../core/theme_controller.dart';
 
 class AccountView extends StatelessWidget {
   const AccountView({super.key});
@@ -18,7 +18,6 @@ class AccountView extends StatelessWidget {
   Future<void> _handleHostToggle(BuildContext context, bool value) async {
     final hostProvider = context.read<HostModeProvider>();
 
-    // Apagar host mode: inmediato.
     if (!value) {
       hostProvider.setHostMode(false);
       return;
@@ -35,7 +34,6 @@ class AccountView extends StatelessWidget {
       return;
     }
 
-    // 1) Intento con caché, 2) si viene null, forzar refresh.
     String? role = await usersApi.getUserRole(userId);
     role ??= await usersApi.getUserRole(userId, refresh: true);
 
@@ -53,13 +51,11 @@ class AccountView extends StatelessWidget {
       );
     }
 
-    // role es 'renter' o null -> mandar a registro de host.
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const RegisterScreen()),
     );
 
-    // Al volver, refrescar rol y decidir.
     role = await usersApi.getUserRole(userId, refresh: true);
     if (role == 'host' || role == 'both') {
       hostProvider.setHostMode(true);
@@ -80,28 +76,32 @@ class AccountView extends StatelessWidget {
     const double p24 = 24;
     const double p16 = 16;
 
+    final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+
     final isHost = context.watch<HostModeProvider>().isHostMode;
+    final themeCtrl = context.watch<ThemeController>();
 
     Widget pillButton(IconData icon, String label, {VoidCallback? onTap}) {
       return SizedBox(
         width: double.infinity,
         child: OutlinedButton.icon(
           onPressed: onTap ?? () {},
-          icon: Icon(icon, size: 18, color: Colors.black87),
+          icon: Icon(icon, size: 18, color: scheme.onSurface),
           label: Padding(
             padding: const EdgeInsets.symmetric(vertical: 12.0),
             child: Text(
               label,
-              style: const TextStyle(fontSize: 16, color: Colors.black87),
+              style: text.bodyLarge?.copyWith(color: scheme.onSurface),
             ),
           ),
           style: OutlinedButton.styleFrom(
-            backgroundColor: Colors.white,
+            backgroundColor: scheme.surface,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
-            side: const BorderSide(color: Color(0xFFE5E7EB)),
+            side: BorderSide(color: scheme.outlineVariant),
             elevation: 0,
           ),
         ),
@@ -121,12 +121,12 @@ class AccountView extends StatelessWidget {
                   Center(
                     child: Transform.scale(
                       scaleY: 0.82,
-                      child: const Text(
+                      child: Text(
                         'QOVO',
-                        style: TextStyle(
+                        style: text.displaySmall?.copyWith(
                           fontSize: 48,
                           fontWeight: FontWeight.w400,
-                          color: Colors.black,
+                          color: scheme.onBackground.withOpacity(0.95),
                           letterSpacing: -7.0,
                         ),
                       ),
@@ -134,42 +134,110 @@ class AccountView extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
 
-                  // Host Mode toggle con validación de rol
+                  // Host Mode toggle
                   Consumer<HostModeProvider>(
                     builder: (context, hostProvider, _) {
                       return SwitchListTile.adaptive(
-                        title: const Text(
+                        title: Text(
                           'Host Mode',
-                          style: TextStyle(fontSize: 16, color: Colors.black87),
+                          style: text.bodyLarge?.copyWith(
+                            color: scheme.onSurface,
+                          ),
                         ),
                         value: hostProvider.isHostMode,
-                        onChanged: (value) {
-                          // Ejecutar flujo async sin bloquear el UI thread
-                          _handleHostToggle(context, value);
-                        },
-                        activeThumbColor: Colors.green,
+                        onChanged: (value) => _handleHostToggle(context, value),
+                        activeColor: scheme.primary,
                         contentPadding: EdgeInsets.zero,
                       );
                     },
                   ),
 
                   if (isHost) ...[
-                    const Center(
+                    Center(
                       child: Text(
                         'Host mode is ON',
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Colors.black54,
-                          fontWeight: FontWeight.w500,
+                        style: text.titleMedium?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
                     const SizedBox(height: 12),
                   ],
 
+                  const SizedBox(height: 8),
+
+                  // Appearance
+                  Text(
+                    'Appearance',
+                    style: text.titleMedium?.copyWith(
+                      color: scheme.onSurface,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  Card(
+                    color: Theme.of(context).cardColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(color: scheme.outlineVariant),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Theme',
+                            style: text.bodyMedium?.copyWith(
+                              color: scheme.onSurface,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          SegmentedButton<ThemePref>(
+                            segments: const [
+                              ButtonSegment(
+                                value: ThemePref.auto,
+                                label: Text('Auto'),
+                                icon: Icon(Icons.brightness_auto),
+                              ),
+                              ButtonSegment(
+                                value: ThemePref.light,
+                                label: Text('Claro'),
+                                icon: Icon(Icons.light_mode),
+                              ),
+                              ButtonSegment(
+                                value: ThemePref.dark,
+                                label: Text('Oscuro'),
+                                icon: Icon(Icons.dark_mode),
+                              ),
+                            ],
+                            selected: {themeCtrl.pref},
+                            onSelectionChanged: (selection) {
+                              final pref = selection.first;
+                              themeCtrl.setPref(pref);
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            themeCtrl.pref == ThemePref.auto
+                                ? 'Automático según hora local (19:00–06:00 por defecto).'
+                                : themeCtrl.pref == ThemePref.light
+                                ? 'Tema claro activo.'
+                                : 'Tema oscuro activo.',
+                            style: text.bodySmall?.copyWith(
+                              color: scheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
                   const SizedBox(height: 16),
 
-                  // Botones tipo "pill"
+                  // Botones
                   pillButton(
                     Icons.settings,
                     'Settings',
@@ -201,11 +269,13 @@ class AccountView extends StatelessWidget {
 
                   const SizedBox(height: 28),
 
-                  const Align(
+                  Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
                       'v.3686.1000',
-                      style: TextStyle(color: Colors.black54),
+                      style: text.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
                     ),
                   ),
                 ],
@@ -213,7 +283,6 @@ class AccountView extends StatelessWidget {
             ),
           ),
 
-          // Espacio inferior para la bottom bar
           const SliverToBoxAdapter(child: SizedBox(height: 92)),
         ],
       ),

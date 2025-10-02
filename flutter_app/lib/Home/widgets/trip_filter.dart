@@ -23,16 +23,24 @@ class TripFilterSegmented extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const bg = Color(0xFFF2F2F7);
-    const blue = Color(0xFF007AFF);
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
+    final bgPill = theme.brightness == Brightness.dark
+        ? const Color(0xFF1C2230)
+        : scheme.surfaceVariant;
+    final knobColor = theme.cardColor;
+    final labelColor = scheme.onSurfaceVariant;
+    final activeColor = scheme.primary;
 
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: bg,
+        color: bgPill,
         borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: scheme.outlineVariant),
       ),
-      clipBehavior: Clip.hardEdge, // evita “sangres” fuera del pill
+      clipBehavior: Clip.hardEdge,
       child: SizedBox(
         height: 40,
         child: Stack(
@@ -43,16 +51,18 @@ class TripFilterSegmented extends StatelessWidget {
               duration: const Duration(milliseconds: 200),
               curve: Curves.easeOut,
               child: FractionallySizedBox(
-                widthFactor: 1 / 3, // 3 segmentos
+                widthFactor: 1 / 3,
                 heightFactor: 1,
                 child: Container(
                   margin: const EdgeInsets.symmetric(horizontal: 2),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: knobColor,
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.06),
+                        color: Colors.black.withOpacity(
+                          theme.brightness == Brightness.dark ? 0.28 : 0.06,
+                        ),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -62,22 +72,28 @@ class TripFilterSegmented extends StatelessWidget {
               ),
             ),
 
-            // Filas de botones (sin fondo por item)
+            // Filas de botones
             Row(
               children: [
                 _SegButton(
                   label: 'All',
                   selected: _index == 0,
+                  activeColor: activeColor,
+                  labelColor: labelColor,
                   onTap: () => onChanged(TripFilter.all),
                 ),
                 _SegButton(
                   label: 'Booked',
                   selected: _index == 1,
+                  activeColor: activeColor,
+                  labelColor: labelColor,
                   onTap: () => onChanged(TripFilter.booked),
                 ),
                 _SegButton(
                   label: 'History',
                   selected: _index == 2,
+                  activeColor: activeColor,
+                  labelColor: labelColor,
                   onTap: () => onChanged(TripFilter.history),
                 ),
               ],
@@ -93,30 +109,30 @@ class _SegButton extends StatelessWidget {
   final String label;
   final bool selected;
   final VoidCallback onTap;
+  final Color activeColor;
+  final Color labelColor;
+
   const _SegButton({
     required this.label,
     required this.selected,
     required this.onTap,
+    required this.activeColor,
+    required this.labelColor,
   });
 
   @override
   Widget build(BuildContext context) {
-    const blue = Color(0xFF007AFF);
+    final style = Theme.of(context).textTheme.labelLarge?.copyWith(
+      fontWeight: FontWeight.w600,
+      color: selected ? activeColor : labelColor,
+    );
 
     return Expanded(
       child: InkWell(
         onTap: onTap,
         splashColor: Colors.transparent,
         highlightColor: Colors.transparent,
-        child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              color: selected ? blue : Colors.black54,
-            ),
-          ),
-        ),
+        child: Center(child: Text(label, style: style)),
       ),
     );
   }

@@ -11,7 +11,7 @@ from alembic import op
 import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
-revision = '3af922cc05be'
+revision = '3218d6cf8ddf'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -56,7 +56,7 @@ def upgrade() -> None:
     sa.UniqueConstraint('user_low_id', 'user_high_id', name='uq_conversation_direct_pair')
     )
     op.create_index(op.f('ix_conversations_conversation_id'), 'conversations', ['conversation_id'], unique=False)
-    op.create_index('ix_conversations_last_message_at', 'conversations', ['last_message_at'], unique=False)
+    op.create_index(op.f('ix_conversations_last_message_at'), 'conversations', ['last_message_at'], unique=False)
     op.create_index(op.f('ix_conversations_user_high_id'), 'conversations', ['user_high_id'], unique=False)
     op.create_index(op.f('ix_conversations_user_low_id'), 'conversations', ['user_low_id'], unique=False)
     op.create_index('ix_conversations_user_pair', 'conversations', ['user_low_id', 'user_high_id'], unique=False)
@@ -197,7 +197,7 @@ def downgrade() -> None:
     op.drop_index('ix_conversations_user_pair', table_name='conversations')
     op.drop_index(op.f('ix_conversations_user_low_id'), table_name='conversations')
     op.drop_index(op.f('ix_conversations_user_high_id'), table_name='conversations')
-    op.drop_index('ix_conversations_last_message_at', table_name='conversations')
+    op.drop_index(op.f('ix_conversations_last_message_at'), table_name='conversations')
     op.drop_index(op.f('ix_conversations_conversation_id'), table_name='conversations')
     op.drop_table('conversations')
     op.drop_index(op.f('ix_users_user_id'), table_name='users')
