@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -16,31 +17,51 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
     """Registra un nuevo usuario"""
     # Verificar si el email ya existe
+    desired_role = (user_data.role or "renter").lower()
+    if desired_role not in ("renter", "host", "both"):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="Rol inválido. Usa 'renter', 'host' o 'both'.")
+
     result = await db.execute(select(User).where(User.email == user_data.email))
     existing_user = result.scalar_one_or_none()
-    
-    if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="El email ya está registrado"
+
+    if not existing_user:
+        role_to_set = "both" if desired_role == "both" else desired_role
+        hashed_password = get_password_hash(user_data.password)
+        new_user = User(
+            user_id=str(uuid.uuid4()),
+            name=user_data.name,
+            email=user_data.email,
+            password=hashed_password,
+            phone=user_data.phone,
+            role=role_to_set,
+            status="active",
         )
-    
-    # Crear nuevo usuario
-    hashed_password = get_password_hash(user_data.password)
-    new_user = User(
-        user_id=str(uuid.uuid4()),
-        name=user_data.name,
-        email=user_data.email,
-        password=hashed_password,
-        phone=user_data.phone,
-        role=user_data.role
-    )
-    
-    db.add(new_user)
+        db.add(new_user)
+        await db.commit()
+        await db.refresh(new_user)
+        # 201 Created con cuerpo del usuario
+        return new_user
+
+    current_role = (existing_user.role or "renter").lower()
+
+    if current_role == "both":
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+                            detail="Ya estás registrado con ambos roles.")     
+
+    if current_role == desired_role:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+                            detail="Ya estás registrado con ese rol.")
+
+    if not verify_password(user_data.password, existing_user.password):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="El email ya está registrado. Usa la misma contraseña para fusionar a ambos roles.")
+          
+    existing_user.role = "both"
     await db.commit()
-    await db.refresh(new_user)
-    
-    return new_user
+    await db.refresh(existing_user)
+    # 200 OK con cuerpo del usuario actualizado
+    return existing_user
 
 @router.post("/login", response_model=Token)
 async def login(user_credentials: UserLogin, db: AsyncSession = Depends(get_db)):

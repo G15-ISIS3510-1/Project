@@ -1,10 +1,14 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_app/features/vehicles/vehicle_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:provider/provider.dart';
 
 import 'package:flutter_app/Home/app_shell.dart';
 import 'package:flutter_app/LoginRegister/register.dart';
+import 'package:flutter_app/data/chat_api.dart'; // 👈 importa ChatApi
+import 'package:flutter_app/main.dart' show AuthProvider;
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -18,10 +22,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final _storage = const FlutterSecureStorage();
 
-  // Cambia según dónde corre el backend:
-  // - Android Emulator: http://10.0.2.2:8000
-  // - iOS Simulator:    http://localhost:8000
-  // - Dispositivo real: http://<IP_DE_TU_PC>:8000
   final String baseUrl = const String.fromEnvironment(
     'API_BASE',
     defaultValue: 'http://10.0.2.2:8000',
@@ -47,7 +47,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _loading = true);
     try {
-      final url = Uri.parse('$baseUrl/api/auth/login');
+      final url = Uri.parse(
+        '$baseUrl/api/auth/login',
+      ); // 👈 asegúrate del prefijo
       final res = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
@@ -63,10 +65,10 @@ class _LoginScreenState extends State<LoginScreen> {
           return;
         }
 
-        // Guarda token para siguientes requests
         await _storage.write(key: 'access_token', value: token);
+        VehicleService.token = token;
 
-        // (Opcional) verifica con /me que el token funcione
+        // 👇 Verifica identidad y toma user_id
         final meUrl = Uri.parse('$baseUrl/api/auth/me');
         final meRes = await http.get(
           meUrl,
@@ -74,11 +76,31 @@ class _LoginScreenState extends State<LoginScreen> {
         );
 
         if (meRes.statusCode == 200) {
+          final me = jsonDecode(meRes.body) as Map<String, dynamic>;
+          // Ajusta el campo según tu /me (user_id, id, uid, etc.)
+          final userId = me['user_id'] as String?;
+          if (userId == null || userId.isEmpty) {
+            _snack('No se pudo determinar user_id desde /me');
+            setState(() => _loading = false);
+            return;
+          }
+
+          final api = ChatApi(baseUrl: '$baseUrl/api', token: token);
+          //                 ^^^^^^^^^^^^^^^^ si tus routers tienen prefijo /api
+
+          context.read<AuthProvider>().signIn(userId: userId, token: token);
           _snack('¡Bienvenido!');
           if (!mounted) return;
+
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (_) => const AppShell()),
+            MaterialPageRoute(
+              builder: (_) => AppShell(
+                api: api,
+                currentUserId: userId,
+                initialIndex: 0, // Home por defecto
+              ),
+            ),
           );
         } else {
           _snack('Token inválido: ${meRes.statusCode} ${meRes.body}');

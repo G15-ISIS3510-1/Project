@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Optional, List
 
-from sqlalchemy import select, and_, or_
+from sqlalchemy import func, select, and_, or_, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import Message, User
@@ -82,20 +82,14 @@ class MessageService:
         Listar el hilo entre user_a y user_b.
         Si only_unread=True, filtra solo los mensajes no leídos por user_a (o sea, recibidos por user_a).
         """
-        base_filter = or_(
-            and_(Message.sender_id == user_a_id, Message.receiver_id == user_b_id),
-            and_(Message.sender_id == user_b_id, Message.receiver_id == user_a_id),
-        )
-
         if only_unread:
+            # SOLO los mensajes que me envió el otro y que yo no he leído
             query = (
                 select(Message)
                 .where(
-                    and_(
-                        base_filter,
-                        Message.receiver_id == user_a_id,
-                        Message.read_at.is_(None),
-                    )
+                    (Message.sender_id == user_b_id)
+                    & (Message.receiver_id == user_a_id)
+                    & (Message.read_at.is_(None))
                 )
                 .order_by(Message.created_at.desc())
                 .offset(skip)
@@ -104,7 +98,13 @@ class MessageService:
         else:
             query = (
                 select(Message)
-                .where(base_filter)
+                .where(
+                    (
+                        (Message.sender_id == user_a_id) & (Message.receiver_id == user_b_id)
+                    ) | (
+                        (Message.sender_id == user_b_id) & (Message.receiver_id == user_a_id)
+                    )
+                )
                 .order_by(Message.created_at.desc())
                 .offset(skip)
                 .limit(limit)
@@ -192,26 +192,18 @@ class MessageService:
         recibidos por reader_id que aún estén sin leer.
         Retorna cuántos mensajes se actualizaron.
         """
-        res = await self.db.execute(
-            select(Message).where(
-                and_(
-                    Message.sender_id == other_user_id,
-                    Message.receiver_id == reader_id,
-                    Message.read_at.is_(None),
-                )
+        stmt = (
+            update(Message)
+            .where(
+                ((Message.sender_id == other_user_id) & (Message.receiver_id == reader_id))
+                & (Message.read_at.is_(None))
             )
+            .values(read_at=func.now())
+            .execution_options(synchronize_session=False)
         )
-        messages = res.scalars().all()
-        if not messages:
-            return 0
-
-        now = datetime.now(timezone.utc)
-        for m in messages:
-            m.read_at = now
-            self.db.add(m)
-
+        res = await self.db.execute(stmt)
         await self.db.commit()
-        return len(messages)
+        return res.rowcount or 0
 
     # -----------------
     # Actualizar contenido

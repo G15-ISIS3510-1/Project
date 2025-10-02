@@ -103,6 +103,7 @@ async def get_thread_with_user(
     skip: int = 0,
     limit: int = 100,
     mark_as_read: bool = Query(False, description="Marcar como leídos los mensajes recibidos en este hilo"),
+    only_unread: bool = Query(False, description="Solo mensajes no leídos (recibidos por el usuario actual)"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user_from_token),
 ):
@@ -110,7 +111,10 @@ async def get_thread_with_user(
     await _ensure_user_exists(db, other_user_id)
     svc = MessageService(db)
     thread = await svc.list_thread(
-        user_a_id=current_user.user_id, user_b_id=other_user_id, skip=skip, limit=limit
+        user_a_id=current_user.user_id, 
+        user_b_id=other_user_id, 
+        skip=skip, limit=limit,
+        only_unread=only_unread,
     )
     if mark_as_read and thread:
         await svc.mark_thread_as_read(reader_id=current_user.user_id, other_user_id=other_user_id)
@@ -211,5 +215,8 @@ async def mark_thread_as_read(
     """Marcar como leídos todos los mensajes recibidos en el hilo con `other_user_id`."""
     await _ensure_user_exists(db, other_user_id)
     svc = MessageService(db)
-    count = await svc.mark_thread_as_read(reader_id=current_user.user_id, other_user_id=other_user_id)
-    return {"message": f"Se marcaron {count} mensajes como leídos", "updated": count}
+    affected = await svc.mark_thread_as_read(
+        reader_id=current_user.user_id,
+        other_user_id=other_user_id,
+    )
+    return {"marked": affected}

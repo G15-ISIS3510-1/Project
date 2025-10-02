@@ -48,15 +48,18 @@ class _HomeViewState extends State<HomeView>
               padding: const EdgeInsets.fromLTRB(_p24, _p24, _p24, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
                   Center(
-                    child: Text(
-                      'QOVO',
-                      style: TextStyle(
-                        fontSize: 48,
-                        fontWeight: FontWeight.w400,
-                        color: Colors.black,
-                        letterSpacing: -7.0,
+                    child: Transform.scale(
+                      scaleY: 0.82,
+                      child: const Text(
+                        'QOVO',
+                        style: TextStyle(
+                          fontSize: 48,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.black,
+                          letterSpacing: -7.0,
+                        ),
                       ),
                     ),
                   ),

@@ -13,6 +13,10 @@ class Vehicle {
   final double lat;
   final double lng;
 
+  // NUEVO: dueño y fecha de creación (que vienen en tu payload)
+  final String ownerId;
+  final DateTime? createdAt;
+
   // Opcional: si tu API luego envía precio/rating
   final double? pricePerDay;
   final double? rating;
@@ -30,6 +34,8 @@ class Vehicle {
     required this.status,
     required this.lat,
     required this.lng,
+    required this.ownerId,
+    this.createdAt,
     this.pricePerDay,
     this.rating,
   });
@@ -37,23 +43,49 @@ class Vehicle {
   String get title => '$make $model $year';
   String get transmissionLabel => transmission == 'AT' ? 'Automatic' : 'Manual';
 
-  factory Vehicle.fromJson(Map<String, dynamic> j) => Vehicle(
-    vehicle_id: j['vehicle_id'] as String,
-    make: j['make'] as String,
-    model: j['model'] as String,
-    year: (j['year'] as num).toInt(),
-    plate: j['plate'] as String,
-    seats: (j['seats'] as num).toInt(),
-    transmission: j['transmission'] as String,
-    fuelType: j['fuel_type'] as String,
-    mileage: (j['mileage'] as num).toInt(),
-    status: j['status'] as String,
-    lat: (j['lat'] as num).toDouble(),
-    lng: (j['lng'] as num).toDouble(),
-    // si tu backend empieza a mandar estos campos, se leen; si no, quedan null
-    pricePerDay: (j['price_per_day'] as num?)?.toDouble(),
-    rating: (j['rating'] as num?)?.toDouble(),
-  );
+  factory Vehicle.fromJson(Map<String, dynamic> j) {
+    DateTime? _parseDate(dynamic v) {
+      if (v == null) return null;
+      if (v is DateTime) return v;
+      if (v is String && v.isNotEmpty) {
+        try {
+          return DateTime.parse(v);
+        } catch (_) {}
+      }
+      return null;
+    }
+
+    double _toDouble(dynamic v) => v == null
+        ? 0.0
+        : (v is num ? v.toDouble() : double.parse(v.toString()));
+    int _toInt(dynamic v) =>
+        v == null ? 0 : (v is num ? v.toInt() : int.parse(v.toString()));
+
+    return Vehicle(
+      vehicle_id: j['vehicle_id'] as String,
+      make: j['make'] as String,
+      model: j['model'] as String,
+      year: _toInt(j['year']),
+      plate: j['plate'] as String,
+      seats: _toInt(j['seats']),
+      transmission: j['transmission'] as String,
+      fuelType: (j['fuel_type'] ?? j['fuelType']) as String,
+      mileage: _toInt(j['mileage']),
+      status: j['status'] as String,
+      lat: _toDouble(j['lat']),
+      lng: _toDouble(j['lng']),
+
+      // nuevos
+      ownerId: (j['owner_id'] ?? j['ownerId']) as String,
+      createdAt: _parseDate(j['created_at'] ?? j['createdAt']),
+
+      // opcionales si llegan
+      pricePerDay:
+          (j['price_per_day'] as num?)?.toDouble() ??
+          (j['pricePerDay'] as num?)?.toDouble(),
+      rating: (j['rating'] as num?)?.toDouble(),
+    );
+  }
 
   Map<String, dynamic> toJson() => {
     'vehicle_id': vehicle_id,
@@ -68,6 +100,8 @@ class Vehicle {
     'status': status,
     'lat': lat,
     'lng': lng,
+    'owner_id': ownerId,
+    if (createdAt != null) 'created_at': createdAt!.toIso8601String(),
     if (pricePerDay != null) 'price_per_day': pricePerDay,
     if (rating != null) 'rating': rating,
   };
