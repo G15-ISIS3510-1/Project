@@ -1,14 +1,54 @@
 // lib/main.dart
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import 'LoginRegister/login.dart';
-import 'host_mode_provider.dart'; // Make sure this path is correct
+import 'host_mode_provider.dart';
+import 'data/users_api.dart';
+
+// 👇 AuthProvider súper simple (ponlo en su archivo si ya tienes uno)
+class AuthProvider with ChangeNotifier {
+  String? _userId;
+  String? _token;
+
+  String? get userId => _userId;
+  String? get token => _token;
+
+  void signIn({required String userId, required String token}) {
+    _userId = userId;
+    _token = token;
+    notifyListeners();
+  }
+
+  void signOut() {
+    _userId = null;
+    _token = null;
+    notifyListeners();
+  }
+}
+
+const String kApiBase = String.fromEnvironment(
+  'API_BASE',
+  defaultValue: 'http://10.0.2.2:8000',
+);
+const String kApiBaseWithPrefix = '$kApiBase/api';
 
 void main() {
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => HostModeProvider(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => HostModeProvider()),
+
+        // ✅ UsersApi depende del token de AuthProvider
+        ProxyProvider<AuthProvider, UsersApi?>(
+          update: (_, auth, previous) {
+            final token = auth.token;
+            if (token == null) return null;
+            return UsersApi(baseUrl: 'http://10.0.2.2:8000/api', token: token);
+          },
+        ),
+      ],
       child: const MyApp(),
     ),
   );
@@ -44,9 +84,7 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
     Future.delayed(const Duration(seconds: 2), () {
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) => const LoginScreen(),
-        ),
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
       );
     });
   }

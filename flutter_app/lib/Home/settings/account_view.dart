@@ -7,8 +7,73 @@ import 'profile_settings_view.dart';
 import 'currency_view.dart';
 import 'legal_view.dart';
 
+// 👇 importa tus providers/apis reales
+import '../../data/users_api.dart';
+import '../../LoginRegister/register.dart';
+import '../../main.dart' show AuthProvider;
+
 class AccountView extends StatelessWidget {
   const AccountView({super.key});
+
+  Future<void> _handleHostToggle(BuildContext context, bool value) async {
+    final hostProvider = context.read<HostModeProvider>();
+
+    // Apagar host mode: inmediato.
+    if (!value) {
+      hostProvider.setHostMode(false);
+      return;
+    }
+
+    final auth = Provider.of<AuthProvider?>(context, listen: false);
+    final usersApi = Provider.of<UsersApi?>(context, listen: false);
+    final userId = auth?.userId;
+
+    if (usersApi == null || userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Inicia sesión para activar Host Mode.')),
+      );
+      return;
+    }
+
+    // 1) Intento con caché, 2) si viene null, forzar refresh.
+    String? role = await usersApi.getUserRole(userId);
+    role ??= await usersApi.getUserRole(userId, refresh: true);
+
+    if (role == 'host' || role == 'both') {
+      hostProvider.setHostMode(true);
+      return;
+    } else {
+      hostProvider.setHostMode(false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Completa el registro como host para activar el modo Host.',
+          ),
+        ),
+      );
+    }
+
+    // role es 'renter' o null -> mandar a registro de host.
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const RegisterScreen()),
+    );
+
+    // Al volver, refrescar rol y decidir.
+    role = await usersApi.getUserRole(userId, refresh: true);
+    if (role == 'host' || role == 'both') {
+      hostProvider.setHostMode(true);
+    } else {
+      hostProvider.setHostMode(false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Completa el registro como host para activar el modo Host.',
+          ),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,6 +134,7 @@ class AccountView extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
 
+                  // Host Mode toggle con validación de rol
                   Consumer<HostModeProvider>(
                     builder: (context, hostProvider, _) {
                       return SwitchListTile.adaptive(
@@ -78,7 +144,8 @@ class AccountView extends StatelessWidget {
                         ),
                         value: hostProvider.isHostMode,
                         onChanged: (value) {
-                          hostProvider.setHostMode(value);
+                          // Ejecutar flujo async sin bloquear el UI thread
+                          _handleHostToggle(context, value);
                         },
                         activeThumbColor: Colors.green,
                         contentPadding: EdgeInsets.zero,
@@ -86,7 +153,6 @@ class AccountView extends StatelessWidget {
                     },
                   ),
 
-                  // Show phrase only when Host Mode is ON
                   if (isHost) ...[
                     const Center(
                       child: Text(
@@ -103,7 +169,7 @@ class AccountView extends StatelessWidget {
 
                   const SizedBox(height: 16),
 
-                  // Pill buttons
+                  // Botones tipo "pill"
                   pillButton(
                     Icons.settings,
                     'Settings',
@@ -135,9 +201,6 @@ class AccountView extends StatelessWidget {
 
                   const SizedBox(height: 28),
 
-                  // Host Mode Toggle
-
-                  // Version label
                   const Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
@@ -150,12 +213,10 @@ class AccountView extends StatelessWidget {
             ),
           ),
 
-          // Bottom spacing for bottom bar
+          // Espacio inferior para la bottom bar
           const SliverToBoxAdapter(child: SizedBox(height: 92)),
         ],
       ),
     );
   }
 }
-
-// fin de lib/settings/account_view.dart

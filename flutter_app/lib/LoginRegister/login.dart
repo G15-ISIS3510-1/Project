@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_app/features/vehicles/vehicle_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:provider/provider.dart';
 
 import 'package:flutter_app/Home/app_shell.dart';
 import 'package:flutter_app/LoginRegister/register.dart';
 import 'package:flutter_app/data/chat_api.dart'; // 👈 importa ChatApi
+import 'package:flutter_app/main.dart' show AuthProvider;
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -86,6 +88,7 @@ class _LoginScreenState extends State<LoginScreen> {
           final api = ChatApi(baseUrl: '$baseUrl/api', token: token);
           //                 ^^^^^^^^^^^^^^^^ si tus routers tienen prefijo /api
 
+          context.read<AuthProvider>().signIn(userId: userId, token: token);
           _snack('¡Bienvenido!');
           if (!mounted) return;
 
