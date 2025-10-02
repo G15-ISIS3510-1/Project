@@ -11,7 +11,7 @@ from alembic import op
 import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
-revision = '8b845b70a009'
+revision = '3af922cc05be'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -43,6 +43,23 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_users_email'), 'users', ['email'], unique=True)
     op.create_index(op.f('ix_users_user_id'), 'users', ['user_id'], unique=False)
+    op.create_table('conversations',
+    sa.Column('conversation_id', sa.String(), nullable=False),
+    sa.Column('user_low_id', sa.String(), nullable=False),
+    sa.Column('user_high_id', sa.String(), nullable=False),
+    sa.Column('title', sa.String(), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('last_message_at', sa.DateTime(timezone=True), nullable=True),
+    sa.ForeignKeyConstraint(['user_high_id'], ['users.user_id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['user_low_id'], ['users.user_id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('conversation_id'),
+    sa.UniqueConstraint('user_low_id', 'user_high_id', name='uq_conversation_direct_pair')
+    )
+    op.create_index(op.f('ix_conversations_conversation_id'), 'conversations', ['conversation_id'], unique=False)
+    op.create_index('ix_conversations_last_message_at', 'conversations', ['last_message_at'], unique=False)
+    op.create_index(op.f('ix_conversations_user_high_id'), 'conversations', ['user_high_id'], unique=False)
+    op.create_index(op.f('ix_conversations_user_low_id'), 'conversations', ['user_low_id'], unique=False)
+    op.create_index('ix_conversations_user_pair', 'conversations', ['user_low_id', 'user_high_id'], unique=False)
     op.create_table('vehicles',
     sa.Column('vehicle_id', sa.String(), nullable=False),
     sa.Column('owner_id', sa.String(), nullable=False),
@@ -91,6 +108,28 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('booking_id')
     )
     op.create_index(op.f('ix_bookings_booking_id'), 'bookings', ['booking_id'], unique=False)
+    op.create_table('messages',
+    sa.Column('message_id', sa.String(), nullable=False),
+    sa.Column('sender_id', sa.String(), nullable=False),
+    sa.Column('receiver_id', sa.String(), nullable=False),
+    sa.Column('content', sa.Text(), nullable=False),
+    sa.Column('conversation_id', sa.String(), nullable=True),
+    sa.Column('metadata', sa.JSON(), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('read_at', sa.DateTime(timezone=True), nullable=True),
+    sa.ForeignKeyConstraint(['conversation_id'], ['conversations.conversation_id'], ondelete='SET NULL'),
+    sa.ForeignKeyConstraint(['receiver_id'], ['users.user_id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['sender_id'], ['users.user_id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('message_id')
+    )
+    op.create_index(op.f('ix_messages_conversation_id'), 'messages', ['conversation_id'], unique=False)
+    op.create_index(op.f('ix_messages_created_at'), 'messages', ['created_at'], unique=False)
+    op.create_index(op.f('ix_messages_message_id'), 'messages', ['message_id'], unique=False)
+    op.create_index(op.f('ix_messages_read_at'), 'messages', ['read_at'], unique=False)
+    op.create_index(op.f('ix_messages_receiver_id'), 'messages', ['receiver_id'], unique=False)
+    op.create_index(op.f('ix_messages_sender_id'), 'messages', ['sender_id'], unique=False)
+    op.create_index('ix_messages_thread_order', 'messages', ['sender_id', 'receiver_id', 'created_at'], unique=False)
+    op.create_index('ix_messages_unread', 'messages', ['receiver_id', 'read_at'], unique=False)
     op.create_table('pricing',
     sa.Column('pricing_id', sa.String(), nullable=False),
     sa.Column('vehicle_id', sa.String(), nullable=False),
@@ -141,11 +180,26 @@ def downgrade() -> None:
     op.drop_table('vehicle_availability')
     op.drop_index(op.f('ix_pricing_pricing_id'), table_name='pricing')
     op.drop_table('pricing')
+    op.drop_index('ix_messages_unread', table_name='messages')
+    op.drop_index('ix_messages_thread_order', table_name='messages')
+    op.drop_index(op.f('ix_messages_sender_id'), table_name='messages')
+    op.drop_index(op.f('ix_messages_receiver_id'), table_name='messages')
+    op.drop_index(op.f('ix_messages_read_at'), table_name='messages')
+    op.drop_index(op.f('ix_messages_message_id'), table_name='messages')
+    op.drop_index(op.f('ix_messages_created_at'), table_name='messages')
+    op.drop_index(op.f('ix_messages_conversation_id'), table_name='messages')
+    op.drop_table('messages')
     op.drop_index(op.f('ix_bookings_booking_id'), table_name='bookings')
     op.drop_table('bookings')
     op.drop_index(op.f('ix_vehicles_vehicle_id'), table_name='vehicles')
     op.drop_index(op.f('ix_vehicles_plate'), table_name='vehicles')
     op.drop_table('vehicles')
+    op.drop_index('ix_conversations_user_pair', table_name='conversations')
+    op.drop_index(op.f('ix_conversations_user_low_id'), table_name='conversations')
+    op.drop_index(op.f('ix_conversations_user_high_id'), table_name='conversations')
+    op.drop_index('ix_conversations_last_message_at', table_name='conversations')
+    op.drop_index(op.f('ix_conversations_conversation_id'), table_name='conversations')
+    op.drop_table('conversations')
     op.drop_index(op.f('ix_users_user_id'), table_name='users')
     op.drop_index(op.f('ix_users_email'), table_name='users')
     op.drop_table('users')

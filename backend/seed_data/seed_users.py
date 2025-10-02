@@ -1,57 +1,88 @@
 # ----------------------------
 # Archivo: seed_data/seed_users.py
 # ----------------------------
-from faker import Faker
+from __future__ import annotations
+
+import os
+import json
 import random
-import string
-import httpx
+import requests
+from typing import Any, Dict, List
+
+from faker import Faker
+
 from .utils import BASE_URL, clean_phone
 
 fake = Faker()
-USER_ROLES = ["renter", "host", "both"]
-USERS_CREATED = []
 
-def _password(n: int = 10) -> str:
-    # >= 8 chars y << 72 bytes (bcrypt)
-    alphabet = string.ascii_letters + string.digits
-    return "".join(random.choice(alphabet) for _ in range(n))
+USERS_CREATED: List[Dict[str, Any]] = []  # [{"email": ..., "password": ..., "role": ..., "user_id": ...}]
 
-def seed_users(n: int = 10):
+
+def _register_user(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Llama a POST /api/auth/register (público, sin Authorization).
+    Devuelve el JSON (dict) o levanta HTTPError con detalle legible.
+    """
+    url = f"{BASE_URL}/api/auth/register"
+    resp = requests.post(url, headers={"Content-Type": "application/json"}, data=json.dumps(payload))
+    if not resp.ok:
+        # Intenta mostrar el detalle de FastAPI/Pydantic para depurar 422s
+        try:
+            detail = resp.json()
+        except Exception:
+            detail = resp.text
+        print(f"[seed_users] register -> {resp.status_code} {detail!r}")
+        resp.raise_for_status()
+    return resp.json()
+
+
+def seed_users(n: int = 12) -> List[Dict[str, Any]]:
+    """
+    Crea n usuarios con mezcla de roles (host/renter/both).
+    Guarda en USERS_CREATED email/password/role/user_id para semillas posteriores.
+    """
     global USERS_CREATED
     USERS_CREATED.clear()
 
-    with httpx.Client(timeout=10.0) as client:
-        for _ in range(n):
-            role = random.choice(USER_ROLES)
-            pwd = _password(10)
-            payload = {
-                "name": fake.name(),                 # tu API usa "name"
-                "email": fake.unique.email(),
-                "password": pwd,                     # >= 8
-                "phone": clean_phone(fake.phone_number(), 15),
+    roles = ["host", "renter", "both"]
+
+    created = 0
+    for _ in range(n):
+        role = random.choice(roles)
+        name = fake.name()
+        email = fake.unique.email()
+
+        # Limpia y limita el teléfono (máx ~15 dígitos es típico para E.164 sin '+')
+        raw_phone = fake.msisdn() or fake.phone_number()
+        phone = clean_phone(raw_phone)[:15] or "3000000000"
+
+        # Usa contraseñas simples pero válidas para pruebas
+        password = fake.password(length=10)
+
+        payload = {
+            "name": name,
+            "email": email,
+            "phone": phone,
+            "password": password,
+            "role": role,  # requerido por tu esquema de registro
+        }
+
+        try:
+            data = _register_user(payload)
+        except requests.HTTPError:
+            # Ya se imprimió el detalle arriba; continúa con el siguiente usuario
+            continue
+
+        user_id = data.get("user_id") or data.get("id")
+        USERS_CREATED.append(
+            {
+                "email": email,
+                "password": password,
                 "role": role,
+                "user_id": user_id,
             }
-            r = client.post(f"{BASE_URL}/api/auth/register", json=payload)
+        )
+        created += 1
 
-            # Acepta 200 o 201 como éxito
-            if r.status_code in (200, 201):
-                data = r.json()
-                USERS_CREATED.append({
-                    "email": payload["email"],
-                    "password": pwd,
-                    "role": role,
-                    "user_id": data.get("user_id") or data.get("id"),
-                })
-            else:
-                print(f"Error creando usuario: {r.status_code} -> {r.text}")
-
-    print(f"Usuarios creados: {len(USERS_CREATED)}")
+    print(f"[seed_users] Usuarios creados: {created}")
     return USERS_CREATED
-
-if __name__ == "__main__":
-    import argparse
-    p = argparse.ArgumentParser()
-    p.add_argument("--n", type=int, default=10)
-    args = p.parse_args()
-    seed_users(n=args.n)
-    print("Usuarios creados exitosamente.")
