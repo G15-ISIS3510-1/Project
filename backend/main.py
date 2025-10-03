@@ -16,6 +16,8 @@ from app.routers import (
     messages,
     conversations,
     bookings,
+    insurance_plans,
+    payments
 )
 # import the router object from the file app/routers/insurance_plans.py
 from app.routers.insurance_plans import router as insurance_plans_router

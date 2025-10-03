@@ -1,12 +1,13 @@
 from pydantic_settings import BaseSettings
-from typing import List
+from typing import List, Optional
 import os
 
 
 
 class Settings(BaseSettings):
     # Database
-    
+
+    GOOGLE_API_KEY: Optional[str] = None
     database_url: str = "postgresql://username:password@localhost:5432/mobile_app_db"
     database_url_async: str = "postgresql+asyncpg://username:password@localhost:5432/mobile_app_db"
     

@@ -1,4 +1,3 @@
-// lib/LoginRegister/register.dart
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -22,7 +21,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _phoneC = TextEditingController();
   final _passwordC = TextEditingController();
 
-  // 👇 nuevo: estado para el rol (renter por defecto)
+  // 👇 estado para el rol (renter por defecto)
   String _role = 'renter';
 
   bool _loading = false;
@@ -36,15 +35,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
-  InputDecoration _dec(String hint) => InputDecoration(
-    hintText: hint,
-    filled: true,
-    fillColor: Colors.white,
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12.0),
-      borderSide: BorderSide.none,
-    ),
-  );
+  InputDecoration _dec(BuildContext context, String hint) {
+    final t = Theme.of(context);
+    final fill = t.colorScheme.surfaceVariant.withOpacity(
+      t.brightness == Brightness.dark ? 0.3 : 1.0,
+    );
+    final onSurface = t.colorScheme.onSurface.withOpacity(0.12);
+
+    return InputDecoration(
+      hintText: hint,
+      filled: true,
+      fillColor: fill,
+      hintStyle: TextStyle(color: t.colorScheme.onSurface.withOpacity(0.6)),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12.0),
+        borderSide: BorderSide(color: onSurface),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12.0),
+        borderSide: BorderSide(color: onSurface),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12.0),
+        borderSide: BorderSide(color: t.colorScheme.primary, width: 1.5),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+    );
+  }
 
   Future<void> _register() async {
     if (!_formKey.currentState!.validate()) return;
@@ -63,8 +80,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         'email': email,
         'password': _passwordC.text,
         'phone': _phoneC.text.trim().isEmpty ? null : _phoneC.text.trim(),
-        // 👇 enviamos el rol elegido
-        'role': _role, // valores esperados: 'renter' | 'host'
+        'role': _role, // 'renter' | 'host'
       };
 
       final res = await http.post(
@@ -117,6 +133,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = Theme.of(context);
+
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -127,26 +145,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
                 const SizedBox(height: 100.0),
-                const Center(
+                Center(
                   child: Text(
                     'QOVO',
                     style: TextStyle(
                       fontSize: 64,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.black,
+                      fontWeight: FontWeight.w600,
+                      color: t.colorScheme.onBackground,
+                      letterSpacing: -6.0,
                     ),
                   ),
                 ),
                 const SizedBox(height: 50.0),
-                const Text(
+                Text(
                   'Create account',
-                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.w500),
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w600,
+                    color: t.colorScheme.onBackground.withOpacity(0.9),
+                  ),
                 ),
                 const SizedBox(height: 20.0),
 
                 TextFormField(
                   controller: _nameC,
-                  decoration: _dec('Name'),
+                  style: TextStyle(color: t.colorScheme.onSurface),
+                  decoration: _dec(context, 'Name'),
                   validator: (v) => (v == null || v.trim().isEmpty)
                       ? 'Nombre requerido'
                       : null,
@@ -155,21 +179,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 TextFormField(
                   controller: _emailC,
-                  decoration: _dec('Email'),
+                  style: TextStyle(color: t.colorScheme.onSurface),
+                  decoration: _dec(context, 'Email'),
                   keyboardType: TextInputType.emailAddress,
                 ),
                 const SizedBox(height: 16.0),
 
                 TextFormField(
                   controller: _phoneC,
-                  decoration: _dec('Phone (optional)'),
+                  style: TextStyle(color: t.colorScheme.onSurface),
+                  decoration: _dec(context, 'Phone (optional)'),
                   keyboardType: TextInputType.phone,
                 ),
                 const SizedBox(height: 16.0),
 
                 TextFormField(
                   controller: _passwordC,
-                  decoration: _dec('Password'),
+                  style: TextStyle(color: t.colorScheme.onSurface),
+                  decoration: _dec(context, 'Password'),
                   obscureText: true,
                   validator: (v) => (v == null || v.length < 6)
                       ? 'Mínimo 6 caracteres'
@@ -180,7 +207,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 // 👇 Selector de rol
                 DropdownButtonFormField<String>(
                   value: _role,
-                  decoration: _dec('Role'),
+                  decoration: _dec(context, 'Role'),
                   items: const [
                     DropdownMenuItem(value: 'renter', child: Text('Renter')),
                     DropdownMenuItem(value: 'host', child: Text('Host')),
@@ -190,21 +217,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 const SizedBox(height: 24.0),
 
-                ElevatedButton(
+                FilledButton(
                   onPressed: _loading ? null : _register,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16.0),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12.0),
                     ),
-                    padding: const EdgeInsets.symmetric(vertical: 16.0),
                   ),
                   child: Text(
                     _loading ? 'Registrando…' : 'Register',
                     style: const TextStyle(
                       fontSize: 20,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
@@ -213,9 +238,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
-                    const Text(
+                    Text(
                       'Have an account? ',
-                      style: TextStyle(fontSize: 16, color: Colors.black),
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: t.colorScheme.onBackground.withOpacity(0.7),
+                      ),
                     ),
                     GestureDetector(
                       onTap: () {
@@ -225,12 +253,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                         );
                       },
-                      child: const Text(
+                      child: Text(
                         'Log in',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: Colors.blue,
+                          color: t.colorScheme.primary,
                         ),
                       ),
                     ),

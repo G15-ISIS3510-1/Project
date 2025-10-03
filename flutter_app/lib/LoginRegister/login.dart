@@ -47,9 +47,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _loading = true);
     try {
-      final url = Uri.parse(
-        '$baseUrl/api/auth/login',
-      ); // 👈 asegúrate del prefijo
+      final url = Uri.parse('$baseUrl/api/auth/login');
       final res = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
@@ -77,7 +75,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
         if (meRes.statusCode == 200) {
           final me = jsonDecode(meRes.body) as Map<String, dynamic>;
-          // Ajusta el campo según tu /me (user_id, id, uid, etc.)
           final userId = me['user_id'] as String?;
           if (userId == null || userId.isEmpty) {
             _snack('No se pudo determinar user_id desde /me');
@@ -86,7 +83,6 @@ class _LoginScreenState extends State<LoginScreen> {
           }
 
           final api = ChatApi(baseUrl: '$baseUrl/api', token: token);
-          //                 ^^^^^^^^^^^^^^^^ si tus routers tienen prefijo /api
 
           context.read<AuthProvider>().signIn(userId: userId, token: token);
           _snack('¡Bienvenido!');
@@ -120,8 +116,40 @@ class _LoginScreenState extends State<LoginScreen> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
+  InputDecoration _dec(BuildContext context, String hint) {
+    final t = Theme.of(context);
+    // surfaceContainerHighest no está en todos los channels; fallback a surfaceVariant
+    final fill = t.colorScheme.surfaceVariant.withOpacity(
+      t.brightness == Brightness.dark ? 0.3 : 1.0,
+    );
+    final onSurface = t.colorScheme.onSurface.withOpacity(0.12);
+
+    return InputDecoration(
+      hintText: hint,
+      filled: true,
+      fillColor: fill,
+      hintStyle: TextStyle(color: t.colorScheme.onSurface.withOpacity(0.6)),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: onSurface, width: 1),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: onSurface, width: 1),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: t.colorScheme.primary, width: 1.5),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final t = Theme.of(context);
+    final onBg = t.colorScheme.onBackground;
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -138,69 +166,54 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Transform.scale(
                   scaleY: 0.82,
                   scaleX: 1.0,
-                  child: const Text(
+                  child: Text(
                     'QOVO',
                     style: TextStyle(
                       fontSize: 64,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.black,
+                      fontWeight: FontWeight.w600,
+                      color: onBg,
                       letterSpacing: -7.0,
                     ),
                   ),
                 ),
               ),
               const SizedBox(height: 80),
-              const Text(
+              Text(
                 'Login to your account',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w600,
-                  color: Colors.black87,
+                  color: t.colorScheme.onBackground.withOpacity(0.9),
                 ),
               ),
               const SizedBox(height: 24),
               TextField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
-                decoration: InputDecoration(
-                  hintText: 'Email',
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
+                style: TextStyle(color: t.colorScheme.onSurface),
+                decoration: _dec(context, 'Email'),
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: _passwordController,
                 obscureText: true,
-                decoration: InputDecoration(
-                  hintText: 'Password',
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
+                style: TextStyle(color: t.colorScheme.onSurface),
+                decoration: _dec(context, 'Password'),
               ),
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
                 height: 50,
-                child: ElevatedButton(
+                child: FilledButton(
                   onPressed: _loading ? null : _handleLogin,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
+                  style: FilledButton.styleFrom(
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                   child: Text(
                     _loading ? 'Ingresando…' : 'Sign in',
-                    style: const TextStyle(color: Colors.white, fontSize: 18),
+                    style: const TextStyle(fontSize: 18),
                   ),
                 ),
               ),
@@ -208,9 +221,11 @@ class _LoginScreenState extends State<LoginScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text(
+                  Text(
                     "Don't have an account?",
-                    style: TextStyle(color: Colors.black54),
+                    style: TextStyle(
+                      color: t.colorScheme.onBackground.withOpacity(0.7),
+                    ),
                   ),
                   const SizedBox(width: 4),
                   GestureDetector(
@@ -221,10 +236,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       );
                     },
-                    child: const Text(
+                    child: Text(
                       'Sign up',
                       style: TextStyle(
-                        color: Color(0xFF4C75FF),
+                        color: t.colorScheme.primary,
                         fontWeight: FontWeight.w600,
                       ),
                     ),

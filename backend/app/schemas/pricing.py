@@ -33,3 +33,18 @@ class PricingList(BaseModel):  # Para hacer la paginación
     total: int
     page: int
     limit: int
+
+class SuggestPriceRequest(BaseModel):
+    make: Optional[str] = None
+    model: Optional[str] = None
+    year: Optional[int] = Field(None, ge=1900, le=2035)
+    transmission: Optional[str] = None  # AT|MT|CVT|EV
+    fuel_type: Optional[str] = None     # gas|diesel|hybrid|ev
+    seats: Optional[int] = Field(None, ge=1, le=50)
+    mileage: Optional[int] = Field(None, ge=0)
+    lat: Optional[float] = Field(None, ge=-90, le=90)
+    lng: Optional[float] = Field(None, ge=-180, le=180)
+
+class SuggestPriceResponse(BaseModel):
+    suggested_price: float
+    reasoning: Optional[str] = None

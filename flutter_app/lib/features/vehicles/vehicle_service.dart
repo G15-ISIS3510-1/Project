@@ -78,7 +78,6 @@ class VehicleService {
       'model': model,
       'year': year,
       'transmission': transmission, // OK
-      'price_per_day': pricePerDay, // 👈 snake_case
       'plate': plate,
       'seats': seats,
       'fuel_type': fuelType, // 👈 requerido

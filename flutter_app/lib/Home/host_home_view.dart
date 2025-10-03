@@ -11,8 +11,6 @@ import '../home/widgets/car_card.dart';
 import '../home/widgets/category_chips.dart';
 import '../home/widgets/search_bar.dart' as qovo;
 import '../host_mode_provider.dart';
-
-// 👇 ajusta este import a donde vivirá tu pantalla para crear vehículo
 import 'package:flutter_app/Home/add_vehicle_view.dart';
 
 class HostHomeView extends StatefulWidget {
@@ -35,19 +33,12 @@ class _HostHomeViewState extends State<HostHomeView>
   @override
   void initState() {
     super.initState();
-    // Si tu API ya tiene endpoint by owner, úsalo (listByOwner)
-    // Si no, traemos todo y filtramos por ownerId == currentUserId
     _future = _loadMyVehicles();
   }
 
   Future<List<Vehicle>> _loadMyVehicles() async {
-    try {
-      // Opción A (si existe): return VehicleService.listByOwner(widget.currentUserId);
-      final all = await VehicleService.list();
-      return all.where((v) => v.ownerId == widget.currentUserId).toList();
-    } catch (e) {
-      rethrow;
-    }
+    final all = await VehicleService.list();
+    return all.where((v) => v.ownerId == widget.currentUserId).toList();
   }
 
   @override
@@ -58,79 +49,59 @@ class _HostHomeViewState extends State<HostHomeView>
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
 
+    // Altura extra para que la última card no quede detrás de la bottom bar
+    final listBottomPadding = 76 + 12 + bottomInset + 8;
+
     return SafeArea(
       top: true,
       bottom: false,
-      child: CustomScrollView(
-        slivers: [
-          // Header + filtros (puedes ajustar categorías si quieres)
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(_p24, _p24, _p24, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Transform.scale(
-                      scaleY: 0.82,
-                      child: Text(
-                        'QOVO',
-                        style: text.displaySmall?.copyWith(
-                          fontSize: 48,
-                          fontWeight: FontWeight.w600,
-                          color: scheme.onBackground,
-                        ),
-                      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── HEADER (fijo) ─────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(_p24, _p24, _p24, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                qovo.SearchBar(),
+                const SizedBox(height: 16),
+                const CategoryChips(
+                  items: [
+                    'My cars',
+                    'SUVs',
+                    'Minivans',
+                    'Trucks',
+                    'Vans',
+                    'Luxury',
+                  ],
+                ),
+                const SizedBox(height: 8),
+                if (isHost)
+                  Text(
+                    'You are in Host mode',
+                    style: text.bodyMedium?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  qovo.SearchBar(),
-                  const SizedBox(height: 16),
-                  const CategoryChips(
-                    items: [
-                      'My cars',
-                      'SUVs',
-                      'Minivans',
-                      'Trucks',
-                      'Vans',
-                      'Luxury',
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  if (isHost)
-                    Text(
-                      'You are in Host mode',
-                      style: text.bodyMedium?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                ],
-              ),
+                const SizedBox(height: 12),
+                _AddCarCard(
+                  onTap: () async {
+                    final created = await Navigator.of(context).push<bool>(
+                      MaterialPageRoute(builder: (_) => const AddVehicleView()),
+                    );
+                    if (created == true && mounted) {
+                      setState(() => _future = _loadMyVehicles());
+                    }
+                  },
+                ),
+              ],
             ),
           ),
 
-          // CTA: tarjeta “Agregar carro”
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(_p24, 0, _p24, 16),
-              child: _AddCarCard(
-                onTap: () async {
-                  final created = await Navigator.of(context).push<bool>(
-                    MaterialPageRoute(builder: (_) => const AddVehicleView()),
-                  );
-                  // si se creó, refrescamos la lista
-                  if (created == true && mounted) {
-                    setState(() => _future = _loadMyVehicles());
-                  }
-                },
-              ),
-            ),
-          ),
-
-          // Lista de mis vehículos
-          SliverFillRemaining(
-            hasScrollBody: true,
+          // ── LISTA (scroll solo aquí) ──────────────────────────────────
+          Expanded(
             child: FutureBuilder<List<Vehicle>>(
               future: _future,
               builder: (context, snap) {
@@ -146,7 +117,12 @@ class _HostHomeViewState extends State<HostHomeView>
                 }
 
                 return ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: _p24),
+                  padding: EdgeInsets.fromLTRB(
+                    _p24,
+                    0,
+                    _p24,
+                    listBottomPadding,
+                  ),
                   itemCount: vehicles.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 16),
                   itemBuilder: (_, i) {
@@ -169,7 +145,6 @@ class _HostHomeViewState extends State<HostHomeView>
                           transmission: transLabel,
                           price: price,
                           onFavoriteToggle: () {},
-                          // Puedes agregar onTap para editar vehículo
                         );
                       },
                     );
@@ -178,15 +153,8 @@ class _HostHomeViewState extends State<HostHomeView>
               },
             ),
           ),
-
-          SliverToBoxAdapter(
-            child: SizedBox(height: 76 + 12 + bottomInset + 8),
-          ),
         ],
       ),
-
-      // FAB adicional para agregar vehículo
-      // (dos formas de llegar: card y este FAB)
     );
   }
 }
@@ -207,9 +175,9 @@ class _AddCarCard extends StatelessWidget {
       splashColor: scheme.primary.withOpacity(0.08),
       child: Container(
         decoration: BoxDecoration(
-          color: theme.cardColor, // antes: Color(0xFFF8FAFF)
+          color: theme.cardColor,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: scheme.outlineVariant), // antes: 0xFFE5E7EB
+          border: Border.all(color: scheme.outlineVariant),
         ),
         padding: const EdgeInsets.all(16),
         child: Row(

@@ -33,6 +33,7 @@ class VehicleUpdate(BaseModel):
     status: Optional[str] = Field(None, pattern="^(active|inactive|pending_review)$")
     lat: Optional[float] = Field(None, ge=-90, le=90)
     lng: Optional[float] = Field(None, ge=-180, le=180)
+    owner_id: Optional[str] = Field(None)  # Permitir actualizar owner_id si es necesario
 
 class VehicleResponse(VehicleBase):
     vehicle_id: str

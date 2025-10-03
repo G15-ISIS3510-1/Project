@@ -1,3 +1,4 @@
+// lib/home/home_view.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_app/features/vehicles/vehicle_service.dart';
 import 'package:flutter_app/features/vehicles/vehicle.dart';
@@ -20,16 +21,15 @@ class _HomeViewState extends State<HomeView>
   bool get wantKeepAlive => true;
 
   late Future<List<Vehicle>> _future;
-
   final Map<String, Future<Pricing?>> _pricingFutures = {};
+
+  static const double _p24 = 24;
 
   @override
   void initState() {
     super.initState();
     _future = VehicleService.list();
   }
-
-  static const double _p24 = 24;
 
   @override
   Widget build(BuildContext context) {
@@ -38,54 +38,54 @@ class _HomeViewState extends State<HomeView>
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
 
+    // para que la última card no quede oculta por la bottom bar
+    final listBottomPadding = 76 + 12 + bottomInset + 8;
+
     return SafeArea(
       top: true,
       bottom: false,
-      child: CustomScrollView(
-        slivers: [
-          // Header + filtros
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(_p24, _p24, _p24, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Transform.scale(
-                      scaleY: 0.82,
-                      child: Text(
-                        'QOVO',
-                        style: text.displaySmall?.copyWith(
-                          fontSize: 48,
-                          fontWeight: FontWeight.w400,
-                          // usa onBackground según tema
-                          color: scheme.onBackground.withOpacity(0.95),
-                          letterSpacing: -7.0,
-                        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── HEADER (fijo) ─────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(_p24, _p24, _p24, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Transform.scale(
+                    scaleY: 0.82,
+                    child: Text(
+                      'QOVO',
+                      style: text.displaySmall?.copyWith(
+                        fontSize: 48,
+                        fontWeight: FontWeight.w400,
+                        color: scheme.onBackground.withOpacity(0.95),
+                        letterSpacing: -7.0,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  const qovo.SearchBar(),
-                  const SizedBox(height: 16),
-                  const CategoryChips(
-                    items: [
-                      'Cars',
-                      'SUVs',
-                      'Minivans',
-                      'Trucks',
-                      'Vans',
-                      'Luxury',
-                    ],
-                  ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 20),
+                const qovo.SearchBar(),
+                const SizedBox(height: 16),
+                const CategoryChips(
+                  items: [
+                    'Cars',
+                    'SUVs',
+                    'Minivans',
+                    'Trucks',
+                    'Vans',
+                    'Luxury',
+                  ],
+                ),
+              ],
             ),
           ),
 
-          // Lista de vehículos
-          SliverFillRemaining(
-            hasScrollBody: true,
+          // ── LISTA (scroll solo aquí) ──────────────────────────────────
+          Expanded(
             child: FutureBuilder<List<Vehicle>>(
               future: _future,
               builder: (context, snap) {
@@ -106,12 +106,16 @@ class _HomeViewState extends State<HomeView>
                 }
 
                 return ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: _p24),
+                  padding: EdgeInsets.fromLTRB(
+                    _p24,
+                    0,
+                    _p24,
+                    listBottomPadding,
+                  ),
                   itemCount: vehicles.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 16),
                   itemBuilder: (_, i) {
                     final v = vehicles[i];
-
                     final transLabel = (v.transmission == 'AT')
                         ? 'Automatic'
                         : (v.transmission == 'MT' ? 'Manual' : v.transmission);
@@ -138,11 +142,6 @@ class _HomeViewState extends State<HomeView>
                 );
               },
             ),
-          ),
-
-          // espacio para la bottom bar
-          SliverToBoxAdapter(
-            child: SizedBox(height: 76 + 12 + bottomInset + 8),
           ),
         ],
       ),
