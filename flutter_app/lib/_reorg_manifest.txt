@@ -1,0 +1,3 @@
+MVVM reorganization manifest
+Copied files: 36
+Files with rewritten imports: 13

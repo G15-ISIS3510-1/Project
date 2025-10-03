@@ -1,13 +1,12 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
-import 'LoginRegister/login.dart';
-import 'host_mode_provider.dart';
-import 'data/users_api.dart';
+import 'presentation/features/auth/view/login_view.dart';
+import 'presentation/features/app_shell/viewmodel/host_mode_provider.dart';
+import 'data/sources/remote/user_remote_source.dart';
 
 // 👇 Tema auto por hora (auto/claro/oscuro)
-import 'core/theme_controller.dart';
+import 'app/theme/theme_controller.dart';
 
 class AuthProvider with ChangeNotifier {
   String? _userId;
