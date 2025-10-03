@@ -39,8 +39,7 @@ class LoginFragment : Fragment() {
             when (state) {
                 is LoginState.Success -> {
                     showSuccess(state.message)
-                    // El token ya se guardó automáticamente en el Repository
-                    // Mostrar información adicional si está disponible
+                    // El token ya se guardo en el Repository
                     if (state.user != null) {
                         showSuccess("¡Bienvenido ${state.user.name}! (${state.user.role})")
                     }
@@ -68,7 +67,6 @@ class LoginFragment : Fragment() {
         }
         
         binding.signUpText.setOnClickListener {
-            // Navegar a pantalla de registro
             findNavController().navigate(R.id.action_login_to_register)
         }
     }

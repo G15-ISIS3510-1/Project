@@ -21,15 +21,25 @@ class AuthRepository {
                     // Guardar token en SharedPreferences
                     preferencesManager.saveAccessToken(loginResponse.accessToken, loginResponse.tokenType)
                     Result.success(loginResponse)
-                } ?: Result.failure(Exception("Empty response body"))
+                } ?: Result.failure(Exception("Error del servidor"))
             } else {
-                val errorBody = response.errorBody()?.string() ?: "Unknown error"
-                Result.failure(Exception("Login failed: $errorBody"))
+                when (response.code()) {
+                    401 -> Result.failure(Exception("Contraseña o usuario incorrecto"))
+                    403 -> Result.failure(Exception("Usuario suspendido"))
+                    422 -> Result.failure(Exception("Datos inválidos"))
+                    500 -> Result.failure(Exception("Error del servidor"))
+                    else -> {
+                        val errorBody = response.errorBody()?.string() ?: "Error desconocido"
+                        Result.failure(Exception("Error del servidor: $errorBody"))
+                    }
+                }
             }
         } catch (e: HttpException) {
             when (e.code()) {
-                401 -> Result.failure(Exception("Credenciales incorrectas"))
+                401 -> Result.failure(Exception("Contraseña o usuario incorrecto"))
                 403 -> Result.failure(Exception("Usuario suspendido"))
+                422 -> Result.failure(Exception("Datos inválidos"))
+                500 -> Result.failure(Exception("Error del servidor"))
                 else -> Result.failure(Exception("Error del servidor: ${e.message()}"))
             }
         } catch (e: IOException) {
@@ -53,15 +63,26 @@ class AuthRepository {
             if (response.isSuccessful) {
                 response.body()?.let { userResponse ->
                     Result.success(userResponse)
-                } ?: Result.failure(Exception("Empty response body"))
+                } ?: Result.failure(Exception("Error del servidor"))
             } else {
-                val errorBody = response.errorBody()?.string() ?: "Unknown error"
-                Result.failure(Exception("Registration failed: $errorBody"))
+                // Manejar errores específicos del servidor
+                when (response.code()) {
+                    409 -> Result.failure(Exception("El email ya está registrado"))
+                    400 -> Result.failure(Exception("Datos inválidos"))
+                    422 -> Result.failure(Exception("Datos inválidos"))
+                    500 -> Result.failure(Exception("Error del servidor"))
+                    else -> {
+                        val errorBody = response.errorBody()?.string() ?: "Error desconocido"
+                        Result.failure(Exception("Error del servidor: $errorBody"))
+                    }
+                }
             }
         } catch (e: HttpException) {
             when (e.code()) {
                 409 -> Result.failure(Exception("El email ya está registrado"))
                 400 -> Result.failure(Exception("Datos inválidos"))
+                422 -> Result.failure(Exception("Datos inválidos"))
+                500 -> Result.failure(Exception("Error del servidor"))
                 else -> Result.failure(Exception("Error del servidor: ${e.message()}"))
             }
         } catch (e: IOException) {

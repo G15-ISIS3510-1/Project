@@ -32,7 +32,6 @@ class LoginViewModel : ViewModel() {
             
             result.fold(
                 onSuccess = { loginResponse ->
-                    // Después del login exitoso, obtener información del usuario
                     viewModelScope.launch {
                         val userResult = authRepository.getCurrentUser(loginResponse.accessToken)
                         userResult.fold(
@@ -44,7 +43,6 @@ class LoginViewModel : ViewModel() {
                                 )
                             },
                             onFailure = { _ ->
-                                // Aunque no se pueda obtener la info del usuario, el login fue exitoso
                                 _loginState.value = LoginState.Success(
                                     message = "Login successful! Welcome $email",
                                     token = loginResponse.accessToken,
