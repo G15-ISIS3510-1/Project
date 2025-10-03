@@ -12,13 +12,15 @@ class TripCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final text = theme.textTheme;
+    final scheme = theme.colorScheme;
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: scheme.outlineVariant),
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(
@@ -27,14 +29,17 @@ class TripCard extends StatelessWidget {
         ),
         title: Text(
           item.title,
-          style: text.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          style: text.titleMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: scheme.onSurface,
+          ),
         ),
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 6),
           child: Text(
             item.date,
             style: text.bodySmall?.copyWith(
-              color: Colors.black54,
+              color: scheme.onSurfaceVariant,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -43,10 +48,12 @@ class TripCard extends StatelessWidget {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: const Color(0xFFF3F4F6),
+            color: theme.brightness == Brightness.dark
+                ? const Color(0xFF1E2634)
+                : scheme.surfaceVariant,
             borderRadius: BorderRadius.circular(10),
           ),
-          child: const Icon(Icons.image_outlined, color: Color(0xFFB8BDC7)),
+          child: Icon(Icons.image_outlined, color: scheme.onSurfaceVariant),
         ),
       ),
     );

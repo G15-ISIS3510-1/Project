@@ -7,6 +7,9 @@ class LegalView extends StatelessWidget {
   Widget build(BuildContext context) {
     const double p24 = 24;
     const double p16 = 16;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final text = theme.textTheme;
 
     return Scaffold(
       body: SafeArea(
@@ -18,37 +21,36 @@ class LegalView extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // X close on its own row
+                    // X close
                     IconButton(
-                      icon: const Icon(Icons.close, color: Colors.black87),
+                      icon: Icon(Icons.close, color: scheme.onSurface),
                       onPressed: () => Navigator.pop(context),
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
                     ),
                     const SizedBox(height: 12),
 
-                    // Title (left aligned)
-                    const Text(
+                    // Title
+                    Text(
                       'Terms & Conditions',
-                      style: TextStyle(
-                        fontSize: 24,
+                      style: text.headlineSmall?.copyWith(
                         fontWeight: FontWeight.w600,
-                        color: Colors.black87,
+                        color: scheme.onBackground,
                       ),
                     ),
                     const SizedBox(height: 12),
-                    const Divider(thickness: 2, color: Colors.black87),
+                    Divider(thickness: 2, color: scheme.outlineVariant),
                     const SizedBox(height: 16),
 
                     // Terms box
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: theme.cardColor,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFE5E7EB)),
+                        border: Border.all(color: scheme.outlineVariant),
                       ),
-                      child: const Text(
+                      child: Text(
                         '''
 Qovo – Terms and Conditions
 
@@ -68,10 +70,9 @@ Welcome to Qovo. These Terms and Conditions ("Terms") govern your use of the Qov
 - Renters must hold a valid driver’s license and meet Qovo’s verification requirements.
 - By using the Qovo app, you confirm that all provided information is accurate and complete.
                         ''',
-                        style: TextStyle(
-                          fontSize: 14,
+                        style: text.bodyMedium?.copyWith(
                           height: 1.5,
-                          color: Colors.black87,
+                          color: scheme.onSurface,
                         ),
                       ),
                     ),
@@ -79,8 +80,6 @@ Welcome to Qovo. These Terms and Conditions ("Terms") govern your use of the Qov
                 ),
               ),
             ),
-
-            // Bottom spacer for glass bottom bar
             const SliverToBoxAdapter(child: SizedBox(height: 92)),
           ],
         ),

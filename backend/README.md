@@ -38,23 +38,27 @@ app/
 ## 🛠️ Instalación
 
 ### 1. Clonar el repositorio
+
 ```bash
 git clone <tu-repositorio>
 cd backend
 ```
 
 ### 2. Crear entorno virtual
+
 ```bash
 python3 -m venv venv
 source venv/bin/activate  # En Windows: venv\Scripts\activate
 ```
 
 ### 3. Instalar dependencias
+
 ```bash
 pip install -r requirements.txt
 ```
 
 ### 4. Configurar base de datos
+
 ```bash
 # Crear archivo .env basado en env.example
 cp env.example .env
@@ -65,6 +69,7 @@ DATABASE_URL_ASYNC=postgresql+asyncpg://usuario:contraseña@localhost:5432/nombr
 ```
 
 ### 5. Configurar base de datos
+
 ```bash
 # Generar migración inicial
 alembic revision --autogenerate -m "Initial migration"
@@ -76,6 +81,7 @@ alembic upgrade head
 ## 🚀 Uso
 
 ### Inicio rápido
+
 ```bash
 # Usar el script de inicio (recomendado)
 chmod +x start.sh
@@ -83,6 +89,7 @@ chmod +x start.sh
 ```
 
 ### Inicio manual
+
 ```bash
 # Activar entorno virtual
 source venv/bin/activate
@@ -92,6 +99,7 @@ python main.py
 ```
 
 ### Inicio con uvicorn
+
 ```bash
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
@@ -99,17 +107,20 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ## 📚 Endpoints de la API
 
 ### Autenticación
+
 - `POST /api/auth/register` - Registrar nuevo usuario
 - `POST /api/auth/login` - Iniciar sesión
 - `GET /api/auth/me` - Obtener usuario actual
 
 ### Usuarios
+
 - `GET /api/users/` - Listar usuarios
 - `GET /api/users/{user_id}` - Obtener usuario específico
 - `PUT /api/users/{user_id}` - Actualizar usuario
 - `DELETE /api/users/{user_id}` - Eliminar usuario
 
 ### Otros
+
 - `GET /` - Información de la API
 - `GET /health` - Health check
 - `GET /docs` - Documentación interactiva (Swagger)
@@ -118,6 +129,7 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ## 🗄️ Base de Datos
 
 ### Modelos principales
+
 - **User**: Usuarios del sistema (hosts y renters)
 - **Vehicle**: Vehículos disponibles para alquiler
 - **Booking**: Reservas de vehículos
@@ -125,6 +137,7 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 - **InsurancePlan**: Planes de seguro
 
 ### Migraciones
+
 ```bash
 # Crear nueva migración
 alembic revision --autogenerate -m "Descripción del cambio"
@@ -139,6 +152,7 @@ alembic downgrade -1
 ## 🔧 Desarrollo
 
 ### Estructura del proyecto
+
 ```
 backend/
 ├── app/                    # Código de la aplicación
@@ -150,13 +164,14 @@ backend/
 ```
 
 ### Variables de entorno
+
 ```bash
 # Base de datos
-DATABASE_URL=postgresql://usuario:contraseña@localhost:5432/nombre_db
-DATABASE_URL_ASYNC=postgresql+asyncpg://usuario:contraseña@localhost:5432/nombre_db
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/qovo_db
+DATABASE_URL_ASYNC=postgresql+asyncpg://postgres:postgres@localhost:5432/qovo_db
 
 # Seguridad
-SECRET_KEY=tu-clave-secreta-aqui
+SECRET_KEY=9d81a5b04b1e0adf32f6d3acb9b38d917bfcc9ad9
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 
@@ -182,6 +197,7 @@ pytest
 ## 📦 Despliegue
 
 ### Docker (recomendado)
+
 ```bash
 # Construir imagen
 docker build -t mobile-app-backend .
@@ -191,6 +207,7 @@ docker run -p 8000:8000 mobile-app-backend
 ```
 
 ### Producción
+
 ```bash
 # Instalar dependencias de producción
 pip install -r requirements.txt

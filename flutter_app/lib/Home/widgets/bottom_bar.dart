@@ -1,4 +1,3 @@
-// lib/features/home/widgets/glass_bottom_bar.dart
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
@@ -20,7 +19,6 @@ class BottomBar extends StatelessWidget {
     this.onTap,
   }) : assert(items.length >= 2);
 
-  // helper para alinear el único magnifier
   double _alignmentXFor(int index) {
     if (items.length == 1) return 0;
     return (index / (items.length - 1)) * 2 - 1; // [-1,1]
@@ -28,6 +26,19 @@ class BottomBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final glassTop = isDark
+        ? Colors.white.withOpacity(0.10)
+        : Colors.white.withOpacity(0.30);
+    final glassBottom = isDark
+        ? Colors.white.withOpacity(0.06)
+        : Colors.white.withOpacity(0.12);
+    final glassBorder = isDark
+        ? Colors.white.withOpacity(0.14)
+        : Colors.white.withOpacity(0.20);
+
     return SafeArea(
       top: false,
       child: Padding(
@@ -47,18 +58,12 @@ class BottomBar extends StatelessWidget {
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [
-                        Colors.white.withOpacity(0.30),
-                        Colors.white.withOpacity(0.12),
-                      ],
+                      colors: [glassTop, glassBottom],
                     ),
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.20),
-                      width: 1,
-                    ),
+                    border: Border.all(color: glassBorder, width: 1),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.06),
+                        color: Colors.black.withOpacity(isDark ? 0.30 : 0.06),
                         blurRadius: 24,
                         offset: const Offset(0, 6),
                       ),
@@ -68,12 +73,10 @@ class BottomBar extends StatelessWidget {
               ),
             ),
 
-            // --- MAGNIFIER deslizante (un solo lente) ---
+            // --- MAGNIFIER ---
             Positioned.fill(
               child: IgnorePointer(
-                // para no bloquear taps
                 child: AnimatedAlign(
-                  // centrado bajo el item activo y un poco arriba para no tapar el label
                   alignment: Alignment(_alignmentXFor(currentIndex), -0.2),
                   duration: const Duration(milliseconds: 260),
                   curve: Curves.easeOutCubic,
@@ -83,17 +86,14 @@ class BottomBar extends StatelessWidget {
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
-                        // la lupa real
                         ClipOval(
                           child: RawMagnifier(
                             size: const Size(76, 76),
                             magnificationScale: 1.15,
                             focalPointOffset: const Offset(0, -6),
-                            // child vacío: magnifica lo de atrás
                             child: const SizedBox.shrink(),
                           ),
                         ),
-                        // aro + sombra (dibujados por fuera porque el API no trae film/border)
                         IgnorePointer(
                           child: Container(
                             width: 76,
@@ -101,12 +101,14 @@ class BottomBar extends StatelessWidget {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: Colors.white.withOpacity(0.60),
+                                color: Colors.white.withOpacity(0.55),
                                 width: 1.2,
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.10),
+                                  color: Colors.black.withOpacity(
+                                    isDark ? 0.35 : 0.10,
+                                  ),
                                   blurRadius: 14,
                                   offset: const Offset(0, 6),
                                 ),
@@ -153,7 +155,7 @@ class _GlassItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final labelColor = active ? Colors.black87 : Colors.black54;
+    final scheme = Theme.of(context).colorScheme;
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -166,12 +168,7 @@ class _GlassItem extends StatelessWidget {
               scale: active ? 1.18 : 1.0,
               duration: const Duration(milliseconds: 160),
               curve: Curves.easeOut,
-              child: Icon(
-                item.icon,
-                size: 22,
-                color: Colors
-                    .black87, // íconos negros; el énfasis viene de la lupa
-              ),
+              child: Icon(item.icon, size: 22, color: scheme.onSurface),
             ),
             const SizedBox(height: 6),
             Text(
@@ -180,7 +177,7 @@ class _GlassItem extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
                 fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-                color: labelColor,
+                color: scheme.onSurfaceVariant,
               ),
             ),
           ],
