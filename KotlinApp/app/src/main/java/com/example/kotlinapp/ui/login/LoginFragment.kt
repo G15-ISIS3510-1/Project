@@ -39,7 +39,12 @@ class LoginFragment : Fragment() {
             when (state) {
                 is LoginState.Success -> {
                     showSuccess(state.message)
-                    // Navegar messages
+                    // El token ya se guardó automáticamente en el Repository
+                    // Mostrar información adicional si está disponible
+                    if (state.user != null) {
+                        showSuccess("¡Bienvenido ${state.user.name}! (${state.user.role})")
+                    }
+                    // Navegar a la siguiente pantalla
                     findNavController().navigate(R.id.messagesFragment)
                 }
                 is LoginState.Error -> {
