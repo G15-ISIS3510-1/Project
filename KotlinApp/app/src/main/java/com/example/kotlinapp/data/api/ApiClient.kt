@@ -9,8 +9,7 @@ import java.util.concurrent.TimeUnit
 
 object ApiClient {
     
-    // URL base del backend - cambiar por la IP de tu máquina si es necesario
-    private const val BASE_URL = "http://192.168.0.198:8000/" // IP real de tu máquina
+    private const val BASE_URL = "http://192.168.0.198:8000/"  //CAMBIAR CUANDO SEA
     
     private val gson = GsonBuilder()
         .setLenient()

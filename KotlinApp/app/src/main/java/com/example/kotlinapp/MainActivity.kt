@@ -13,7 +13,6 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         
-        // Restaurar navegación básica
         setContentView(R.layout.activity_main_nav)
         
         // Configuración de insets para pantalla completa
