@@ -33,6 +33,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.imePadding
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.kotlinapp.data.remote.dto.PricingCreate
+import com.example.kotlinapp.data.remote.dto.VehicleCreate
 
 
 @Composable
@@ -62,6 +65,25 @@ fun AddCar(
 
     // Navegar al terminar
 //    if (ui.value.success) onDone()
+
+    val vm: AddCarViewModel = viewModel()
+    val ui by vm.ui.collectAsState()
+    val statusValue = "active"
+    val latValue = 4.7110           //cambiar para que ponga ubicación
+    val lngValue = -74.0721
+
+    LaunchedEffect(ui.success) {
+        if (ui.success) onDone()
+    }
+
+    if (ui.error != null) {
+        Text(
+            text = ui.error!!,
+            color = Color.Red,
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
+
 
     Scaffold(
         topBar = { TopAddCar() },
@@ -173,14 +195,67 @@ fun AddCar(
 
             Spacer(Modifier.height(24.dp))
 
+
             Button(
                 onClick = {
                     // Aquí hacer la llamada al backend para registrar el vehículo
                     // o navegar de regreso
+                    val y = year.toIntOrNull()
+                    val s = seats.toIntOrNull()
+                    val m = mileage.toIntOrNull()
+                    val price = dailyPrice.toDoubleOrNull()
+                    val min = minDays.toIntOrNull()
+                    val max = maxDays.toIntOrNull()
+
+                    // Validaciones mínimas para no romper el backend
+                    if (y == null || y !in 1900..2030) { /* mostrar error */ return@Button }
+                    if (s == null || s !in 1..50) { /* error */ return@Button }
+                    if (m == null || m < 0) { /* error */ return@Button }
+                    if (price == null || price <= 0.0) { /* error */ return@Button }
+                    if (min == null || min < 1) { /* error */ return@Button }
+                    if (transmission !in listOf("AT","MT","CVT","EV")) { /* error */ return@Button }
+                    if (fuelType !in listOf("gas","diesel","hybrid","ev")) { /* error */ return@Button }
+
+                    val vReq = VehicleCreate(
+                        make = make.trim(),
+                        model = model.trim(),
+                        year = y,
+                        plate = plate.trim(),
+                        seats = s,
+                        transmission = transmission,
+                        fuel_type = fuelType,
+                        mileage = m,
+                        status = statusValue,
+                        lat = latValue,
+                        lng = lngValue
+                    )
+
+                    val pReq = PricingCreate(
+                        vehicle_id = "",
+                        daily_price = price,
+                        min_days = min,
+                        max_days = max,
+                        currency = currency
+                    )
+
+                    vm.submit(vReq, pReq)
                     onDone()
                 },
+//                enabled = !ui.value.loading,
                 modifier = Modifier.fillMaxWidth()
             ) {
+//                if (ui.value.loading) {
+//                    CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
+//                    Spacer(Modifier.width(8.dp))
+//                }
+
+                if (ui.error != null) {
+                    Text(
+                        text = ui.error!!,
+                        color = Color.Red,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
                 Text("Add Vehicle")
             }
         }
