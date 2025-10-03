@@ -12,6 +12,7 @@ import com.example.kotlinapp.R
 import com.example.kotlinapp.databinding.FragmentAccountBinding
 import com.example.kotlinapp.ui.navigation.BottomTab
 import com.example.kotlinapp.ui.navigation.PillBottomNavBar
+import com.example.kotlinapp.ui.addCar.AddCar
 
 class AccountFragment : Fragment() {
 
@@ -37,6 +38,8 @@ class AccountFragment : Fragment() {
         binding.btnAddCar.setOnClickListener {
             Toast.makeText(requireContext(), "Add Car clicked", Toast.LENGTH_SHORT).show()
             // TODO: Implement add car functionality
+            findNavController().navigate(R.id.addCarFragment)
+
         }
 
         binding.btnVisitedPlaces.setOnClickListener {
