@@ -4,10 +4,13 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.delay
+import com.example.kotlinapp.data.models.UserResponse
+import com.example.kotlinapp.data.repository.AuthRepository
 import kotlinx.coroutines.launch
 
 class RegisterViewModel : ViewModel() {
+    
+    private val authRepository = AuthRepository()
     
     private val _registerState = MutableLiveData<RegisterState>()
     val registerState: LiveData<RegisterState> = _registerState
@@ -15,8 +18,8 @@ class RegisterViewModel : ViewModel() {
     private val _isLoading = MutableLiveData<Boolean>()
     val isLoading: LiveData<Boolean> = _isLoading
     
-    fun register(name: String, email: String, password: String, confirmPassword: String) {
-        // Validaciones básicas
+    fun register(name: String, email: String, password: String, confirmPassword: String, phone: String = "3001234567", role: String = "renter") {
+        // Validaciones requeridas
         when {
             name.isEmpty() -> {
                 _registerState.value = RegisterState.Error("Name is required")
@@ -38,8 +41,12 @@ class RegisterViewModel : ViewModel() {
                 _registerState.value = RegisterState.Error("Passwords do not match")
                 return
             }
-            password.length < 6 -> {
-                _registerState.value = RegisterState.Error("Password must be at least 6 characters")
+            password.length < 8 -> {
+                _registerState.value = RegisterState.Error("Password must be at least 8 characters")
+                return
+            }
+            phone.length < 10 || phone.length > 15 -> {
+                _registerState.value = RegisterState.Error("Phone must be between 10 and 15 characters")
                 return
             }
         }
@@ -47,17 +54,21 @@ class RegisterViewModel : ViewModel() {
         _isLoading.value = true
         
         viewModelScope.launch {
-            try {
-                // Simular llamada a API de registro
-                delay(2000)
-                
-                // Simulación de registro exitoso
-                _registerState.value = RegisterState.Success("Account created successfully! Welcome $name")
-            } catch (e: Exception) {
-                _registerState.value = RegisterState.Error("Registration failed: ${e.message}")
-            } finally {
-                _isLoading.value = false
-            }
+            val result = authRepository.register(name, email, password, phone, role)
+            
+            result.fold(
+                onSuccess = { userResponse ->
+                    _registerState.value = RegisterState.Success(
+                        message = "Account created successfully! Welcome ${userResponse.name}",
+                        user = userResponse
+                    )
+                },
+                onFailure = { exception ->
+                    _registerState.value = RegisterState.Error(exception.message ?: "Registration failed")
+                }
+            )
+            
+            _isLoading.value = false
         }
     }
     
@@ -67,6 +78,9 @@ class RegisterViewModel : ViewModel() {
 }
 
 sealed class RegisterState {
-    data class Success(val message: String) : RegisterState()
+    data class Success(
+        val message: String,
+        val user: UserResponse
+    ) : RegisterState()
     data class Error(val message: String) : RegisterState()
 }

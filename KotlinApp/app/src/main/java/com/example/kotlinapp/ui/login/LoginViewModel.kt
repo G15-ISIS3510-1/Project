@@ -4,10 +4,14 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.delay
+import com.example.kotlinapp.data.models.LoginResponse
+import com.example.kotlinapp.data.models.UserResponse
+import com.example.kotlinapp.data.repository.AuthRepository
 import kotlinx.coroutines.launch
 
 class LoginViewModel : ViewModel() {
+    
+    private val authRepository = AuthRepository()
     
     private val _loginState = MutableLiveData<LoginState>()
     val loginState: LiveData<LoginState> = _loginState
@@ -24,17 +28,36 @@ class LoginViewModel : ViewModel() {
         _isLoading.value = true
         
         viewModelScope.launch {
-            try {
-                // Simular llamada a API
-                delay(2000)
-                
-                // Simulación de autenticación exitosa
-                _loginState.value = LoginState.Success("Login successful! Welcome $email")
-            } catch (e: Exception) {
-                _loginState.value = LoginState.Error("Login failed: ${e.message}")
-            } finally {
-                _isLoading.value = false
-            }
+            val result = authRepository.login(email, password)
+            
+            result.fold(
+                onSuccess = { loginResponse ->
+                    viewModelScope.launch {
+                        val userResult = authRepository.getCurrentUser(loginResponse.accessToken)
+                        userResult.fold(
+                            onSuccess = { user ->
+                                _loginState.value = LoginState.Success(
+                                    message = "Login successful! Welcome ${user.name}",
+                                    token = loginResponse.accessToken,
+                                    user = user
+                                )
+                            },
+                            onFailure = { _ ->
+                                _loginState.value = LoginState.Success(
+                                    message = "Login successful! Welcome $email",
+                                    token = loginResponse.accessToken,
+                                    user = null
+                                )
+                            }
+                        )
+                    }
+                },
+                onFailure = { exception ->
+                    _loginState.value = LoginState.Error(exception.message ?: "Login failed")
+                }
+            )
+            
+            _isLoading.value = false
         }
     }
     
@@ -44,6 +67,10 @@ class LoginViewModel : ViewModel() {
 }
 
 sealed class LoginState {
-    data class Success(val message: String) : LoginState()
+    data class Success(
+        val message: String,
+        val token: String,
+        val user: UserResponse?
+    ) : LoginState()
     data class Error(val message: String) : LoginState()
 }
