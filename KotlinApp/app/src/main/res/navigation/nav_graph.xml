@@ -77,10 +77,11 @@
         <fragment
             android:id="@+id/paymentFragment"
             android:name="com.example.kotlinapp.ui.payment.PaymentFragment"
-            android:label="Payments" />
+            android:label="Payments">
             <action
                 android:id="@+id/action_payment_to_currency"
                 app:destination="@id/currencyFragment" />
+        </fragment>
         <fragment
             android:id="@+id/visitedPlacesFragment"
             android:name="com.example.kotlinapp.ui.places.VisitedPlacesFragment"

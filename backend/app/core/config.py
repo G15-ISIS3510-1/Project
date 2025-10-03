@@ -18,7 +18,15 @@ class Settings(BaseSettings):
     
     # App
     debug: bool = True
-    cors_origins: List[str] = ["http://localhost:3000", "http://localhost:8080"]
+    cors_origins: List[str] = [
+        "http://localhost:3000",
+        "http://localhost:8080",
+        "http://10.0.2.2:8000",  # Android emulator
+        "http://127.0.0.1:8000", # Local development
+        "http://0.0.0.0:8000",   # All interfaces
+        "http://192.168.0.198:8000",  
+        "*"  # Allow all origins for development
+    ]
     
     # Server
     host: str = "0.0.0.0"
