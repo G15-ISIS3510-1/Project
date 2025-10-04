@@ -1,5 +1,7 @@
-@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class,
+    com.google.accompanist.permissions.ExperimentalPermissionsApi::class)
 package com.example.kotlinapp.ui.addCar
+
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,6 +40,29 @@ import com.example.kotlinapp.data.remote.dto.PricingCreate
 import com.example.kotlinapp.data.remote.dto.VehicleCreate
 
 
+
+import android.net.Uri
+import android.os.Environment
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.FileProvider
+import coil.compose.AsyncImage
+import com.google.accompanist.permissions.*
+import com.google.android.gms.location.LocationServices
+import java.io.File
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+
+import androidx.compose.ui.res.painterResource
+
 @Composable
 fun AddCar(
     onDone: () -> Unit = {}
@@ -55,22 +80,103 @@ fun AddCar(
     var fuelType by remember { mutableStateOf("gas") }
     var mileage by remember { mutableStateOf("") }
 
-    // Simula owner desde sesión (reemplaza por tu SessionManager)
-    val ownerId = remember { "00000000-0000-0000-0000-000000000001" }
 
-    var dailyPrice by remember { mutableStateOf("") } // usa String y validas
+    var dailyPrice by remember { mutableStateOf("") }
     var minDays by remember { mutableStateOf("1") }
     var maxDays by remember { mutableStateOf("") }
     var currency by remember { mutableStateOf("USD") }
 
-    // Navegar al terminar
-//    if (ui.value.success) onDone()
+
+    var photoUri by remember { mutableStateOf<Uri?>(null) }
+    var photoFile by remember { mutableStateOf<File?>(null) }
+    var latValue by remember { mutableStateOf<Double?>(null) }
+    var lngValue by remember { mutableStateOf<Double?>(null) }
+    var validationError by remember { mutableStateOf<String?>(null) }
+
 
     val vm: AddCarViewModel = viewModel()
     val ui by vm.ui.collectAsState()
+    val context = LocalContext.current
     val statusValue = "active"
-    val latValue = 4.7110           //cambiar para que ponga ubicación
-    val lngValue = -74.0721
+
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success && photoFile != null) {
+
+            photoUri = Uri.fromFile(photoFile)
+        } else {
+            photoUri = null
+            photoFile = null
+        }
+    }
+
+    //Permiso para camara
+    val cameraPermissionState = rememberPermissionState(
+        android.Manifest.permission.CAMERA
+    )
+
+    //Permiso para ubicacion
+    val locationPermissionState = rememberMultiplePermissionsState(
+        permissions = listOf(
+            android.Manifest.permission.ACCESS_FINE_LOCATION,
+            android.Manifest.permission.ACCESS_COARSE_LOCATION
+        )
+    )
+
+    //Obtener ubicacion
+    val fusedLocationClient = remember {
+        LocationServices.getFusedLocationProviderClient(context)
+    }
+
+
+    fun getLocation() {
+        if (locationPermissionState.allPermissionsGranted) {
+            try {
+                fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                    if (location != null) {
+                        latValue = location.latitude
+                        lngValue = location.longitude
+                        Toast.makeText(
+                            context,
+                            "Location obtained: ${location.latitude}, ${location.longitude}",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    } else {
+                        Toast.makeText(
+                            context,
+                            "The location could not be obtained. Try enabling GPS.",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            } catch (e: SecurityException) {
+                Toast.makeText(context, "Permissions error", Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            locationPermissionState.launchMultiplePermissionRequest()
+        }
+    }
+
+    fun takePhoto() {
+        if (cameraPermissionState.status.isGranted) {
+            val file = File(
+                context.getExternalFilesDir(Environment.DIRECTORY_PICTURES),
+                "vehicle_${System.currentTimeMillis()}.jpg"
+            )
+            photoFile = file
+
+            val uri = FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                file
+            )
+            photoUri = uri
+            cameraLauncher.launch(uri)
+        } else {
+            cameraPermissionState.launchPermissionRequest()
+        }
+    }
 
     LaunchedEffect(ui.success) {
         if (ui.success) onDone()
@@ -97,12 +203,106 @@ fun AddCar(
                 .padding(16.dp)
                 .verticalScroll(scroll)
                 .imePadding(),
-
-
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
 
-            // Campos
+            // Mostrar errores
+            if (ui.error != null) {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = ui.error!!,
+                        color = Color.Red,
+                        modifier = Modifier.padding(12.dp)
+                    )
+                }
+            }
+
+            if (validationError != null) {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF3E0)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = validationError!!,
+                        color = Color(0xFFE65100),
+                        modifier = Modifier.padding(12.dp)
+                    )
+                }
+            }
+
+            // Sección de foto
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text("Photo of the vehicle", fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.height(8.dp))
+
+                    if (photoFile != null && photoFile!!.exists()) {
+                        AsyncImage(
+                            model = photoFile,  // Usa el File directamente
+                            contentDescription = "Vehicle photo",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp)
+                                .clip(RoundedCornerShape(8.dp)),
+                            contentScale = ContentScale.Crop,
+                            error = painterResource(android.R.drawable.ic_menu_gallery)
+                        )
+                        Spacer(Modifier.height(8.dp))
+                    } else if (photoUri != null) {
+
+                        Text("Photo captured but not available", color = Color.Gray)
+                    }
+
+                    Button(onClick = { takePhoto() }) {
+                        Icon(Icons.Default.CameraAlt, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text(if (photoUri == null) "Take foto" else "Change foto")
+                    }
+                }
+            }
+
+            // Sección de ubicación
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text("vehicle location", fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.height(8.dp))
+
+                    if (latValue != null && lngValue != null) {
+                        Text(
+                            "Lat: %.6f, Lng: %.6f".format(latValue, lngValue),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.Gray
+                        )
+                    } else {
+                        Text(
+                            "Location not obtained",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.Gray
+                        )
+                    }
+
+                    Spacer(Modifier.height(8.dp))
+                    Button(onClick = { getLocation() }) {
+                        Icon(Icons.Default.MyLocation, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Get location")
+                    }
+                }
+            }
+
+            // Campos del formulario (igual que antes)
             OutlinedTextField(
                 value = make,
                 onValueChange = { make = it },
@@ -160,7 +360,6 @@ fun AddCar(
                 )
             }
 
-            // ...
             OutlinedTextField(
                 value = dailyPrice,
                 onValueChange = { dailyPrice = it.filter { ch -> ch.isDigit() || ch == '.' } },
@@ -183,23 +382,26 @@ fun AddCar(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // Currency como dropdown
             SimpleDropdown(
                 label = "Currency",
                 value = currency,
-                options = listOf("USD","COP","EUR","GBP"),
+                options = listOf("USD", "COP", "EUR", "GBP"),
                 onChange = { currency = it },
                 modifier = Modifier.fillMaxWidth()
             )
 
-
             Spacer(Modifier.height(24.dp))
-
 
             Button(
                 onClick = {
-                    // Aquí hacer la llamada al backend para registrar el vehículo
-                    // o navegar de regreso
+                    validationError = null
+
+                    // Validar ubicación
+                    if (latValue == null || lngValue == null) {
+                        validationError = "Debes obtener la ubicación del vehículo"
+                        return@Button
+                    }
+
                     val y = year.toIntOrNull()
                     val s = seats.toIntOrNull()
                     val m = mileage.toIntOrNull()
@@ -207,54 +409,51 @@ fun AddCar(
                     val min = minDays.toIntOrNull()
                     val max = maxDays.toIntOrNull()
 
-                    // Validaciones mínimas para no romper el backend
-                    if (y == null || y !in 1900..2030) { /* mostrar error */ return@Button }
-                    if (s == null || s !in 1..50) { /* error */ return@Button }
-                    if (m == null || m < 0) { /* error */ return@Button }
-                    if (price == null || price <= 0.0) { /* error */ return@Button }
-                    if (min == null || min < 1) { /* error */ return@Button }
-                    if (transmission !in listOf("AT","MT","CVT","EV")) { /* error */ return@Button }
-                    if (fuelType !in listOf("gas","diesel","hybrid","ev")) { /* error */ return@Button }
+                    when {
+                        make.isBlank() -> validationError = "Ingresa la marca"
+                        model.isBlank() -> validationError = "Ingresa el modelo"
+                        y == null || y !in 1900..2030 -> validationError = "Año inválido"
+                        s == null || s !in 1..50 -> validationError = "Número de asientos inválido"
+                        m == null || m < 0 -> validationError = "Kilometraje inválido"
+                        price == null || price <= 0.0 -> validationError = "Precio inválido"
+                        min == null || min < 1 -> validationError = "Días mínimos inválido"
+                        else -> {
+                            val vReq = VehicleCreate(
+                                make = make.trim(),
+                                model = model.trim(),
+                                year = y,
+                                plate = plate.trim(),
+                                seats = s,
+                                transmission = transmission,
+                                fuel_type = fuelType,
+                                mileage = m,
+                                status = statusValue,
+                                lat = latValue!!,
+                                lng = lngValue!!
+                            )
 
-                    val vReq = VehicleCreate(
-                        make = make.trim(),
-                        model = model.trim(),
-                        year = y,
-                        plate = plate.trim(),
-                        seats = s,
-                        transmission = transmission,
-                        fuel_type = fuelType,
-                        mileage = m,
-                        status = statusValue,
-                        lat = latValue,
-                        lng = lngValue
-                    )
+                            val pReq = PricingCreate(
+                                vehicle_id = "",
+                                daily_price = price,
+                                min_days = min,
+                                max_days = max,
+                                currency = currency
+                            )
 
-                    val pReq = PricingCreate(
-                        vehicle_id = "",
-                        daily_price = price,
-                        min_days = min,
-                        max_days = max,
-                        currency = currency
-                    )
-
-                    vm.submit(vReq, pReq)
-                    onDone()
+                            vm.submit(vReq, pReq)
+                        }
+                    }
                 },
-//                enabled = !ui.value.loading,
+                enabled = !ui.loading,
                 modifier = Modifier.fillMaxWidth()
             ) {
-//                if (ui.value.loading) {
-//                    CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
-//                    Spacer(Modifier.width(8.dp))
-//                }
-
-                if (ui.error != null) {
-                    Text(
-                        text = ui.error!!,
-                        color = Color.Red,
-                        modifier = Modifier.fillMaxWidth()
+                if (ui.loading) {
+                    CircularProgressIndicator(
+                        strokeWidth = 2.dp,
+                        modifier = Modifier.size(18.dp),
+                        color = Color.White
                     )
+                    Spacer(Modifier.width(8.dp))
                 }
                 Text("Add Vehicle")
             }
@@ -293,7 +492,6 @@ fun SimpleDropdown(
                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
             },
             modifier = Modifier
-                .menuAnchor()
                 .fillMaxWidth()
         )
 
