@@ -252,5 +252,15 @@
             android:fontFamily="@font/poppins_semibold"
             app:cornerRadius="12dp"
             app:strokeColor="?attr/colorOutline" />
+        <TextView
+            android:id="@+id/tvSuggestion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Detectando tu ubicación y sugiriendo una moneda…"
+            android:textSize="14sp"
+            android:textColor="#6F6F77"
+            android:fontFamily="@font/poppins_semibold" />
+
     </LinearLayout>
 </ScrollView>
