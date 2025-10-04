@@ -1,4 +1,4 @@
-from sqlalchemy import JSON, Column, Index, String, Integer, Float, DateTime, Boolean, ForeignKey, Enum, Text, UniqueConstraint
+from sqlalchemy import JSON, Column, Index, String, Integer, Float, DateTime, Boolean, ForeignKey, Enum, Text, UniqueConstraint, func as sql_func
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.db.base import Base
@@ -179,6 +179,27 @@ class Payment(Base):
     # Relaciones
     booking = relationship("Booking", back_populates="payments")
     payer = relationship("User", back_populates="payments")
+
+class VehicleRating(Base):
+    __tablename__ = "vehicle_ratings"
+    
+    rating_id = Column(String, primary_key=True, index=True)
+    vehicle_id = Column(String, ForeignKey("vehicles.vehicle_id", ondelete="CASCADE"), nullable=False, index=True)
+    booking_id = Column(String, ForeignKey("bookings.booking_id", ondelete="CASCADE"), nullable=False, index=True)
+    renter_id = Column(String, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False, index=True)
+    rating = Column(Float, nullable=False)  # 1.0 - 5.0
+    comment = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relaciones
+    vehicle = relationship("Vehicle")
+    booking = relationship("Booking")
+    renter = relationship("User")
+    
+    __table_args__ = (
+        Index("ix_vehicle_ratings_vehicle_rating", "vehicle_id", "rating"),
+        Index("ix_vehicle_ratings_renter_booking", "renter_id", "booking_id"),
+    )
 
 class Message(Base):
     __tablename__ = "messages"

@@ -1,5 +1,6 @@
 package com.example.kotlinapp.ui.home
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -10,6 +11,7 @@ import androidx.navigation.fragment.findNavController
 import com.example.kotlinapp.R
 import com.example.kotlinapp.databinding.FragmentHomeBinding
 import com.example.kotlinapp.ui.theme.AppTheme
+import com.example.kotlinapp.ui.toprated.TopRatedVehiclesActivity
 
 class HomeFragment : Fragment() {
     
@@ -36,6 +38,10 @@ class HomeFragment : Fragment() {
             AppTheme {
                 HomeScreen(
                 onCardClick = { /* TODO: navigate to detail */ },
+                onTopRatedClick = {
+                    val intent = Intent(requireContext(), TopRatedVehiclesActivity::class.java)
+                    startActivity(intent)
+                },
                 onBottomClick = { tab ->
                     when (tab) {
                         BottomTab.Home -> Unit

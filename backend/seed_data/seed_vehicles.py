@@ -19,10 +19,21 @@ def _build_vehicle_payload() -> Dict[str, Any]:
     Construye un payload que cumpla con tu VehicleCreate:
     Requeridos (según tu 422): make, model, year, plate, seats,
     transmission, fuel_type, mileage, status, lat, lng
+    
+    Los vehículos se generan en Ciudad de México (CDMX) para que la app funcione
+    Coordenadas centro CDMX: 19.4326, -99.1332
+    Radio: ~20km alrededor del centro
     """
     transmissions = ["AT", "MT", "CVT", "EV"]
     fuels        = ["gas", "diesel", "hybrid", "ev"]
-    statuses     = ["active", "inactive", "pending_review"]
+    status       = "active"
+    
+    # Coordenadas en Ciudad de México (CDMX) con variación de ~20km
+    # Latitud: 19.4326 ± 0.18 (aprox 20km)
+    # Longitud: -99.1332 ± 0.18 (aprox 20km)
+    center_lat = 19.4326
+    center_lng = -99.1332
+    radius_degrees = 0.18  # ~20km
 
     return {
         "make": random.choice(["Toyota", "Honda", "Ford", "Chevrolet", "Mazda",
@@ -34,9 +45,9 @@ def _build_vehicle_payload() -> Dict[str, Any]:
         "transmission": random.choice(transmissions),
         "fuel_type": random.choice(fuels),
         "mileage": random.randint(5_000, 120_000),
-        "status": random.choice(statuses),
-        "lat": round(random.uniform(-34.7, 40.7), 6),
-        "lng": round(random.uniform(-58.5, -3.7), 6),
+        "status": status,  
+        "lat": round(center_lat + random.uniform(-radius_degrees, radius_degrees), 6),
+        "lng": round(center_lng + random.uniform(-radius_degrees, radius_degrees), 6),
     }
 
 

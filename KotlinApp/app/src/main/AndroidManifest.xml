@@ -48,6 +48,11 @@
             android:value="AIzaSyCwU6ENjG-6Jf7pOjBTcftLh5uyz_zTAx4" />
 
         
+        <activity
+            android:name=".ui.toprated.TopRatedVehiclesActivity"
+            android:exported="false"
+            android:theme="@style/Theme.KotlinApp" />
+        
         <!-- BroadcastReceiver para cambios de hora -->
         <receiver
             android:name=".core.TimeChangeReceiver"
