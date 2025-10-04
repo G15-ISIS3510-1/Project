@@ -2,19 +2,38 @@ import 'package:flutter/material.dart';
 
 class CategoryChips extends StatefulWidget {
   final List<String> items;
-  const CategoryChips({super.key, required this.items});
+
+  /// Callback cuando cambia la selección.
+  /// Envía el label seleccionado; o `null` si se deselecciona.
+  final ValueChanged<String?>? onSelected;
+
+  /// Índice seleccionado inicial (0 por defecto). Usa `null` para sin selección.
+  final int? initialIndex;
+
+  const CategoryChips({
+    super.key,
+    required this.items,
+    this.onSelected,
+    this.initialIndex = 0,
+  });
 
   @override
   State<CategoryChips> createState() => _CategoryChipsState();
 }
 
 class _CategoryChipsState extends State<CategoryChips> {
-  int? selected = 0;
+  int? selected;
+
+  @override
+  void initState() {
+    super.initState();
+    selected = widget.initialIndex;
+  }
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final isSelected = (int i) => selected == i;
+    bool isSelected(int i) => selected == i;
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -25,7 +44,10 @@ class _CategoryChipsState extends State<CategoryChips> {
             ChoiceChip(
               label: Text(widget.items[i]),
               selected: isSelected(i),
-              onSelected: (v) => setState(() => selected = v ? i : null),
+              onSelected: (v) {
+                setState(() => selected = v ? i : null);
+                widget.onSelected?.call(v ? widget.items[i] : null);
+              },
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),

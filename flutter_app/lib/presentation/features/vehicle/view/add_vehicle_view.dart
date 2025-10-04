@@ -1,11 +1,7 @@
 // lib/presentation/features/vehicle/view/add_vehicle_view.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
-import 'package:flutter_app/data/sources/remote/vehicle_remote_source.dart';
-import 'package:flutter_app/data/sources/remote/pricing_remote_source.dart';
-import 'package:flutter_app/main.dart' show AuthProvider;
-
+import 'package:flutter_app/presentation/features/vehicle/viewmodel/add_vehicle_viewmodel.dart';
 
 class AddVehicleView extends StatefulWidget {
   const AddVehicleView({super.key});
@@ -29,21 +25,6 @@ class _AddVehicleViewState extends State<AddVehicleView> {
   final _latC = TextEditingController(text: '0');
   final _lngC = TextEditingController(text: '0');
 
-  String _transmission = 'AT'; // AT | MT
-  String _fuelType = 'gas'; // gas|diesel|hybrid|ev
-  String _status = 'active'; // active|inactive|pending_review
-  bool _loading = false;
-
-  // --- IA pricing ---
-  double? _suggested;
-  String? _reason;
-  bool _fetchingSuggest = false;
-  bool _suggestionStale = false;
-
-  void _markStale() {
-    if (!_suggestionStale) setState(() => _suggestionStale = true);
-  }
-
   @override
   void dispose() {
     _titleC.dispose();
@@ -60,55 +41,63 @@ class _AddVehicleViewState extends State<AddVehicleView> {
     super.dispose();
   }
 
+  void _markStale() {
+    context.read<AddVehicleViewModel>().markStale();
+  }
+
   Future<void> _fetchSuggestedPrice() async {
-    final token = context.read<AuthProvider?>()?.token;
-    if (token == null) return;
-
-    final form = <String, dynamic>{};
-    void putIf(String k, String v) {
-      if (v.trim().isNotEmpty) form[k] = v.trim();
-    }
-
-    putIf('make', _makeC.text);
-    putIf('model', _modelC.text);
-
     final y = int.tryParse(_yearC.text);
-    if (y != null) form['year'] = y;
-
-    form['transmission'] = _transmission;
-    form['fuel_type'] = _fuelType;
-
     final seats = int.tryParse(_seatsC.text);
-    if (seats != null) form['seats'] = seats;
-
     final mil = int.tryParse(_mileageC.text);
-    if (mil != null) form['mileage'] = mil;
-
     final lat = double.tryParse(_latC.text);
-    if (lat != null) form['lat'] = lat;
-
     final lng = double.tryParse(_lngC.text);
-    if (lng != null) form['lng'] = lng;
 
-    if (form.isEmpty) return;
+    await context.read<AddVehicleViewModel>().fetchSuggestedPrice(
+      make: _makeC.text,
+      model: _modelC.text,
+      year: y,
+      seats: seats,
+      mileage: mil,
+      lat: lat,
+      lng: lng,
+    );
+  }
 
-    setState(() => _fetchingSuggest = true);
+  Future<void> _submit() async {
+    final vm = context.read<AddVehicleViewModel>();
+    if (!_formKey.currentState!.validate()) return;
+
     try {
-      final res = await PricingService.suggestPrice(form: form);
+      final ok = await vm.submit(
+        title: _titleC.text.trim(),
+        make: _makeC.text.trim(),
+        model: _modelC.text.trim(),
+        year: int.parse(_yearC.text.trim()),
+        plate: _plateC.text.trim(),
+        seats: int.parse(_seatsC.text.trim()),
+        mileage: int.parse(_mileageC.text.trim()),
+        lat: double.parse(_latC.text.trim()),
+        lng: double.parse(_lngC.text.trim()),
+        dailyPrice: double.parse(_priceC.text.trim()),
+        imageUrl: _imageUrlC.text.trim().isEmpty
+            ? null
+            : _imageUrlC.text.trim(),
+      );
+
       if (!mounted) return;
-      setState(() {
-        _suggested = res?.value;
-        _reason = res?.reasoning;
-        _suggestionStale = false;
-      });
-    } catch (_) {
+      if (ok) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✅ Vehículo creado y pricing registrado'),
+          ),
+        );
+        Navigator.pop(context, true);
+      }
+    } catch (e) {
       if (!mounted) return;
-      setState(() {
-        _suggested = null;
-        _reason = null;
-      });
-    } finally {
-      if (mounted) setState(() => _fetchingSuggest = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('⚠️ Error: $e')));
     }
   }
 
@@ -139,87 +128,12 @@ class _AddVehicleViewState extends State<AddVehicleView> {
     );
   }
 
-  // --- helper para extraer el ID que devuelva tu VehicleService
-  String? _extractVehicleId(dynamic created) {
-    try {
-      if (created == null) return null;
-      // Caso: objeto con campo id
-      final idField = (created as dynamic).id;
-      if (idField is String && idField.isNotEmpty) return idField;
-    } catch (_) {}
-    // Caso: Map
-    if (created is Map) {
-      final id = created['id'] ?? created['vehicle_id'] ?? created['uuid'];
-      if (id is String && id.isNotEmpty) return id;
-    }
-    // Caso: String directo
-    if (created is String && created.isNotEmpty) return created;
-    return null;
-  }
-
-  Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
-    setState(() => _loading = true);
-    try {
-      final price = double.parse(_priceC.text.trim());
-
-      // 1) Crear vehículo
-      final created = await VehicleService.createVehicle(
-        title: _titleC.text.trim(),
-        make: _makeC.text.trim(),
-        model: _modelC.text.trim(),
-        year: int.parse(_yearC.text.trim()),
-        transmission: _transmission,
-        // Puedes enviar pricePerDay aquí si tu API lo admite,
-        // pero igual creamos el pricing explícitamente abajo.
-        pricePerDay: price,
-        imageUrl: _imageUrlC.text.trim().isEmpty
-            ? null
-            : _imageUrlC.text.trim(),
-        plate: _plateC.text.trim().toUpperCase(),
-        seats: int.parse(_seatsC.text.trim()),
-        fuelType: _fuelType,
-        mileage: int.parse(_mileageC.text.trim()),
-        status: _status,
-        lat: double.parse(_latC.text.trim()),
-        lng: double.parse(_lngC.text.trim()),
-      );
-
-      // 2) Obtener vehicleId sin asumir tipo de retorno
-      final vehicleId = _extractVehicleId(created);
-      if (vehicleId == null) {
-        throw Exception('No se pudo obtener el vehicleId del createVehicle().');
-      }
-
-      // 3) Crear/Upsert del pricing para evitar el 404 en GET /api/pricing/vehicle/{id}
-      await PricingService.create(
-        vehicleId,
-        double.parse(_priceC.text.trim()),
-        minDays: 1, // ajusta tus reglas
-        maxDays: 30, // idem
-        currency: 'USD',
-      );
-
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('✅ Vehículo creado y pricing registrado')),
-      );
-      Navigator.pop(context, true);
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('⚠️ Error: $e')));
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     const p = EdgeInsets.symmetric(horizontal: 24.0);
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
+    final vm = context.watch<AddVehicleViewModel>();
 
     final form = Form(
       key: _formKey,
@@ -264,16 +178,14 @@ class _AddVehicleViewState extends State<AddVehicleView> {
           const SizedBox(height: 12),
 
           DropdownButtonFormField<String>(
-            value: _transmission,
+            value: vm.transmission,
             decoration: _dec(context, 'Transmission'),
             items: const [
               DropdownMenuItem(value: 'AT', child: Text('Automatic')),
               DropdownMenuItem(value: 'MT', child: Text('Manual')),
             ],
-            onChanged: (v) {
-              setState(() => _transmission = v ?? 'AT');
-              _markStale();
-            },
+            onChanged: (v) =>
+                context.read<AddVehicleViewModel>().setTransmission(v ?? 'AT'),
           ),
           const SizedBox(height: 12),
 
@@ -309,7 +221,7 @@ class _AddVehicleViewState extends State<AddVehicleView> {
           const SizedBox(height: 12),
 
           DropdownButtonFormField<String>(
-            value: _fuelType,
+            value: vm.fuelType,
             decoration: _dec(context, 'Fuel type'),
             items: const [
               DropdownMenuItem(value: 'gas', child: Text('Gasoline')),
@@ -317,10 +229,8 @@ class _AddVehicleViewState extends State<AddVehicleView> {
               DropdownMenuItem(value: 'hybrid', child: Text('Hybrid')),
               DropdownMenuItem(value: 'ev', child: Text('Electric')),
             ],
-            onChanged: (v) {
-              setState(() => _fuelType = v ?? 'gas');
-              _markStale();
-            },
+            onChanged: (v) =>
+                context.read<AddVehicleViewModel>().setFuelType(v ?? 'gas'),
           ),
           const SizedBox(height: 12),
 
@@ -364,8 +274,8 @@ class _AddVehicleViewState extends State<AddVehicleView> {
             width: double.infinity,
             height: 48,
             child: FilledButton(
-              onPressed: _loading ? null : _submit,
-              child: Text(_loading ? 'Saving…' : 'Save vehicle'),
+              onPressed: vm.loading ? null : _submit,
+              child: Text(vm.loading ? 'Saving…' : 'Save vehicle'),
             ),
           ),
         ],
@@ -373,14 +283,14 @@ class _AddVehicleViewState extends State<AddVehicleView> {
     );
 
     final suggestCard = _SuggestedPriceCard(
-      loading: _fetchingSuggest,
-      value: _suggested,
-      reason: _reason,
-      stale: _suggestionStale,
+      loading: vm.fetchingSuggest,
+      value: vm.suggested,
+      reason: vm.reason,
+      stale: vm.suggestionStale,
       onRefresh: _fetchSuggestedPrice,
       onApply: () {
-        if (_suggested != null) {
-          _priceC.text = _suggested!.toStringAsFixed(2);
+        if (vm.suggested != null) {
+          _priceC.text = vm.suggested!.toStringAsFixed(2);
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(const SnackBar(content: Text('AI price applied')));
