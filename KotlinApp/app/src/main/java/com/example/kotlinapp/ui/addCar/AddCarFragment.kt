@@ -9,7 +9,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import com.example.kotlinapp.data.remote.Session
-import com.example.kotlinapp.data.remote.api.RetrofitClient
+
 import com.example.kotlinapp.data.remote.dto.LoginRequest
 
 class AddCarFragment : Fragment() {
@@ -17,25 +17,7 @@ class AddCarFragment : Fragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View {
-        return ComposeView(requireContext()).apply {
-            setContent {
-                LaunchedEffect(Unit) {
-                    // Solo para pruebas. Reemplaza por tus credenciales reales de un usuario existente
-                    try {
-                        val tok = RetrofitClient.api.login(
-                            LoginRequest(
-                                email = "user@example.com",
-                                password = "123456"   // la que tengas en tu backend
-                            )
-                        )
-                        Session.token = tok.access_token
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }
-                MaterialTheme { AddCar() }
-            }
-        }
+    ): View = ComposeView(requireContext()).apply {
+        setContent { MaterialTheme { AddCar() } }
     }
 }
