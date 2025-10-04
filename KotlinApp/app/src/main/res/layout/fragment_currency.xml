@@ -59,7 +59,7 @@
                 app:cardElevation="0dp"
                 app:cardCornerRadius="12dp"
                 app:strokeWidth="1dp"
-                app:strokeColor="#D8D6DC">
+                app:strokeColor="?attr/colorOutline">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -107,7 +107,7 @@
                 app:cardElevation="0dp"
                 app:cardCornerRadius="12dp"
                 app:strokeWidth="1dp"
-                app:strokeColor="#D8D6DC">
+                app:strokeColor="?attr/colorOutline">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -155,7 +155,7 @@
                 app:cardElevation="0dp"
                 app:cardCornerRadius="12dp"
                 app:strokeWidth="1dp"
-                app:strokeColor="#D8D6DC">
+                app:strokeColor="?attr/colorOutline">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -203,7 +203,7 @@
                 app:cardElevation="0dp"
                 app:cardCornerRadius="12dp"
                 app:strokeWidth="1dp"
-                app:strokeColor="#D8D6DC">
+                app:strokeColor="?attr/colorOutline">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -251,7 +251,7 @@
             android:textSize="16sp"
             android:fontFamily="@font/poppins_semibold"
             app:cornerRadius="12dp"
-            app:strokeColor="#D8D6DC" />
+            app:strokeColor="?attr/colorOutline" />
         <TextView
             android:id="@+id/tvSuggestion"
             android:layout_width="match_parent"
