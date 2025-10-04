@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
@@ -66,11 +67,13 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun HomeScreen(
     onCardClick: (VehicleItem) -> Unit = {},
-    onBottomClick: (BottomTab) -> Unit = {}
+    onBottomClick: (BottomTab) -> Unit = {},
+    onTopRatedClick: () -> Unit = {}
 ) {
     var query by remember { mutableStateOf("") }
     val categories = listOf("Cars", "SUVs", "Minivans", "Trucks", "Vans", "Luxury")
     val items = sampleVehicles
+
 
     Scaffold(
         topBar = { TopLogoBar() },
@@ -79,7 +82,7 @@ fun HomeScreen(
                 onBottomClick(tab)
             }
         },
-        containerColor = Color(0xFFF7F7F7)
+        containerColor = MaterialTheme.colorScheme.surface
     ) { padding ->
         LazyColumn(
             modifier = Modifier
@@ -95,6 +98,9 @@ fun HomeScreen(
                     onMic = { }
                 )
             }
+            item { 
+                TopRatedButton(onClick = onTopRatedClick)
+            }
             item { CategoryChips(categories = categories) }
             items(items) { v ->
                 VehicleCard(v, onFavorite = { }) { onCardClick(v) }
@@ -106,14 +112,14 @@ fun HomeScreen(
 
 @Composable
 private fun TopLogoBar() {
-    Surface(color = Color.White, shadowElevation = 0.dp) {
+    Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 0.dp) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 8.dp, bottom = 4.dp),
             contentAlignment = Alignment.Center
         ) {
-            Text("QOVO", fontSize = 28.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.sp)
+            Text("QOVO", fontSize = 28.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.sp, color = MaterialTheme.colorScheme.onSurface)
         }
     }
 }
@@ -124,26 +130,30 @@ private fun SearchBar(
     onChange: (String) -> Unit,
     onMic: () -> Unit
 ) {
+    // Colores del sistema Material Design
+    val surfaceVariantColor = MaterialTheme.colorScheme.surfaceVariant
+    val onSurfaceVariantColor = MaterialTheme.colorScheme.onSurfaceVariant
+    
     TextField(
         value = value,
         onValueChange = onChange,
-        placeholder = { Text("Search") },
-        leadingIcon = { Icon(imageVector = Icons.Filled.Search, contentDescription = "Search") },
+        placeholder = { Text("Search", color = onSurfaceVariantColor) },
+        leadingIcon = { Icon(imageVector = Icons.Filled.Search, contentDescription = "Search", tint = onSurfaceVariantColor) },
         trailingIcon = {
             Box(
                 modifier = Modifier
                     .size(28.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFFEDEDED))
+                    .background(surfaceVariantColor)
                     .clickable { onMic() },
                 contentAlignment = Alignment.Center
-            ) { Icon(imageVector = Icons.Filled.Mic, contentDescription = "Mic") }
+            ) { Icon(imageVector = Icons.Filled.Mic, contentDescription = "Mic", tint = onSurfaceVariantColor) }
         },
         singleLine = true,
         shape = RoundedCornerShape(24.dp),
         colors = TextFieldDefaults.colors(
-            unfocusedContainerColor = Color(0xFFEDEDED),
-            focusedContainerColor = Color(0xFFEDEDED),
+            unfocusedContainerColor = surfaceVariantColor,
+            focusedContainerColor = surfaceVariantColor,
             unfocusedIndicatorColor = Color.Transparent,
             focusedIndicatorColor = Color.Transparent
         ),
@@ -153,13 +163,20 @@ private fun SearchBar(
 
 @Composable
 private fun CategoryChips(categories: List<String>) {
+    // Colores del sistema Material Design
+    val surfaceColor = MaterialTheme.colorScheme.surface
+    val onSurfaceColor = MaterialTheme.colorScheme.onSurface
+    
+    // Color del sistema para chips
+    val chipColor = MaterialTheme.colorScheme.surfaceVariant
+    
     LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         items(categories) { label ->
             AssistChip(
                 onClick = { },
-                label = { Text(label) },
+                label = { Text(label, color = onSurfaceColor) },
                 shape = RoundedCornerShape(16.dp),
-                colors = AssistChipDefaults.assistChipColors(containerColor = Color.White),
+                       colors = AssistChipDefaults.assistChipColors(containerColor = chipColor),
                 border = AssistChipDefaults.assistChipBorder(true)
             )
         }
@@ -172,23 +189,34 @@ private fun VehicleCard(
     onFavorite: (VehicleItem) -> Unit,
     onClick: (VehicleItem) -> Unit
 ) {
+    // Colores del sistema Material Design
+    val surfaceColor = MaterialTheme.colorScheme.surface
+    val onSurfaceColor = MaterialTheme.colorScheme.onSurface
+    val surfaceVariantColor = MaterialTheme.colorScheme.surfaceVariant
+    val onSurfaceVariantColor = MaterialTheme.colorScheme.onSurfaceVariant
+    
+    // Colores del sistema Material Design
+    val starColor = MaterialTheme.colorScheme.tertiary // Naranja para estrellas
+    val priceColor = MaterialTheme.colorScheme.primary // Azul para precios
+    val favoriteColor = MaterialTheme.colorScheme.error // Rojo para favoritos
+    
     ElevatedCard(
         onClick = { onClick(item) },
         shape = RoundedCornerShape(16.dp),
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.elevatedCardColors(containerColor = Color.White)
+        colors = CardDefaults.elevatedCardColors(containerColor = surfaceColor)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(140.dp)
-                .background(Color(0xFFF0F0F0)),
+                .background(surfaceVariantColor),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = Icons.Filled.Image,
                 contentDescription = null,
-                tint = Color(0xFFBDBDBD),
+                tint = onSurfaceVariantColor,
                 modifier = Modifier.size(48.dp)
             )
             Icon(
@@ -198,7 +226,7 @@ private fun VehicleCard(
                     .align(Alignment.TopEnd)
                     .padding(12.dp)
                     .size(22.dp),
-                tint = Color(0xFF8E8E8E)
+                tint = favoriteColor
             )
         }
 
@@ -209,11 +237,12 @@ private fun VehicleCard(
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
                     modifier = Modifier.weight(1f),
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    color = onSurfaceColor
                 )
-                Icon(Icons.Filled.Star, contentDescription = null, tint = Color.Black, modifier = Modifier.size(16.dp))
+                Icon(Icons.Filled.Star, contentDescription = null, tint = starColor, modifier = Modifier.size(16.dp))
                 Spacer(Modifier.width(4.dp))
-                Text(item.rating.toString(), fontSize = 12.sp)
+                Text(item.rating.toString(), fontSize = 12.sp, color = starColor)
             }
             Spacer(Modifier.height(6.dp))
             Row(
@@ -221,8 +250,8 @@ private fun VehicleCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(item.transmission, color = Color(0xFF6F6F6F))
-                Text(item.price, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
+                Text(item.transmission, color = onSurfaceVariantColor)
+                Text(item.price, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = priceColor)
             }
         }
     }
@@ -242,9 +271,10 @@ fun PillBottomNavBar(
 
 @Composable
 private fun PillBar(selected: BottomTab, onSelect: (BottomTab) -> Unit) {
-    val blue = Color(0xFF2F80FF)
-    val grey = Color(0xFF6F6F6F)
-    val bg = Color.White.copy(alpha = 0.95f)
+    // Colores del sistema Material Design para navegación
+    val blue = MaterialTheme.colorScheme.primary // Azul para seleccionado
+    val grey = MaterialTheme.colorScheme.onSurfaceVariant // Gris para no seleccionado
+    val bg = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
 
     Box(
         modifier = Modifier
@@ -409,6 +439,47 @@ data class VehicleItem(
     val price: String,
     val imageUrl: String? = null
 )
+
+@Composable
+private fun TopRatedButton(onClick: () -> Unit) {
+    ElevatedCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        ),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column {
+                Text(
+                    text = "🏆 Vehículos Top Rated",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                Text(
+                    text = "Descubre los vehículos mejor calificados",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+            Icon(
+                imageVector = Icons.Filled.Star,
+                contentDescription = "Top Rated",
+                tint = Color.Yellow,
+                modifier = Modifier.size(32.dp)
+            )
+        }
+    }
+}
 
 private val sampleVehicles = listOf(
     VehicleItem("Mercedes Blue 2023", 4.8, "Automatic", "$176,037.11"),

@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true"
-    android:background="@android:color/white">
+    android:background="?attr/colorSurface">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -26,7 +26,7 @@
             android:textSize="32sp"
             android:fontFamily="@font/poppins_semibold"
             android:letterSpacing="0.08"
-            android:textColor="@android:color/black"
+            android:textColor="?attr/colorOnSurface"
             tools:ignore="SmallSp" />
 
         <!-- Divider superior -->
@@ -35,7 +35,7 @@
             android:layout_height="2dp"
             android:layout_marginTop="12dp"
             android:layout_marginBottom="12dp"
-            android:background="#261F2E" />
+            android:background="?attr/colorOutline" />
 
         <!-- Fila perfil (texto + avatar bordeado) -->
         <LinearLayout
@@ -59,7 +59,7 @@
                     android:text="Juan Pablo Baron"
                     android:textSize="20sp"
                     android:fontFamily="@font/poppins_semibold"
-                    android:textColor="@android:color/black" />
+                    android:textColor="?attr/colorOnSurface" />
 
                 <TextView
                     android:id="@+id/tvPhone"
@@ -69,7 +69,7 @@
                     android:text="3152403373"
                     android:textSize="14sp"
                     android:fontFamily="@font/poppins_regular"
-                    android:textColor="#9AA0A6" />
+                    android:textColor="?attr/colorOnSurfaceVariant" />
 
                 <TextView
                     android:id="@+id/tvEmail"
@@ -79,7 +79,7 @@
                     android:text="juanpa.baron18@gmail.com"
                     android:textSize="14sp"
                     android:fontFamily="@font/poppins_regular"
-                    android:textColor="#9AA0A6" />
+                    android:textColor="?attr/colorOnSurfaceVariant" />
             </LinearLayout>
 
             <!-- Avatar con borde grueso y esquinas redondeadas -->
@@ -93,7 +93,7 @@
                 app:srcCompat="@drawable/ic_avatar_placeholder"
                 app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Medium"
                 app:strokeWidth="4dp"
-                app:strokeColor="#261F2E" />
+                app:strokeColor="?attr/colorOutline" />
         </LinearLayout>
 
         <!-- ESPACIO -->
@@ -114,7 +114,7 @@
             app:icon="@drawable/ic_car"
             app:iconGravity="textStart"
             app:iconPadding="12dp"
-            app:strokeColor="#D8D6DC"
+            app:strokeColor="?attr/colorOutline"
             app:cornerRadius="16dp" />
 
         <!-- Botón: Visited Places -->
@@ -130,7 +130,7 @@
             app:icon="@drawable/ic_place"
             app:iconGravity="textStart"
             app:iconPadding="12dp"
-            app:strokeColor="#D8D6DC"
+            app:strokeColor="?attr/colorOutline"
             app:cornerRadius="16dp" />
 
         <!-- Botón: View Cars on Map -->
@@ -162,7 +162,7 @@
             app:icon="@drawable/ic_notifications"
             app:iconGravity="textStart"
             app:iconPadding="12dp"
-            app:strokeColor="#D8D6DC"
+            app:strokeColor="?attr/colorOutline"
             app:cornerRadius="16dp" />
 
         <!-- Botón: Payment -->
@@ -178,7 +178,7 @@
             app:icon="@drawable/ic_payment"
             app:iconGravity="textStart"
             app:iconPadding="12dp"
-            app:strokeColor="#D8D6DC"
+            app:strokeColor="?attr/colorOutline"
             app:cornerRadius="16dp" />
 
         <!-- Divider inferior -->
@@ -187,7 +187,7 @@
             android:layout_height="2dp"
             android:layout_marginTop="18dp"
             android:layout_marginBottom="10dp"
-            android:background="#261F2E" />
+            android:background="?attr/colorOutline" />
 
         <!-- Botón: Switch Account (outline gris) -->
         <com.google.android.material.button.MaterialButton
@@ -198,7 +198,7 @@
             android:text="@string/switch_account"
             android:textSize="15sp"
             android:fontFamily="@font/poppins_semibold"
-            app:strokeColor="#C6C3CC"
+            app:strokeColor="?attr/colorOutlineVariant"
             app:cornerRadius="16dp" />
 
         <!-- Botón: Sign Out (outline rojo) -->
@@ -211,8 +211,8 @@
             android:text="@string/sign_out"
             android:textSize="15sp"
             android:fontFamily="@font/poppins_semibold"
-            android:textColor="#D33B32"
-            app:strokeColor="#D33B32"
+            android:textColor="?attr/colorError"
+            app:strokeColor="?attr/colorError"
             app:cornerRadius="16dp" />
 
         <!-- Botón: Go Back (outline gris) -->
@@ -225,7 +225,7 @@
             android:text="@string/go_back"
             android:textSize="15sp"
             android:fontFamily="@font/poppins_semibold"
-            app:strokeColor="#C6C3CC"
+            app:strokeColor="?attr/colorOutlineVariant"
             app:cornerRadius="16dp" />
 
         <androidx.compose.ui.platform.ComposeView

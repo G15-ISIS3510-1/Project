@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true"
-    android:background="@android:color/white"
+    android:background="?attr/colorSurface"
     android:clipToPadding="false"
     android:paddingBottom="24dp">
 
@@ -28,7 +28,7 @@
             android:textSize="32sp"
             android:fontFamily="@font/poppins_semibold"
             android:letterSpacing="0.08"
-            android:textColor="@android:color/black" />
+            android:textColor="?attr/colorOnSurface" />
 
         <!-- Espacio grande superior -->
         <View
@@ -48,7 +48,7 @@
             app:icon="@drawable/ic_settings"
             app:iconGravity="textStart"
             app:iconPadding="12dp"
-            app:strokeColor="#D8D6DC" />
+            app:strokeColor="?attr/colorOutline" />
 
         <!-- Separación -->
         <View
@@ -68,7 +68,7 @@
             app:icon="@drawable/ic_mail"
             app:iconGravity="textStart"
             app:iconPadding="12dp"
-            app:strokeColor="#D8D6DC" />
+            app:strokeColor="?attr/colorOutline" />
 
         <View
             android:layout_width="match_parent"
@@ -87,7 +87,7 @@
             app:icon="@drawable/ic_currency_pound"
             app:iconGravity="textStart"
             app:iconPadding="12dp"
-            app:strokeColor="#D8D6DC" />
+            app:strokeColor="?attr/colorOutline" />
 
         <View
             android:layout_width="match_parent"
@@ -106,7 +106,7 @@
             app:icon="@drawable/ic_info"
             app:iconGravity="textStart"
             app:iconPadding="12dp"
-            app:strokeColor="#D8D6DC" />
+            app:strokeColor="?attr/colorOutline" />
 
         <View
             android:layout_width="match_parent"
@@ -139,7 +139,7 @@
             android:layout_height="wrap_content"
             android:text="v.3686.1000"
             android:textSize="14sp"
-            android:textColor="#9AA0A6"
+            android:textColor="?attr/colorOnSurfaceVariant"
             android:fontFamily="@font/poppins_regular" />
 
     </LinearLayout>

@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import com.example.kotlinapp.R
+import com.example.kotlinapp.ui.theme.AppTheme
 
 class HostFragment : Fragment() {
 
@@ -22,7 +23,9 @@ class HostFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         val composeView: ComposeView = view.findViewById(R.id.hostCompose)
         composeView.setContent {
-            HostScreen { pin ->
+            AppTheme {
+                HostScreen { pin ->
+                }
             }
         }
     }

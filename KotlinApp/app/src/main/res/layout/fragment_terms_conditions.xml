@@ -5,7 +5,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white">
+    android:background="?attr/colorSurface">
 
     <!-- Logo -->
     <TextView
@@ -16,7 +16,7 @@
         android:textSize="40sp"
         android:textStyle="bold"
         android:letterSpacing="0.05"
-        android:textColor="@android:color/black"
+        android:textColor="?attr/colorOnSurface"
         android:fontFamily="@font/poppins_bold"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -31,7 +31,7 @@
         android:text="Terms &amp; Conditions"
         android:textStyle="bold"
         android:textSize="16sp"
-        android:textColor="#6A6A6A"
+        android:textColor="?attr/colorOnSurfaceVariant"
         android:fontFamily="@font/poppins_semibold"
         android:gravity="center"
         android:layout_marginTop="8dp"
@@ -63,7 +63,7 @@
             app:cardCornerRadius="12dp"
             app:cardElevation="0dp"
             app:strokeWidth="1dp"
-            app:strokeColor="#E6E6E6"
+            app:strokeColor="?attr/colorOutline"
             android:layout_marginBottom="4dp">
 
             <TextView
@@ -71,7 +71,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:padding="16dp"
-                android:textColor="#424242"
+                android:textColor="?attr/colorOnSurface"
                 android:textSize="14sp"
                 android:fontFamily="@font/poppins_regular"
                 android:lineSpacingExtra="2dp"
@@ -88,7 +88,7 @@
         android:text="Back"
         android:textAllCaps="false"
         android:textStyle="bold"
-        android:textColor="#424242"
+        android:textColor="?attr/colorOnSurface"
         android:fontFamily="@font/poppins_semibold"
         android:background="@drawable/button_outline_background"
         android:layout_marginStart="32dp"
