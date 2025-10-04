@@ -90,4 +90,9 @@
             android:id="@+id/currencyFragment"
             android:name="com.example.kotlinapp.ui.currency.CurrencyFragment"
             android:label="Preferred Currency" />
+    <fragment
+        android:id="@+id/addCarFragment"
+        android:name="com.example.kotlinapp.ui.addCar.AddCarFragment"
+        android:label="AddCarFragment" />
+
 </navigation>

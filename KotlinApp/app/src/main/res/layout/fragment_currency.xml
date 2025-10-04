@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white"
+    android:background="?attr/colorSurface"
     android:fillViewport="true"
     android:clipToPadding="false"
     android:paddingBottom="24dp">
@@ -26,7 +26,7 @@
             android:textSize="32sp"
             android:fontFamily="@font/poppins_semibold"
             android:letterSpacing="0.08"
-            android:textColor="@android:color/black" />
+            android:textColor="?attr/colorOnSurface" />
 
         <!-- Título -->
         <TextView
@@ -37,7 +37,7 @@
             android:layout_marginTop="16dp"
             android:text="@string/preferred_currency"
             android:textSize="18sp"
-            android:textColor="@android:color/black"
+            android:textColor="?attr/colorOnSurface"
             android:fontFamily="@font/poppins_semibold" />
 
         <!-- Lista de opciones -->
@@ -82,7 +82,7 @@
                         android:layout_marginStart="10dp"
                         android:text="@string/usd_row"
                         android:textSize="18sp"
-                        android:textColor="@android:color/black"
+                        android:textColor="?attr/colorOnSurface"
                         android:fontFamily="@font/poppins_semibold" />
 
                     <TextView
@@ -90,7 +90,7 @@
                         android:layout_height="wrap_content"
                         android:text="$"
                         android:textSize="18sp"
-                        android:textColor="#6F6F77"
+                        android:textColor="?attr/colorOnSurfaceVariant"
                         android:fontFamily="@font/poppins_semibold" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -130,7 +130,7 @@
                         android:layout_marginStart="10dp"
                         android:text="@string/eur_row"
                         android:textSize="18sp"
-                        android:textColor="@android:color/black"
+                        android:textColor="?attr/colorOnSurface"
                         android:fontFamily="@font/poppins_semibold" />
 
                     <TextView
@@ -138,7 +138,7 @@
                         android:layout_height="wrap_content"
                         android:text="€"
                         android:textSize="18sp"
-                        android:textColor="#6F6F77"
+                        android:textColor="?attr/colorOnSurfaceVariant"
                         android:fontFamily="@font/poppins_semibold" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -178,7 +178,7 @@
                         android:layout_marginStart="10dp"
                         android:text="@string/gbp_row"
                         android:textSize="18sp"
-                        android:textColor="@android:color/black"
+                        android:textColor="?attr/colorOnSurface"
                         android:fontFamily="@font/poppins_semibold" />
 
                     <TextView
@@ -186,7 +186,7 @@
                         android:layout_height="wrap_content"
                         android:text="£"
                         android:textSize="18sp"
-                        android:textColor="#6F6F77"
+                        android:textColor="?attr/colorOnSurfaceVariant"
                         android:fontFamily="@font/poppins_semibold" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -226,7 +226,7 @@
                         android:layout_marginStart="10dp"
                         android:text="@string/cop_row"
                         android:textSize="18sp"
-                        android:textColor="@android:color/black"
+                        android:textColor="?attr/colorOnSurface"
                         android:fontFamily="@font/poppins_semibold" />
 
                     <TextView
@@ -234,7 +234,7 @@
                         android:layout_height="wrap_content"
                         android:text="$"
                         android:textSize="18sp"
-                        android:textColor="#6F6F77"
+                        android:textColor="?attr/colorOnSurfaceVariant"
                         android:fontFamily="@font/poppins_semibold" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
