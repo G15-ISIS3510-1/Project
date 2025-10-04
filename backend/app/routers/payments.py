@@ -6,10 +6,14 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.base import get_db
-from app.db.models import User
-from app.schemas.payment import PaymentCreate, PaymentUpdate, PaymentResponse
+from app.db.models import User, Payment
+from app.schemas.payment import PaymentCreate, PaymentUpdate, PaymentResponse, PaymentMethodAnalytics
 from app.services.payment_service import PaymentService
 from app.routers.users import get_current_user_from_token
+from sqlalchemy import select, update
+
+from datetime import datetime, timedelta
+from sqlalchemy import func
 
 router = APIRouter(prefix="/payments", tags=["payments"])
 
@@ -47,6 +51,41 @@ async def list_my_payments(
     payments = await svc.get_payments_by_id_user(current_user.user_id, skip=skip, limit=limit)
     return payments
 
+@router.get("/analytics/adoption", response_model=List[PaymentMethodAnalytics])
+async def get_payment_method_adoption(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_from_token),
+):
+    three_months_ago = datetime.utcnow() - timedelta(days=90)
+
+    # agregamos total para calcular porcentaje
+    total_q = await db.execute(
+        select(func.count(Payment.payment_id)).where(Payment.created_at >= three_months_ago)
+    )
+    total = total_q.scalar() or 0
+
+    if total == 0:
+        return []
+
+    q = await db.execute(
+        select(
+            Payment.payment_method,
+            func.count(Payment.payment_id).label("count")
+        )
+        .where(Payment.created_at >= three_months_ago)
+        .group_by(Payment.payment_method)
+        .order_by(func.count(Payment.payment_id).asc())
+    )
+    rows = q.all()
+
+    return [
+    PaymentMethodAnalytics(
+        name=row.payment_method or "unknown",  # ← Manejar nulls
+        count=row.count,
+        percentage=round((row.count / total) * 100, 2)
+    )
+    for row in rows
+    ]
 
 @router.get("/{payment_id}", response_model=PaymentResponse)
 async def get_payment(

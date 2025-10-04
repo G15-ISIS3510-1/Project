@@ -8,6 +8,7 @@ class PaymentBase(BaseModel):
     amount: float = Field(..., gt=0, description="Amount to pay per reservation")
     currency: str = Field(default="USD", min_length=3, max_length=3, description="Currency (USD, EUR, etc.)")
     status: str = Field(..., description="Payment status (pending, paid, failed, etc.)")
+    payment_method: Optional[str] = Field(None, max_length=50)
     provider: Optional[str] = Field(None, max_length=40, description="Payment provider (stripe, adyen, etc.)")
     provider_ref: Optional[str] = Field(None, max_length=120, description="External provider reference ID")
     created_at: Optional[datetime] = Field(default_factory=datetime.utcnow)
@@ -33,3 +34,8 @@ class PaymentResponse(PaymentBase):
 
     class Config:
         from_attributes = True
+
+class PaymentMethodAnalytics(BaseModel):
+    name: str
+    count: int
+    percentage: float | None = None
