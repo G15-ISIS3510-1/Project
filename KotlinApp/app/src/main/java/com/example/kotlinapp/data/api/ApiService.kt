@@ -49,3 +49,4 @@ data class PhotoUploadResponse(
     val photo_url: String,
     val message: String
 )
+

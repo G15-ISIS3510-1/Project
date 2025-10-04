@@ -108,6 +108,25 @@
             app:iconPadding="12dp"
             app:strokeColor="#D8D6DC" />
 
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="22dp" />
+
+        <!-- Botón Payment Analytics -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnPaymentAnalytics"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="Payment Analytics"
+            android:textSize="18sp"
+            android:fontFamily="@font/poppins_semibold"
+            app:cornerRadius="16dp"
+            app:icon="@drawable/ic_payment"
+            app:iconGravity="textStart"
+            app:iconPadding="12dp"
+            app:strokeColor="#D8D6DC" />
+
         <!-- Mucho espacio hasta la versión (como en el mock) -->
         <View
             android:layout_width="match_parent"
