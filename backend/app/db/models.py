@@ -79,6 +79,7 @@ class Vehicle(Base):
     lat = Column(Float, nullable=False)  # -90..90
     lng = Column(Float, nullable=False)  # -180..180
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    photo_url = Column(String, nullable=True)
     
     # Relaciones
     owner = relationship("User", back_populates="owned_vehicles")
