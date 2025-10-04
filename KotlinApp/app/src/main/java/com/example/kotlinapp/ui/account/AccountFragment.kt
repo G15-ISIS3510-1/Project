@@ -47,6 +47,11 @@ class AccountFragment : Fragment() {
             findNavController().navigate(R.id.action_account_to_visitedPlaces)
         }
 
+        binding.btnViewCar.setOnClickListener {
+            Toast.makeText(requireContext(), "View active cars on map", Toast.LENGTH_SHORT).show()
+            findNavController().navigate(R.id.vehicleMapFragment)
+        }
+
         binding.btnCommunications.setOnClickListener {
             Toast.makeText(requireContext(), "Communications clicked", Toast.LENGTH_SHORT).show()
             // TODO: Implement communications
