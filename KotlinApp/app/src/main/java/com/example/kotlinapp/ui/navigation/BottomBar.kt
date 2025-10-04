@@ -33,9 +33,9 @@ fun PillBottomNavBar(
 ) {
     var selected by remember { mutableStateOf(selectedTab) }
 
-    val blue = Color(0xFF2F80FF)
-    val grey = Color(0xFF6F6F6F)
-    val bg = Color.White.copy(alpha = 0.95f)
+    val blue = MaterialTheme.colorScheme.primary
+    val grey = MaterialTheme.colorScheme.onSurfaceVariant
+    val bg = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
 
     Box(
         modifier = Modifier

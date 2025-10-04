@@ -9,6 +9,7 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.navigation.fragment.findNavController
 import com.example.kotlinapp.R
 import com.example.kotlinapp.databinding.FragmentHomeBinding
+import com.example.kotlinapp.ui.theme.AppTheme
 
 class HomeFragment : Fragment() {
     
@@ -32,7 +33,8 @@ class HomeFragment : Fragment() {
     private fun setupCompose() {
         val composeView: ComposeView = view?.findViewById(R.id.homeCompose) ?: return
         composeView.setContent {
-            HomeScreen(
+            AppTheme {
+                HomeScreen(
                 onCardClick = { /* TODO: navigate to detail */ },
                 onBottomClick = { tab ->
                     when (tab) {
@@ -55,6 +57,7 @@ class HomeFragment : Fragment() {
                     }
                 }
             )
+            }
         }
     }
     

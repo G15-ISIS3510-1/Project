@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true"
-    android:background="@android:color/white"
+    android:background="?attr/colorSurface"
     android:clipToPadding="false"
     android:paddingBottom="24dp">
 
@@ -27,7 +27,7 @@
             android:textSize="32sp"
             android:fontFamily="@font/poppins_semibold"
             android:letterSpacing="0.08"
-            android:textColor="@android:color/black" />
+            android:textColor="?attr/colorOnSurface" />
 
         <!-- Search -->
         <com.google.android.material.textfield.TextInputLayout
@@ -39,7 +39,7 @@
             app:startIconDrawable="@drawable/ic_search"
             app:endIconMode="custom"
             app:endIconDrawable="@drawable/ic_mic"
-            app:boxBackgroundColor="#F0F0F0"
+            app:boxBackgroundColor="?attr/colorSurfaceVariant"
             app:boxStrokeWidth="0dp"
             app:boxCornerRadiusTopStart="24dp"
             app:boxCornerRadiusTopEnd="24dp"
@@ -76,7 +76,7 @@
                 android:checkable="true"
                 android:checked="true"
                 app:cornerRadius="20dp"
-                app:strokeColor="#E9E7EE" />
+                app:strokeColor="?attr/colorOutlineVariant" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/tabFavorites"
@@ -88,7 +88,7 @@
                 android:textSize="14sp"
                 android:checkable="true"
                 app:cornerRadius="20dp"
-                app:strokeColor="#E9E7EE" />
+                app:strokeColor="?attr/colorOutlineVariant" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/tabTagged"
@@ -100,7 +100,7 @@
                 android:textSize="14sp"
                 android:checkable="true"
                 app:cornerRadius="20dp"
-                app:strokeColor="#E9E7EE" />
+                app:strokeColor="?attr/colorOutlineVariant" />
         </com.google.android.material.button.MaterialButtonToggleGroup>
 
         <!-- LISTADO (4 tarjetas estáticas para replicar el mock) -->
@@ -117,7 +117,7 @@
                 android:layout_marginBottom="16dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="1dp"
-                app:strokeColor="#E5E5E5"
+                app:strokeColor="?attr/colorOutline"
                 app:cardCornerRadius="16dp">
 
                 <LinearLayout
@@ -139,7 +139,7 @@
                             android:layout_height="wrap_content"
                             android:text="Bogotá, Colombia"
                             android:textSize="20sp"
-                            android:textColor="@android:color/black"
+                            android:textColor="?attr/colorOnSurface"
                             android:fontFamily="@font/poppins_semibold" />
 
                         <TextView
@@ -148,7 +148,7 @@
                             android:layout_marginTop="6dp"
                             android:text="March 2025"
                             android:textSize="14sp"
-                            android:textColor="#90939A"
+                            android:textColor="?attr/colorOnSurfaceVariant"
                             android:fontFamily="@font/poppins_regular" />
                     </LinearLayout>
 
@@ -160,7 +160,7 @@
                         app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Medium"
                         app:srcCompat="@drawable/ic_image_placeholder"
                         app:strokeWidth="2dp"
-                        app:strokeColor="#E5E5E5" />
+                        app:strokeColor="?attr/colorOutline" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -171,7 +171,7 @@
                 android:layout_marginBottom="16dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="1dp"
-                app:strokeColor="#E5E5E5"
+                app:strokeColor="?attr/colorOutline"
                 app:cardCornerRadius="16dp">
 
                 <LinearLayout
@@ -193,7 +193,7 @@
                             android:layout_height="wrap_content"
                             android:text="Tunja, Colombia"
                             android:textSize="20sp"
-                            android:textColor="@android:color/black"
+                            android:textColor="?attr/colorOnSurface"
                             android:fontFamily="@font/poppins_semibold" />
 
                         <TextView
@@ -202,7 +202,7 @@
                             android:layout_marginTop="6dp"
                             android:text="January 2025"
                             android:textSize="14sp"
-                            android:textColor="#90939A"
+                            android:textColor="?attr/colorOnSurfaceVariant"
                             android:fontFamily="@font/poppins_regular" />
                     </LinearLayout>
 
@@ -214,7 +214,7 @@
                         app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Medium"
                         app:srcCompat="@drawable/ic_image_placeholder"
                         app:strokeWidth="2dp"
-                        app:strokeColor="#E5E5E5" />
+                        app:strokeColor="?attr/colorOutline" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -225,7 +225,7 @@
                 android:layout_marginBottom="16dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="1dp"
-                app:strokeColor="#E5E5E5"
+                app:strokeColor="?attr/colorOutline"
                 app:cardCornerRadius="16dp">
 
                 <LinearLayout
@@ -247,7 +247,7 @@
                             android:layout_height="wrap_content"
                             android:text="Sao Paulo, Brasil"
                             android:textSize="20sp"
-                            android:textColor="@android:color/black"
+                            android:textColor="?attr/colorOnSurface"
                             android:fontFamily="@font/poppins_semibold" />
 
                         <TextView
@@ -256,7 +256,7 @@
                             android:layout_marginTop="6dp"
                             android:text="November 2024"
                             android:textSize="14sp"
-                            android:textColor="#90939A"
+                            android:textColor="?attr/colorOnSurfaceVariant"
                             android:fontFamily="@font/poppins_regular" />
                     </LinearLayout>
 
@@ -268,7 +268,7 @@
                         app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Medium"
                         app:srcCompat="@drawable/ic_image_placeholder"
                         app:strokeWidth="2dp"
-                        app:strokeColor="#E5E5E5" />
+                        app:strokeColor="?attr/colorOutline" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -279,7 +279,7 @@
                 android:layout_marginBottom="16dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="1dp"
-                app:strokeColor="#E5E5E5"
+                app:strokeColor="?attr/colorOutline"
                 app:cardCornerRadius="16dp">
 
                 <LinearLayout
@@ -301,7 +301,7 @@
                             android:layout_height="wrap_content"
                             android:text="Washington D.C., USA"
                             android:textSize="20sp"
-                            android:textColor="@android:color/black"
+                            android:textColor="?attr/colorOnSurface"
                             android:fontFamily="@font/poppins_semibold" />
 
                         <TextView
@@ -310,7 +310,7 @@
                             android:layout_marginTop="6dp"
                             android:text="October 2024"
                             android:textSize="14sp"
-                            android:textColor="#90939A"
+                            android:textColor="?attr/colorOnSurfaceVariant"
                             android:fontFamily="@font/poppins_regular" />
                     </LinearLayout>
 
@@ -322,7 +322,7 @@
                         app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Medium"
                         app:srcCompat="@drawable/ic_image_placeholder"
                         app:strokeWidth="2dp"
-                        app:strokeColor="#E5E5E5" />
+                        app:strokeColor="?attr/colorOutline" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
@@ -338,6 +338,6 @@
             android:textSize="18sp"
             android:fontFamily="@font/poppins_semibold"
             app:cornerRadius="16dp"
-            app:strokeColor="#D8D6DC" />
+            app:strokeColor="?attr/colorOutline" />
     </LinearLayout>
 </ScrollView>
