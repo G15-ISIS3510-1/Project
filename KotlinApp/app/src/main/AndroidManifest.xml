@@ -43,6 +43,11 @@
             </intent-filter>
         </activity>
         
+        <activity
+            android:name=".ui.toprated.TopRatedVehiclesActivity"
+            android:exported="false"
+            android:theme="@style/Theme.KotlinApp" />
+        
         <!-- BroadcastReceiver para cambios de hora -->
         <receiver
             android:name=".core.TimeChangeReceiver"

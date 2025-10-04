@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
@@ -66,7 +67,8 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun HomeScreen(
     onCardClick: (VehicleItem) -> Unit = {},
-    onBottomClick: (BottomTab) -> Unit = {}
+    onBottomClick: (BottomTab) -> Unit = {},
+    onTopRatedClick: () -> Unit = {}
 ) {
     var query by remember { mutableStateOf("") }
     val categories = listOf("Cars", "SUVs", "Minivans", "Trucks", "Vans", "Luxury")
@@ -95,6 +97,9 @@ fun HomeScreen(
                     onChange = { query = it },
                     onMic = { }
                 )
+            }
+            item { 
+                TopRatedButton(onClick = onTopRatedClick)
             }
             item { CategoryChips(categories = categories) }
             items(items) { v ->
@@ -434,6 +439,47 @@ data class VehicleItem(
     val price: String,
     val imageUrl: String? = null
 )
+
+@Composable
+private fun TopRatedButton(onClick: () -> Unit) {
+    ElevatedCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        ),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column {
+                Text(
+                    text = "🏆 Vehículos Top Rated",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                Text(
+                    text = "Descubre los vehículos mejor calificados",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+            Icon(
+                imageVector = Icons.Filled.Star,
+                contentDescription = "Top Rated",
+                tint = Color.Yellow,
+                modifier = Modifier.size(32.dp)
+            )
+        }
+    }
+}
 
 private val sampleVehicles = listOf(
     VehicleItem("Mercedes Blue 2023", 4.8, "Automatic", "$176,037.11"),

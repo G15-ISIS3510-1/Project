@@ -15,6 +15,7 @@ from .seed_messages import seed_messages
 from .seed_bookings import seed_bookings
 from .seed_payments import seed_payments
 from .seed_insurance_plans import seed_insurance_plans
+from .seed_vehicle_ratings import seed_vehicle_ratings
 
 BASE = os.getenv("SEED_BASE_URL", "http://127.0.0.1:8000")
 ADMIN_EMAIL = os.getenv("SEED_EMAIL", "admin@example.com")
@@ -91,6 +92,7 @@ def main():
     seed_messages(messages_per_conversation=3)
     seed_bookings(per_vehicle=1)
     seed_payments(max_per_booking=1)
+    seed_vehicle_ratings()
     print("[seed] done")
 
 if __name__ == "__main__":

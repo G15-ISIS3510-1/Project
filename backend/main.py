@@ -13,6 +13,7 @@ from app.routers import (
     vehicles,
     pricing,
     vehicle_availability,
+    vehicle_ratings,
     messages,
     conversations,
     bookings,
@@ -90,6 +91,7 @@ app.include_router(vehicles.router, prefix="/api")
 app.include_router(pricing.router, prefix="/api/pricing")
 
 app.include_router(vehicle_availability.router, prefix="/api/vehicle-availability")
+app.include_router(vehicle_ratings.router, prefix="/api")
 app.include_router(messages.router, prefix="/api/messages")
 app.include_router(conversations.router, prefix="/api/conversations")
 app.include_router(bookings.router, prefix="/api/bookings")

@@ -37,6 +37,7 @@ object ApiClient {
         .build()
     
     val authApiService: AuthApiService = retrofit.create(AuthApiService::class.java)
+    val vehicleRatingApi: VehicleRatingApi = retrofit.create(VehicleRatingApi::class.java)
 
     fun <T> create(service: Class<T>): T = retrofit.create(service)
 }
