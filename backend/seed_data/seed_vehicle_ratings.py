@@ -1,16 +1,17 @@
 import asyncio
 import random
+import os
 from datetime import datetime, timedelta
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from app.core.config import settings
 from app.db.models import VehicleRating, Vehicle, Booking, User
 from sqlalchemy import select
 import uuid
 
 async def seed_vehicle_ratings():
     """Crear MUCHOS datos de prueba para calificaciones de vehículos"""
-    # Crear engine asíncrono
-    async_engine = create_async_engine(settings.database_url_async)
+    # Crear engine asíncrono usando DATABASE_URL del entorno o por defecto
+    database_url = os.getenv("DATABASE_URL", "postgresql+asyncpg://marcosespana@127.0.0.1:5432/qovo_db")
+    async_engine = create_async_engine(database_url)
     
     async with AsyncSession(async_engine) as db:
         try:

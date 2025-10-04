@@ -11,19 +11,19 @@ import retrofit2.http.Path
 
 interface VehicleRatingApi {
     
-    @POST("vehicle-ratings/search/top-rated")
+    @POST("api/vehicle-ratings/search/top-rated")
     suspend fun getTopRatedVehicles(
         @Header("Authorization") token: String,
         @Body searchParams: TopRatedVehicleSearch
     ): Response<List<TopRatedVehicle>>
     
-    @GET("vehicle-ratings/vehicle/{vehicle_id}")
+    @GET("api/vehicle-ratings/vehicle/{vehicle_id}")
     suspend fun getVehicleRatings(
         @Header("Authorization") token: String,
         @Path("vehicle_id") vehicleId: String
     ): Response<List<VehicleRating>>
     
-    @GET("vehicle-ratings/{rating_id}")
+    @GET("api/vehicle-ratings/{rating_id}")
     suspend fun getRatingById(
         @Header("Authorization") token: String,
         @Path("rating_id") ratingId: String

@@ -18,12 +18,31 @@ data class TopRatedVehiclesUiState(
 )
 
 data class SearchParams(
-    val startDate: Date = Date(System.currentTimeMillis() + 24 * 60 * 60 * 1000), // Tomorrow
-    val endDate: Date = Date(System.currentTimeMillis() + 4 * 24 * 60 * 60 * 1000), // 4 days from now
-    val latitude: Double = 4.6097, // Bogotá coordinates
-    val longitude: Double = -74.0817,
+    // Buscar vehículos para dentro de 7 días a las 10am UTC (horario seguro dentro de disponibilidad)
+    val startDate: Date = run {
+        val calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
+            add(Calendar.DAY_OF_YEAR, 7)  // 7 días en el futuro
+            set(Calendar.HOUR_OF_DAY, 10)  // 10:00 AM UTC
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        calendar.time
+    },
+    val endDate: Date = run {
+        val calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
+            add(Calendar.DAY_OF_YEAR, 7)  // mismo día
+            set(Calendar.HOUR_OF_DAY, 18)  // 6:00 PM UTC
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        calendar.time
+    },
+    val latitude: Double = 19.4326, // Ciudad de México (CDMX) 
+    val longitude: Double = -99.1332,
     val radiusKm: Double = 50.0,
-    val limit: Int = 3
+    val limit: Int = 10  // Mostrar hasta 10 vehículos
 )
 
 class TopRatedVehiclesViewModel(

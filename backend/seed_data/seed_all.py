@@ -16,6 +16,7 @@ from .seed_bookings import seed_bookings
 from .seed_payments import seed_payments
 from .seed_insurance_plans import seed_insurance_plans
 from .seed_vehicle_ratings import seed_vehicle_ratings
+import asyncio
 
 BASE = os.getenv("SEED_BASE_URL", "http://127.0.0.1:8000")
 ADMIN_EMAIL = os.getenv("SEED_EMAIL", "admin@example.com")
@@ -86,13 +87,20 @@ def main():
     seed_users(n=12)
     seed_vehicles()         # make sure fuel_type values are one of: gas|diesel|hybrid|ev
     seed_pricing()
-    seed_availability(days=10)
+    seed_availability(days=30, past_days=60)  
     seed_insurance_plans()
     seed_conversations(max_pairs=5)
     seed_messages(messages_per_conversation=3)
-    seed_bookings(per_vehicle=1)
+    seed_bookings(per_vehicle=4)  
     seed_payments(max_per_booking=1)
-    seed_vehicle_ratings()
+    
+    print("\n[seed] Creando calificaciones de vehículos...")
+    try:
+        asyncio.run(seed_vehicle_ratings())
+    except Exception as e:
+        print(f"[seed] Error al crear calificaciones: {e}")
+        print("[seed] Puedes ejecutar 'python seed_data/seed_vehicle_ratings.py' manualmente después")
+    
     print("[seed] done")
 
 if __name__ == "__main__":

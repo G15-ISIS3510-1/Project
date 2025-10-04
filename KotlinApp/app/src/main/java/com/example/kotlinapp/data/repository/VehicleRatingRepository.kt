@@ -25,9 +25,12 @@ class VehicleRatingRepository(
             val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault())
             dateFormat.timeZone = TimeZone.getTimeZone("UTC")
             
+            val startTs = dateFormat.format(startDate)
+            val endTs = dateFormat.format(endDate)
+            
             val searchParams = TopRatedVehicleSearch(
-                startTs = dateFormat.format(startDate),
-                endTs = dateFormat.format(endDate),
+                startTs = startTs,
+                endTs = endTs,
                 latitude = latitude,
                 longitude = longitude,
                 radiusKm = radiusKm,
@@ -37,9 +40,11 @@ class VehicleRatingRepository(
             val response = api.getTopRatedVehicles("Bearer $token", searchParams)
             
             if (response.isSuccessful) {
-                Result.success(response.body() ?: emptyList())
+                val vehicles = response.body() ?: emptyList()
+                Result.success(vehicles)
             } else {
-                Result.failure(Exception("Error: ${response.code()} - ${response.message()}"))
+                val errorMsg = "Error: ${response.code()} - ${response.message()}"
+                Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
             Result.failure(e)
