@@ -26,6 +26,10 @@ class PaymentFragment : Fragment(R.layout.fragment_payment) {
         binding.btnCurrency.setOnClickListener {
             findNavController().navigate(R.id.action_payment_to_currency)
         }
+
+        binding.btnPaymentAnalytics.setOnClickListener {
+            findNavController().navigate(R.id.action_payment_to_analytics)
+        }
     }
 
     override fun onDestroyView() {
