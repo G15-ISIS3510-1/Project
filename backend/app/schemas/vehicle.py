@@ -15,7 +15,7 @@ class VehicleBase(BaseModel):
     status: str = Field(..., pattern="^(active|inactive|pending_review)$")
     lat: float = Field(..., ge=-90, le=90)  # Latitud válida
     lng: float = Field(..., ge=-180, le=180)  # Longitud válida
-    
+    photo_url: Optional[str] = None
 
 
 class VehicleCreate(VehicleBase):
@@ -34,6 +34,7 @@ class VehicleUpdate(BaseModel):
     lat: Optional[float] = Field(None, ge=-90, le=90)
     lng: Optional[float] = Field(None, ge=-180, le=180)
     owner_id: Optional[str] = Field(None)  # Permitir actualizar owner_id si es necesario
+    photo_url: Optional[str] = None
 
 class VehicleResponse(VehicleBase):
     vehicle_id: str
