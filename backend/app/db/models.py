@@ -172,6 +172,7 @@ class Payment(Base):
     amount = Column(Float, nullable=False)
     currency = Column(String, default="USD")
     status = Column(Enum(PaymentStatus), nullable=False)
+    payment_method = Column(String(50), nullable=True)
     provider = Column(String, nullable=False)  # ej. stripe, adyen
     provider_ref = Column(String)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
