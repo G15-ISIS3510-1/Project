@@ -12,7 +12,7 @@ from typing import List
 from fastapi import UploadFile, File
 import shutil
 from pathlib import Path
-from sqlalchemy import update
+from sqlalchemy import select, update
 
 router = APIRouter(prefix="/vehicles", tags=["vehicles"])
 
@@ -26,6 +26,19 @@ async def get_vehicles(
     """Obtiene lista de vehículos"""
     vehicle_service = VehicleService(db)
     vehicles = await vehicle_service.get_vehicles(skip=skip, limit=limit)
+    return vehicles
+
+
+@router.get("/active", response_model=List[VehicleResponse])
+async def get_active_vehicles(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(Vehicle).where(Vehicle.status.in_(["active", "inactive"]))  
+    )
+    vehicles = result.scalars().all()
+    
+    if not vehicles:
+        raise HTTPException(status_code=404, detail="No hay vehículos disponibles")
+    
     return vehicles
 
 @router.get("/{vehicle_id}", response_model=VehicleResponse)
@@ -56,6 +69,9 @@ async def get_vehicles_by_owner(
     vehicle_service = VehicleService(db)
     vehicles = await vehicle_service.get_vehicles_by_owner(owner_id)
     return vehicles
+
+
+
 
 @router.post("/", response_model=VehicleResponse)
 async def create_vehicle(
