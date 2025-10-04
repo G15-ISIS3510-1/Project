@@ -44,7 +44,7 @@ fun TripScreen(
     Scaffold(
         topBar = { TopLogoBar() },
         bottomBar = { PillBottomNavBar(selectedTab = BottomTab.Trip, onTabSelected = onBottomClick) },
-        containerColor = Color(0xFFF7F7F7)
+        containerColor = MaterialTheme.colorScheme.surface
     ) { padding ->
         LazyColumn(
             modifier = Modifier
@@ -80,7 +80,7 @@ fun TripScreen(
 
 @Composable
 private fun TopLogoBar() {
-    Surface(color = Color.White, shadowElevation = 0.dp) {
+    Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 0.dp) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -109,7 +109,7 @@ private fun TripSearchBar(
                 modifier = Modifier
                     .size(28.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFFEDEDED))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
                     .clickable { onMic() },
                 contentAlignment = Alignment.Center
             ) { Icon(Icons.Filled.Mic, contentDescription = "Mic") }
@@ -117,8 +117,8 @@ private fun TripSearchBar(
         singleLine = true,
         shape = RoundedCornerShape(24.dp),
         colors = TextFieldDefaults.colors(
-            unfocusedContainerColor = Color(0xFFEDEDED),
-            focusedContainerColor = Color(0xFFEDEDED),
+            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
             unfocusedIndicatorColor = Color.Transparent,
             focusedIndicatorColor = Color.Transparent
         ),
@@ -135,9 +135,9 @@ private fun TripSegmented(
     onSelect: (TripFilter) -> Unit,
     height: Dp = 36.dp
 ) {
-    val container = Color(0xFFF1F1F1)
-    val selectedText = Color(0xFF2F80FF)
-    val unselectedText = Color(0xFF6F6F6F)
+    val container = MaterialTheme.colorScheme.surfaceVariant
+    val selectedText = MaterialTheme.colorScheme.primary
+    val unselectedText = MaterialTheme.colorScheme.onSurfaceVariant
 
     Box(
         modifier = Modifier
@@ -156,7 +156,7 @@ private fun TripSegmented(
                 val isSel = option == selected
                 Surface(
                     shape = RoundedCornerShape(16.dp),
-                    color = if (isSel) Color.White else Color.Transparent,
+                    color = if (isSel) MaterialTheme.colorScheme.surface else Color.Transparent,
                     shadowElevation = if (isSel) 1.dp else 0.dp,
                     modifier = Modifier
                         .weight(1f)
@@ -190,7 +190,7 @@ private fun TripCard(item: TripItem, onClick: (TripItem) -> Unit) {
     ElevatedCard(
         onClick = { onClick(item) },
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.elevatedCardColors(containerColor = Color.White),
+        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
@@ -209,7 +209,7 @@ private fun TripCard(item: TripItem, onClick: (TripItem) -> Unit) {
                 Spacer(Modifier.height(6.dp))
                 Text(
                     item.date,
-                    color = Color(0xFF6F6F6F),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 12.sp
                 )
             }
@@ -218,13 +218,13 @@ private fun TripCard(item: TripItem, onClick: (TripItem) -> Unit) {
                 modifier = Modifier
                     .size(64.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(Color(0xFFF0F0F0)),
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Filled.Image,
                     contentDescription = null,
-                    tint = Color(0xFFBDBDBD),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(28.dp)
                 )
             }
