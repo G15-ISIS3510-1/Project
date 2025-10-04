@@ -1,5 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
+    <!-- Colores base -->
     <color name="white">#FFFFFFFF</color>
+    <color name="black">#FF000000</color>
+    
+    <!-- Colores primarios (Azul) -->
+    <color name="primary_blue">#FF1976D2</color>
+    <color name="primary_blue_light">#FFBBDEFB</color>
+    <color name="primary_blue_dark">#FF0D47A1</color>
+    
+    <!-- Colores secundarios (Verde) -->
+    <color name="secondary_green">#FF4CAF50</color>
+    <color name="secondary_green_light">#FFC8E6C9</color>
+    <color name="secondary_green_dark">#FF2E7D32</color>
+    
+    <!-- Colores terciarios (Naranja) -->
+    <color name="tertiary_orange">#FFFF9800</color>
+    <color name="tertiary_orange_light">#FFFFE0B2</color>
+    <color name="tertiary_orange_dark">#FFF57C00</color>
+    
+    <!-- Colores de error -->
+    <color name="error_red">#FFF44336</color>
+    <color name="error_red_light">#FFFFCDD2</color>
+    <color name="error_red_dark">#FFD32F2F</color>
+    
+    <!-- Colores de superficie (Tema Claro) -->
+    <color name="surface_light">#FFFEFEFE</color>
+    <color name="on_surface_light">#FF1C1B1F</color>
+    <color name="surface_variant_light">#FFE7E0EC</color>
+    <color name="on_surface_variant_light">#FF49454F</color>
+    
+    <!-- Colores de fondo (Tema Claro) -->
+    <color name="background_light">#FFFFFBFE</color>
+    <color name="on_background_light">#FF1C1B1F</color>
+    
+    <!-- Colores adicionales -->
+    <color name="outline_light">#FF79747E</color>
+    <color name="outline_variant_light">#FFCAC4D0</color>
+    <color name="scrim_light">#FF000000</color>
+    
+    <!-- Colores de estado -->
+    <color name="success_green">#FF4CAF50</color>
+    <color name="warning_yellow">#FFFFC107</color>
+    <color name="info_blue">#FF2196F3</color>
 </resources>

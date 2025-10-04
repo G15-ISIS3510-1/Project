@@ -44,7 +44,7 @@ fun HostScreen(
     val buttonHeight = 56.dp
     val spaceAfterLogo = 56.dp
 
-    Surface(color = Color.White) {
+    Surface(color = MaterialTheme.colorScheme.surface) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -68,7 +68,7 @@ fun HostScreen(
                 text = "Host PIN",
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFF6F6F6F)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
@@ -96,10 +96,10 @@ fun HostScreen(
                 enabled = pin.length == 4,
                 shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF111111),
-                    contentColor = Color.White,
-                    disabledContainerColor = Color(0xFF111111).copy(alpha = 0.4f),
-                    disabledContentColor = Color.White.copy(alpha = 0.8f)
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
+                    disabledContentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
                 ),
                 modifier = Modifier
                     .width(buttonWidth)
@@ -165,10 +165,10 @@ private fun PinRow(
                     .height(boxHeight)
                     .focusRequester(requesters[i])
                     .clip(RoundedCornerShape(radius))
-                    .background(Color.White)
+                    .background(MaterialTheme.colorScheme.surface)
                     .border(
                         width = 1.dp,
-                        color = Color(0xFFE6E6E6),
+                        color = MaterialTheme.colorScheme.outline,
                         shape = RoundedCornerShape(radius)
                     ),
                 decorationBox = { inner ->

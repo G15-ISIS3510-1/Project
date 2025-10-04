@@ -3,14 +3,20 @@ package com.example.kotlinapp
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.navigation.fragment.NavHostFragment
+import com.example.kotlinapp.core.ThemeController
+import android.util.Log
 
 class MainActivity : AppCompatActivity() {
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        setupTheme()
+        
         enableEdgeToEdge()
         
         setContentView(R.layout.activity_main_nav)
@@ -25,9 +31,19 @@ class MainActivity : AppCompatActivity() {
         setupNavigation()
     }
     
+    private fun setupTheme() {
+        try {
+            val themeController = ThemeController(this)
+            themeController.initializeTheme()
+        } catch (e: Exception) {
+            //SI HAY ERROR 
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+        }
+    }
+
+
     private fun setupNavigation() {
-        // La navegación se maneja automáticamente por NavHostFragment
-        // No necesitamos configuración adicional por ahora
+
     }
     
     override fun onSupportNavigateUp(): Boolean {

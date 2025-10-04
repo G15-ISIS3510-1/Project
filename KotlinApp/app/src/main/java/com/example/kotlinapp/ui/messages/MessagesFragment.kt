@@ -14,6 +14,7 @@ import com.example.kotlinapp.ui.navigation.PillBottomNavBar
 import androidx.navigation.fragment.findNavController
 import com.example.kotlinapp.R
 import com.example.kotlinapp.databinding.FragmentMessagesBinding
+import com.example.kotlinapp.ui.theme.AppTheme
 
 class MessagesFragment : Fragment() {
 
@@ -105,7 +106,8 @@ class MessagesFragment : Fragment() {
     private fun setupBottomBar() {
         val composeView: ComposeView = binding.bottomBarCompose
         composeView.setContent {
-            PillBottomNavBar(selectedTab = BottomTab.Messages) { tab ->
+            AppTheme {
+                PillBottomNavBar(selectedTab = BottomTab.Messages) { tab ->
                 when (tab) {
                     BottomTab.Home -> {
                         val navController = findNavController()
@@ -133,6 +135,7 @@ class MessagesFragment : Fragment() {
                         }
                     }
                 }
+            }
             }
         }
     }
