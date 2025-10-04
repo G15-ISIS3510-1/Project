@@ -7,15 +7,25 @@ import com.example.kotlinapp.data.remote.dto.PricingUpdate
 import com.example.kotlinapp.data.remote.dto.TokenResponse
 import com.example.kotlinapp.data.remote.dto.VehicleCreate
 import com.example.kotlinapp.data.remote.dto.VehicleResponse
+import okhttp3.MultipartBody
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.PUT
+import retrofit2.http.Part
 import retrofit2.http.Path
 
 interface VehiclesApiService {
     @POST("api/vehicles/")
     suspend fun createVehicle(@Body body: VehicleCreate): VehicleResponse
+
+    @Multipart
+    @POST("api/vehicles/{vehicleId}/upload-photo")
+    suspend fun uploadPhoto(
+        @Path("vehicleId") vehicleId: String,
+        @Part file: MultipartBody.Part
+    ): PhotoUploadResponse
 }
 
 interface PricingApiService {
@@ -31,3 +41,8 @@ interface PricingApiService {
         @Body body: PricingUpdate
     ): PricingResponse
 }
+
+data class PhotoUploadResponse(
+    val photo_url: String,
+    val message: String
+)

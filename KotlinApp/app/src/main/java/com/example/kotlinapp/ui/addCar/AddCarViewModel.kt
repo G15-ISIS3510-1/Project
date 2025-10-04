@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
+import java.io.File
 
 class AddCarViewModel(
     private val repo: VehicleRepository = VehicleRepository(),
@@ -20,25 +21,24 @@ class AddCarViewModel(
     private val _ui = MutableStateFlow(AddCarUiState())
     val ui: StateFlow<AddCarUiState> = _ui
 
-    fun submit(v: VehicleCreate, p: PricingCreate) {
-        // Verifica token antes
+    fun submit(v: VehicleCreate, p: PricingCreate, photoFile: File?) {
         val hasToken = prefs.hasValidToken()
         if (!hasToken) {
-            _ui.value = AddCarUiState(error = "Debes iniciar sesión para crear vehículos.")
+            _ui.value = AddCarUiState(error = "You must log in")
             return
         }
 
         _ui.value = AddCarUiState(loading = true)
         viewModelScope.launch {
             try {
-                repo.createVehicleWithPricing(v, p)
+                repo.createVehicleWithPricing(v, p, photoFile)
                 _ui.value = AddCarUiState(success = true)
             } catch (e: HttpException) {
-                val msg = if (e.code() == 401) "Sesión expirada o no autenticado. Inicia sesión."
-                else "Error del servidor (${e.code()})"
+                val msg = if (e.code() == 401) "Session expired"
+                else "Server Error (${e.code()})"
                 _ui.value = AddCarUiState(error = msg)
             } catch (e: Exception) {
-                _ui.value = AddCarUiState(error = e.message ?: "Network error")
+                _ui.value = AddCarUiState(error = e.message ?: "Network Error")
             }
         }
     }

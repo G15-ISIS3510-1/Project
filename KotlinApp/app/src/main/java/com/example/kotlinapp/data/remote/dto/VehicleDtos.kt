@@ -12,7 +12,8 @@ data class VehicleCreate(
     val mileage: Int,                     // >=0
     val status: String,                   // "active" | "inactive" | "pending_review"
     val lat: Double,
-    val lng: Double
+    val lng: Double,
+    val photo_url: String? = null
 )
 
 data class VehicleResponse(
@@ -29,5 +30,6 @@ data class VehicleResponse(
     val status: String,
     val lat: Double,
     val lng: Double,
-    val created_at: String
+    val created_at: String,
+    val photo_url: String? = null
 )

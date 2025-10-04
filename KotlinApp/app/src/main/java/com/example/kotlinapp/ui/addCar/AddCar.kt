@@ -67,10 +67,9 @@ import androidx.compose.ui.res.painterResource
 fun AddCar(
     onDone: () -> Unit = {}
 ) {
-    //val vm: AddCarViewModel = viewModel()
-    //val ui = vm.ui.collectAsState()
 
-    // Estados de los campos
+
+
     var make by remember { mutableStateOf("") }
     var model by remember { mutableStateOf("") }
     var year by remember { mutableStateOf("") }
@@ -206,7 +205,7 @@ fun AddCar(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
 
-            // Mostrar errores
+
             if (ui.error != null) {
                 Card(
                     colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE)),
@@ -233,7 +232,7 @@ fun AddCar(
                 }
             }
 
-            // Sección de foto
+
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = Color.White)
@@ -247,7 +246,7 @@ fun AddCar(
 
                     if (photoFile != null && photoFile!!.exists()) {
                         AsyncImage(
-                            model = photoFile,  // Usa el File directamente
+                            model = photoFile,
                             contentDescription = "Vehicle photo",
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -270,7 +269,7 @@ fun AddCar(
                 }
             }
 
-            // Sección de ubicación
+
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = Color.White)
@@ -302,7 +301,7 @@ fun AddCar(
                 }
             }
 
-            // Campos del formulario (igual que antes)
+
             OutlinedTextField(
                 value = make,
                 onValueChange = { make = it },
@@ -396,7 +395,7 @@ fun AddCar(
                 onClick = {
                     validationError = null
 
-                    // Validar ubicación
+                    // Validar ubicación, que se tomo con el sensor
                     if (latValue == null || lngValue == null) {
                         validationError = "Debes obtener la ubicación del vehículo"
                         return@Button
@@ -440,7 +439,8 @@ fun AddCar(
                                 currency = currency
                             )
 
-                            vm.submit(vReq, pReq)
+
+                            vm.submit(vReq, pReq, photoFile)
                         }
                     }
                 },
@@ -476,9 +476,9 @@ fun SimpleDropdown(
     ExposedDropdownMenuBox(
         expanded = expanded,
         onExpandedChange = {
-            // Alterna el menú al tocar el campo
+
             expanded = !expanded
-            // Opcional: quita el foco para que no aparezca el teclado
+
             if (expanded) focusManager.clearFocus()
         },
         modifier = modifier
@@ -492,6 +492,7 @@ fun SimpleDropdown(
                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
             },
             modifier = Modifier
+                 .menuAnchor()
                 .fillMaxWidth()
         )
 
