@@ -17,7 +17,8 @@ from app.routers import (
     conversations,
     bookings,
     insurance_plans,
-    payments
+    payments,
+    analytics
 )
 # import the router object from the file app/routers/insurance_plans.py
 from app.routers.insurance_plans import router as insurance_plans_router
@@ -97,6 +98,9 @@ app.include_router(bookings.router, prefix="/api/bookings")
 # Insurance plans endpoints at /api/insurance_plans/...
 app.include_router(insurance_plans_router, prefix="/api/insurance_plans")
 app.include_router(payments_router, prefix="/api")
+
+#Analytics
+app.include_router(analytics.router, prefix="/api/analytics", tags=["analytics"])
 
 # Rutas básicas
 @app.get("/")

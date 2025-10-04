@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart'; 
 import '../../settings/view/profile_settings_view.dart';
+import '../viewmodel/visited_places_viewmodel.dart'; // Importar el ViewModel
 
 class VisitedPlacesScreen extends StatelessWidget {
   const VisitedPlacesScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // Inyectar el ViewModel (si no lo haces en la navegación, hazlo aquí)
+    final vm = context.watch<VisitedPlacesViewModel>(); 
+
     return Scaffold(
       appBar: AppBar(
         title: Transform.scale(
@@ -29,27 +35,21 @@ class VisitedPlacesScreen extends StatelessWidget {
       body: Column(
         children: [
           _buildSearchAndFilterSection(),
+          // Mostrar errores del ViewModel, si existen
+          if (vm.error != null)
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text('Error: ${vm.error!}', style: TextStyle(color: Colors.red)),
+            ),
+            
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              children: const [
-                _PlaceCard(
-                  city: 'Bogotá, Colombia',
-                  date: 'March 2025',
-                ),
-                _PlaceCard(
-                  city: 'Tunja, Colombia',
-                  date: 'January 2025',
-                ),
-                _PlaceCard(
-                  city: 'Sao Paulo, Brasil',
-                  date: 'November 2024',
-                ),
-                _PlaceCard(
-                  city: 'Washington D.C., USA',
-                  date: 'October 2024',
-                ),
-              ],
+              children: vm.places.map((place) { // Usar la lista del ViewModel
+                return _PlaceCard(
+                  place: place, // Pasar el objeto VisitedPlace completo
+                );
+              }).toList(),
             ),
           ),
           _buildBackButton(context),
@@ -138,73 +138,85 @@ class VisitedPlacesScreen extends StatelessWidget {
   }
 }
 
+// ----------------------------------------------------------------------
+// WIDGET _PlaceCard MODIFICADO PARA USAR EL VIEWMODEL
+// ----------------------------------------------------------------------
+
 class _PlaceCard extends StatelessWidget {
-  final String city;
-  final String date;
+  final VisitedPlace place;
 
   const _PlaceCard({
-    required this.city,
-    required this.date,
+    required this.place,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16.0),
-      padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.0),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
-            spreadRadius: 1,
-            blurRadius: 5,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                city,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                date,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey,
-                ),
-              ),
-            ],
-          ),
-          Container(
-            width: 70,
-            height: 70,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF0F0F0),
-              borderRadius: BorderRadius.circular(8.0),
+    final vm = context.read<VisitedPlacesViewModel>();
+    
+    return GestureDetector(
+      // Llamamos a la función del ViewModel al hacer tap
+      onTap: () => vm.launchMap(place.latitude, place.longitude, place.city), 
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16.0),
+        padding: const EdgeInsets.all(16.0),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12.0),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.2),
+              spreadRadius: 1,
+              blurRadius: 5,
+              offset: const Offset(0, 3),
             ),
-            child: const Icon(
-              Icons.image,
-              color: Color(0xFFC0C0C0),
-              size: 40,
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  place.city,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  place.date,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
+            Container(
+              width: 70,
+              height: 70,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0F0F0),
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+              child: const Icon(
+                Icons.location_on, // Icono de ubicación para indicar que es un mapa
+                color: Color(0xFFC0C0C0),
+                size: 40,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
+
+// ----------------------------------------------------------------------
+// WIDGET _FilterChip (Sin cambios)
+// ----------------------------------------------------------------------
 
 class _FilterChip extends StatelessWidget {
   final String label;

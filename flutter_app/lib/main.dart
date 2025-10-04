@@ -376,6 +376,11 @@ import 'presentation/features/app_shell/viewmodel/host_mode_provider.dart';
 // 👇 Tema auto por hora (auto/claro/oscuro)
 import 'app/theme/theme_controller.dart';
 
+import 'package:flutter_app/data/repositories/analytics_repository.dart';
+import 'package:flutter_app/data/sources/remote/analytics_remote_source.dart';
+import 'package:flutter_app/presentation/features/booking_reminders/viewmodel/booking_reminder_viewmodel.dart';
+import 'package:http/http.dart' as http;
+
 // (Opcional) si quieres fijar base al arrancar, descomenta:
 // import 'data/sources/remote/api_client.dart'; // Api.I()
 
@@ -407,6 +412,7 @@ const String kApiBaseWithPrefix = kApiBase;
 void main() {
   final api = Api.I();
   api.setBase(kApiBase);
+  final httpClient = http.Client();
 
   runApp(
     MultiProvider(
@@ -441,6 +447,27 @@ void main() {
         Provider<PricingRepository>(
           create: (ctx) =>
               PricingRepositoryImpl(remote: ctx.read<PricingService>()),
+        ),
+
+        Provider<http.Client>.value(value: httpClient),
+
+        Provider<AnalyticsRemoteSource>(
+          create: (ctx) => AnalyticsRemoteSourceImpl(
+            client: ctx.read<http.Client>(),
+            baseUrl: kApiBase,
+          ),
+        ),
+
+        Provider<AnalyticsRepository>(
+          create: (ctx) => AnalyticsRepositoryImpl(
+            remoteSource: ctx.read<AnalyticsRemoteSource>(),
+          ),
+        ),
+
+        ChangeNotifierProvider<BookingReminderViewModel>(
+          create: (ctx) => BookingReminderViewModel(
+            ctx.read<AnalyticsRepository>(),
+          ),
         ),
 
         ChangeNotifierProvider<AuthViewModel>(

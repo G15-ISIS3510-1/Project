@@ -7,6 +7,7 @@ import '../../auth/view/login_view.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
 import '../../app_shell/viewmodel/host_mode_provider.dart';
+import 'package:flutter_app/presentation/features/vehicle/view/add_vehicle_view.dart';
 
 class UserProfile {
   final String name;
@@ -265,7 +266,23 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
                     const SizedBox(height: 24),
 
                     // ======= Botones =======
-                    pillButton(Icons.directions_car_filled_rounded, 'Add Car'),
+                    pillButton(
+                      Icons.directions_car_filled_rounded,
+                      'Add Car',
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => ChangeNotifierProvider(
+                              create: (context) => AddVehicleViewModel(
+                                vehicles: context.read<VehicleRepository>(),
+                                pricing: context.read<PricingRepository>(),
+                              ),
+                              child: const AddVehicleView(),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
                     const SizedBox(height: 16),
                     pillButton(
                       Icons.place_outlined,
@@ -274,6 +291,21 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
                         Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (context) => const VisitedPlacesScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    pillButton(
+                      Icons.access_time,
+                      'Booking Reminders',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => BookingRemindersView(
+                              userId: context.read<dynamic>().userId ?? '',
+                            ),
                           ),
                         );
                       },

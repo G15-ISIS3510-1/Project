@@ -1,7 +1,8 @@
-// lib/presentation/features/vehicle/view/add_vehicle_view.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_app/presentation/features/vehicle/viewmodel/add_vehicle_viewmodel.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 class AddVehicleView extends StatefulWidget {
   const AddVehicleView({super.key});
@@ -24,6 +25,8 @@ class _AddVehicleViewState extends State<AddVehicleView> {
   final _mileageC = TextEditingController(text: '0');
   final _latC = TextEditingController(text: '0');
   final _lngC = TextEditingController(text: '0');
+  
+  XFile? _imageFile;
 
   @override
   void dispose() {
@@ -43,6 +46,18 @@ class _AddVehicleViewState extends State<AddVehicleView> {
 
   void _markStale() {
     context.read<AddVehicleViewModel>().markStale();
+  }
+
+  Future<void> _takePhoto() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? photo = await picker.pickImage(source: ImageSource.camera);
+    
+    if (photo != null) {
+      setState(() {
+        _imageFile = photo;
+        _imageUrlC.clear(); 
+      });
+    }
   }
 
   Future<void> _fetchSuggestedPrice() async {
@@ -79,9 +94,8 @@ class _AddVehicleViewState extends State<AddVehicleView> {
         lat: double.parse(_latC.text.trim()),
         lng: double.parse(_lngC.text.trim()),
         dailyPrice: double.parse(_priceC.text.trim()),
-        imageUrl: _imageUrlC.text.trim().isEmpty
-            ? null
-            : _imageUrlC.text.trim(),
+        imageUrl: _imageUrlC.text.trim().isEmpty ? null : _imageUrlC.text.trim(),
+        imageFile: _imageFile,
       );
 
       if (!mounted) return;
@@ -264,10 +278,54 @@ class _AddVehicleViewState extends State<AddVehicleView> {
           ),
           const SizedBox(height: 12),
 
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Vehicle Photo',
+                style: text.labelLarge?.copyWith(color: scheme.onSurface),
+              ),
+              const SizedBox(height: 8),
+              InkWell(
+                onTap: _takePhoto,
+                child: Container(
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: scheme.surfaceContainerHigh,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: _imageFile != null ? scheme.primary : scheme.outlineVariant,
+                      width: 2,
+                    ),
+                  ),
+                  child: Center(
+                    child: _imageFile == null
+                        ? Icon(
+                            Icons.camera_alt_outlined,
+                            size: 40,
+                            color: scheme.onSurfaceVariant,
+                          )
+                        : ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: Image.file(
+                              File(_imageFile!.path),
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              height: double.infinity,
+                            ),
+                          ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
           TextFormField(
             controller: _imageUrlC,
-            decoration: _dec(context, 'Image URL (optional)'),
+            decoration: _dec(context, 'Image URL (optional, manual)'),
+            onChanged: (_) => setState(() => _imageFile = null),
           ),
+
 
           const SizedBox(height: 20),
           SizedBox(
