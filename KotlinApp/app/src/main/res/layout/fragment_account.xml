@@ -133,6 +133,22 @@
             app:strokeColor="#D8D6DC"
             app:cornerRadius="16dp" />
 
+        <!-- Botón: View Cars on Map -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnViewCar"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="12dp"
+            android:text="View Cars on Map"
+            android:textSize="18sp"
+            android:fontFamily="@font/poppins_semibold"
+            app:icon="@drawable/ic_map"
+            app:iconGravity="textStart"
+            app:iconPadding="12dp"
+            app:strokeColor="#D8D6DC"
+            app:cornerRadius="16dp" />
+
         <!-- Botón: Communications -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnCommunications"

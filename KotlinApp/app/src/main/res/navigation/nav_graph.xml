@@ -40,6 +40,14 @@
         android:label="Terms &amp; Conditions"
         tools:layout="@layout/fragment_terms_conditions" />
 
+    <!-- Map fragment -->
+    <fragment
+        android:id="@+id/vehicleMapFragment"
+        android:name="com.example.kotlinapp.ui.vehiclesMap.VehicleMapFragment"
+        android:label="Vehicle Map"
+        tools:layout="@layout/fragment_vehicle_map" />
+
+
     <!-- Home Fragment -->
     <fragment
         android:id="@+id/homeFragment"
@@ -72,6 +80,10 @@
             <action
                 android:id="@+id/action_account_to_visitedPlaces"
                 app:destination="@id/visitedPlacesFragment" />
+
+            <action
+                android:id="@+id/action_account_to_vehicleMap"
+                app:destination="@id/vehicleMapFragment" />
         </fragment>
 
         <fragment

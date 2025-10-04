@@ -17,6 +17,9 @@ import retrofit2.http.Part
 import retrofit2.http.Path
 
 interface VehiclesApiService {
+
+    @GET("api/vehicles/active")
+    suspend fun getActiveVehicles(): List<VehicleResponse>
     @POST("api/vehicles/")
     suspend fun createVehicle(@Body body: VehicleCreate): VehicleResponse
 

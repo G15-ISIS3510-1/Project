@@ -42,4 +42,9 @@ class VehicleRepository(
 
         return vehicle to pricing
     }
+
+
+    suspend fun getActiveVehicles(): List<VehicleResponse> {
+        return vehiclesApi.getActiveVehicles()
+    }
 }
