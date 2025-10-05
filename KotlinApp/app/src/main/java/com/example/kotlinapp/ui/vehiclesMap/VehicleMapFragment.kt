@@ -19,6 +19,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.*
+import androidx.compose.ui.graphics.Color
 
 
 class VehicleMapFragment : Fragment() {
@@ -52,8 +53,8 @@ fun VehicleMapScreen() {
             TopAppBar(
                 title = { Text("Active Vehicles") },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary
+                    containerColor = Color.Black,
+                    titleContentColor = Color.White
                 )
             )
         }

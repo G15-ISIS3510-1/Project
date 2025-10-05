@@ -16,13 +16,13 @@ class PaymentFragment : Fragment(R.layout.fragment_payment) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentPaymentBinding.bind(view)
 
-        // Version dinámicamente (si tienes versionName en build.gradle)
+
         val versionName = try {
             requireContext().packageManager.getPackageInfo(requireContext().packageName, 0).versionName
         } catch (e: Exception) { "3686.1000" }
         binding.tvVersion.text = "v.$versionName"
 
-        // TODO: listeners si estas opciones abren otras pantallas
+
         binding.btnCurrency.setOnClickListener {
             findNavController().navigate(R.id.action_payment_to_currency)
         }

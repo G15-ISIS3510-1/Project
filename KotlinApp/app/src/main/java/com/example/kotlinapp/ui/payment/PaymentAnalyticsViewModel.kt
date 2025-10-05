@@ -32,7 +32,7 @@ class PaymentAnalyticsViewModel : ViewModel() {
             _error.value = null
 
             try {
-                // IMplementacion patrón use case (no el repo directamente)
+                // Implementacion patrón use case (no el repo directamente)
                 val data = getAdoption()
                 _analytics.value = data
             } catch (e: Exception) {

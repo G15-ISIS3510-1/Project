@@ -7,6 +7,7 @@ import com.example.kotlinapp.data.remote.dto.PricingUpdate
 import com.example.kotlinapp.data.remote.dto.TokenResponse
 import com.example.kotlinapp.data.remote.dto.VehicleCreate
 import com.example.kotlinapp.data.remote.dto.VehicleResponse
+import com.example.kotlinapp.data.remote.dto.VehicleWithPricingResponse
 import okhttp3.MultipartBody
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -15,11 +16,18 @@ import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Part
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface VehiclesApiService {
 
     @GET("api/vehicles/active")
     suspend fun getActiveVehicles(): List<VehicleResponse>
+
+    @GET("api/vehicles/active-with-pricing")
+    suspend fun getActiveVehiclesWithPricing(
+        @Query("search") search: String? = null,
+        @Query("category") category: String? = null
+    ): List<VehicleWithPricingResponse>
     @POST("api/vehicles/")
     suspend fun createVehicle(@Body body: VehicleCreate): VehicleResponse
 

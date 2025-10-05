@@ -55,6 +55,11 @@
         android:label="Home"
         tools:layout="@layout/fragment_home" />
 
+    <fragment
+        android:id="@+id/tripFragment"
+        android:name="com.example.kotlinapp.ui.trips.TripFragment"
+        android:label="Trip" />
+
     <!-- Messages Fragment -->
     <fragment
         android:id="@+id/messagesFragment"

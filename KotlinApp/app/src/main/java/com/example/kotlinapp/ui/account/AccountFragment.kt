@@ -82,38 +82,38 @@ class AccountFragment : Fragment() {
         composeView.setContent {
             AppTheme {
                 PillBottomNavBar(selectedTab = BottomTab.Account) { tab ->
-                when (tab) {
-                    BottomTab.Home -> {
-                        val navController = findNavController()
-                        if (navController.currentDestination?.id != R.id.homeFragment) {
-                            navController.navigate(R.id.homeFragment)
-                        }
-                    }
-                    BottomTab.Trip -> {
-                        Toast.makeText(requireContext(), "Trip", Toast.LENGTH_SHORT).show()
-                        // TODO: Navigate to TripFragment if created
-                    }
-                    BottomTab.Messages -> {
-                        val navController = findNavController()
-                        if (navController.currentDestination?.id != R.id.messagesFragment) {
-                            navController.navigate(R.id.messagesFragment)
-                        }
-                    }
-                    BottomTab.Host -> {
-                        val navController = findNavController()
-                        if (navController.currentDestination?.id != R.id.hostFragment) {
-                            navController.navigate(R.id.hostFragment)
-                        }
-                    }
-                    BottomTab.Account -> {
-                        val navController = findNavController()
-                        if (navController.currentDestination?.id != R.id.accountFragment) {
-                            navController.navigate(R.id.accountFragment)
-                        }
-                    }
+                    navigateToTab(tab)
                 }
             }
+        }
+    }
+
+    private fun navigateToTab(tab: BottomTab) {
+        val navController = findNavController()
+        val currentDestination = navController.currentDestination?.id
+
+        when (tab) {
+            BottomTab.Home -> {
+                if (currentDestination != R.id.homeFragment) {
+                    navController.navigate(R.id.homeFragment)
+                }
             }
+            BottomTab.Trip -> {
+                if (currentDestination != R.id.tripFragment) {
+                    navController.navigate(R.id.tripFragment)
+                }
+            }
+            BottomTab.Messages -> {
+                if (currentDestination != R.id.messagesFragment) {
+                    navController.navigate(R.id.messagesFragment)
+                }
+            }
+            BottomTab.Host -> {
+                if (currentDestination != R.id.hostFragment) {
+                    navController.navigate(R.id.hostFragment)
+                }
+            }
+            BottomTab.Account -> { }
         }
     }
 
