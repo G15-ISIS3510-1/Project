@@ -30,7 +30,8 @@ class VehicleService:
             mileage=vehicle_data.mileage,
             status=vehicle_data.status,
             lat=vehicle_data.lat,
-            lng=vehicle_data.lng
+            lng=vehicle_data.lng,
+            photo_url=vehicle_data.photo_url
         )
         
         self.db.add(vehicle)

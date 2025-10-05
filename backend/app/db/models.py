@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, Float, DateTime, Boolean, ForeignKey, Enum, Text
+from sqlalchemy import JSON, Column, Index, String, Integer, Float, DateTime, Boolean, ForeignKey, Enum, Text, UniqueConstraint, func as sql_func
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.db.base import Base
@@ -46,6 +46,22 @@ class User(Base):
     host_bookings = relationship("Booking", back_populates="host", foreign_keys="Booking.host_id")
     payments = relationship("Payment", back_populates="payer")
 
+    # --- Mensajería ---
+    sent_messages = relationship(
+        "Message",
+        back_populates="sender",
+        foreign_keys="Message.sender_id",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+    received_messages = relationship(
+        "Message",
+        back_populates="receiver",
+        foreign_keys="Message.receiver_id",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+
 class Vehicle(Base):
     __tablename__ = "vehicles"
     
@@ -63,6 +79,7 @@ class Vehicle(Base):
     lat = Column(Float, nullable=False)  # -90..90
     lng = Column(Float, nullable=False)  # -180..180
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    photo_url = Column(String, nullable=True)
     
     # Relaciones
     owner = relationship("User", back_populates="owned_vehicles")
@@ -155,6 +172,7 @@ class Payment(Base):
     amount = Column(Float, nullable=False)
     currency = Column(String, default="USD")
     status = Column(Enum(PaymentStatus), nullable=False)
+    payment_method = Column(String(50), nullable=True)
     provider = Column(String, nullable=False)  # ej. stripe, adyen
     provider_ref = Column(String)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -162,3 +180,77 @@ class Payment(Base):
     # Relaciones
     booking = relationship("Booking", back_populates="payments")
     payer = relationship("User", back_populates="payments")
+
+class VehicleRating(Base):
+    __tablename__ = "vehicle_ratings"
+    
+    rating_id = Column(String, primary_key=True, index=True)
+    vehicle_id = Column(String, ForeignKey("vehicles.vehicle_id", ondelete="CASCADE"), nullable=False, index=True)
+    booking_id = Column(String, ForeignKey("bookings.booking_id", ondelete="CASCADE"), nullable=False, index=True)
+    renter_id = Column(String, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False, index=True)
+    rating = Column(Float, nullable=False)  # 1.0 - 5.0
+    comment = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relaciones
+    vehicle = relationship("Vehicle")
+    booking = relationship("Booking")
+    renter = relationship("User")
+    
+    __table_args__ = (
+        Index("ix_vehicle_ratings_vehicle_rating", "vehicle_id", "rating"),
+        Index("ix_vehicle_ratings_renter_booking", "renter_id", "booking_id"),
+    )
+
+class Message(Base):
+    __tablename__ = "messages"
+
+    message_id = Column(String, primary_key=True, index=True)
+    sender_id = Column(String, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False, index=True)
+    receiver_id = Column(String, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False, index=True)
+
+    content = Column(Text, nullable=False)
+
+    # 👇 Agrega el FK real a conversations; deja SET NULL si borran la conversación
+    conversation_id = Column(
+        String,
+        ForeignKey("conversations.conversation_id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
+    meta = Column("metadata", JSON, nullable=True)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
+    read_at = Column(DateTime(timezone=True), nullable=True, index=True)
+
+    # Relaciones
+    sender = relationship("User", back_populates="sent_messages", foreign_keys=[sender_id])
+    receiver = relationship("User", back_populates="received_messages", foreign_keys=[receiver_id])
+
+    # 👇 Relación inversa con Conversation
+    conversation = relationship("Conversation", back_populates="messages")
+
+    __table_args__ = (
+        Index("ix_messages_thread_order", "sender_id", "receiver_id", "created_at"),
+        Index("ix_messages_unread", "receiver_id", "read_at"),
+    )
+
+class Conversation(Base):
+    __tablename__ = "conversations"
+
+    conversation_id = Column(String, primary_key=True, index=True)
+    user_low_id = Column(String, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False, index=True)
+    user_high_id = Column(String, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False, index=True)
+    title = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    last_message_at = Column(DateTime(timezone=True), nullable=True, index=True)
+
+    # 👇 relación clara con back_populates (sin primaryjoin manual)
+    messages = relationship("Message", back_populates="conversation")
+
+    __table_args__ = (
+        UniqueConstraint("user_low_id", "user_high_id", name="uq_conversation_direct_pair"),
+        Index("ix_conversations_user_pair", "user_low_id", "user_high_id"),
+        Index("ix_conversations_last_message_at", "last_message_at"),
+    )

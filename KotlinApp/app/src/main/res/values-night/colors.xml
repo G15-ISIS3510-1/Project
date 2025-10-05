@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Colores base -->
+    <color name="white">#FFFFFFFF</color>
+    <color name="black">#FF000000</color>
+    
+    <!-- Colores primarios (Azul) - Más contrastantes para tema oscuro -->
+    <color name="primary_blue">#FF64B5F6</color>
+    <color name="primary_blue_light">#FF90CAF9</color>
+    <color name="primary_blue_dark">#FF1976D2</color>
+    
+    <!-- Colores secundarios (Verde) - Más contrastantes para tema oscuro -->
+    <color name="secondary_green">#FF66BB6A</color>
+    <color name="secondary_green_light">#FF81C784</color>
+    <color name="secondary_green_dark">#FF388E3C</color>
+    
+    <!-- Colores terciarios (Naranja) - Más contrastantes para tema oscuro -->
+    <color name="tertiary_orange">#FFFF9800</color>
+    <color name="tertiary_orange_light">#FFFFB74D</color>
+    <color name="tertiary_orange_dark">#FFF57C00</color>
+    
+    <!-- Colores de error -->
+    <color name="error_red">#FFF28B82</color>
+    <color name="error_red_light">#FFFFCDD2</color>
+    <color name="error_red_dark">#FFF44336</color>
+    
+    <!-- Colores de superficie (Tema Oscuro) - Más contrastantes -->
+    <color name="surface_light">#FF000000</color>
+    <color name="on_surface_light">#FFFFFFFF</color>
+    <color name="surface_variant_light">#FF2D2D2D</color>
+    <color name="on_surface_variant_light">#FFFFFFFF</color>
+    
+    <!-- Colores de fondo (Tema Oscuro) - Más contrastantes -->
+    <color name="background_light">#FF000000</color>
+    <color name="on_background_light">#FFFFFFFF</color>
+    
+    <!-- Colores adicionales -->
+    <color name="outline_light">#FF938F99</color>
+    <color name="outline_variant_light">#FF49454F</color>
+    <color name="scrim_light">#FF000000</color>
+    
+    <!-- Colores de estado -->
+    <color name="success_green">#FF81C784</color>
+    <color name="warning_yellow">#FFFFD54F</color>
+    <color name="info_blue">#FF64B5F6</color>
+</resources>

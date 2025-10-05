@@ -24,3 +24,4 @@ Jairo Andres Fierro Fierro - 202226326 - ja.fierro@uniandes.edu.co
 #### [MS4](https://github.com/G15-ISIS3510-1/Project/wiki/MS4)
 #### [Sprint 1](https://github.com/G15-ISIS3510-1/Project/wiki/Sprint-1)
 #### [MS6](https://github.com/G15-ISIS3510-1/Project/wiki/MS6)
+#### [MS7](https://github.com/G15-ISIS3510-1/Project/wiki/MS7)

@@ -1,12 +1,37 @@
+# Core Framework
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
-sqlalchemy==2.0.23
+pydantic==2.11.9
+pydantic-settings==2.1.0
+
+# Database
+SQLAlchemy==2.0.23
 alembic==1.12.1
-psycopg2-binary==2.9.9
 asyncpg==0.29.0
-python-multipart==0.0.6
+psycopg2-binary==2.9.9
+greenlet==3.2.4
+
+# Authentication & Security
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
+python-multipart==0.0.6
+
+# Email
+email-validator==2.3.0
+
+# HTTP & Requests
+httpx==0.28.1
+requests==2.32.5
+
+# Utilities
 python-dotenv==1.0.0
-pydantic==2.5.0
-pydantic-settings==2.1.0
+
+# Data Generation & Testing
+Faker==37.8.0
+
+# AI & ML (versions not pinned to allow dependency resolution)
+google-genai
+langchain
+langchain-google-genai
+langchain-openai
+openai

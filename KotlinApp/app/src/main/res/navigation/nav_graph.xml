@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/loginFragment">
+
+    <!-- Login Fragment -->
+    <fragment
+        android:id="@+id/loginFragment"
+        android:name="com.example.kotlinapp.ui.login.LoginFragment"
+        android:label="Login"
+        tools:layout="@layout/fragment_login">
+        
+        <action
+            android:id="@+id/action_login_to_home"
+            app:destination="@id/homeFragment" />
+            
+        <action
+            android:id="@+id/action_login_to_register"
+            app:destination="@id/registerFragment" />
+    </fragment>
+
+    <!-- Register Fragment -->
+    <fragment
+        android:id="@+id/registerFragment"
+        android:name="com.example.kotlinapp.ui.register.RegisterFragment"
+        android:label="Register"
+        tools:layout="@layout/fragment_register">
+        
+        <action
+            android:id="@+id/action_register_to_terms"
+            app:destination="@id/termsConditionsFragment" />
+    </fragment>
+
+    <!-- Terms and Conditions Fragment -->
+    <fragment
+        android:id="@+id/termsConditionsFragment"
+        android:name="com.example.kotlinapp.ui.terms.TermsConditionsFragment"
+        android:label="Terms &amp; Conditions"
+        tools:layout="@layout/fragment_terms_conditions" />
+
+    <!-- Map fragment -->
+    <fragment
+        android:id="@+id/vehicleMapFragment"
+        android:name="com.example.kotlinapp.ui.vehiclesMap.VehicleMapFragment"
+        android:label="Vehicle Map"
+        tools:layout="@layout/fragment_vehicle_map" />
+
+
+    <!-- Home Fragment -->
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.example.kotlinapp.ui.home.HomeFragment"
+        android:label="Home"
+        tools:layout="@layout/fragment_home" />
+
+    <fragment
+        android:id="@+id/tripFragment"
+        android:name="com.example.kotlinapp.ui.trips.TripFragment"
+        android:label="Trip" />
+
+    <!-- Messages Fragment -->
+    <fragment
+        android:id="@+id/messagesFragment"
+        android:name="com.example.kotlinapp.ui.messages.MessagesFragment"
+        android:label="Messages"
+        tools:layout="@layout/fragment_messages" />
+
+    <!-- Host Fragment -->
+    <fragment
+        android:id="@+id/hostFragment"
+        android:name="com.example.kotlinapp.ui.host.HostFragment"
+        android:label="Host"
+        tools:layout="@layout/fragment_host" />
+
+        <!-- Account Fragment -->
+        <fragment
+            android:id="@+id/accountFragment"
+            android:name="com.example.kotlinapp.ui.account.AccountFragment"
+            android:label="Account">
+            <action
+                android:id="@+id/action_account_to_payment"
+                app:destination="@id/paymentFragment" />
+            <action
+                android:id="@+id/action_account_to_visitedPlaces"
+                app:destination="@id/visitedPlacesFragment" />
+
+            <action
+                android:id="@+id/action_account_to_vehicleMap"
+                app:destination="@id/vehicleMapFragment" />
+        </fragment>
+
+        <fragment
+            android:id="@+id/paymentFragment"
+            android:name="com.example.kotlinapp.ui.payment.PaymentFragment"
+            android:label="Payments">
+            <action
+                android:id="@+id/action_payment_to_currency"
+                app:destination="@id/currencyFragment" />
+            <action
+                android:id="@+id/action_payment_to_analytics"
+                app:destination="@id/paymentAnalyticsFragment" />
+        </fragment>
+        <fragment
+            android:id="@+id/visitedPlacesFragment"
+            android:name="com.example.kotlinapp.ui.places.VisitedPlacesFragment"
+            android:label="Visited Places" />
+        <fragment
+            android:id="@+id/currencyFragment"
+            android:name="com.example.kotlinapp.ui.currency.CurrencyFragment"
+            android:label="Preferred Currency" />
+    <fragment
+        android:id="@+id/addCarFragment"
+        android:name="com.example.kotlinapp.ui.addCar.AddCarFragment"
+        android:label="AddCarFragment" />
+
+    <fragment
+        android:id="@+id/paymentAnalyticsFragment"
+        android:name="com.example.kotlinapp.ui.payment.PaymentAnalyticsFragment"
+        android:label="Payment Analytics" />
+
+</navigation>

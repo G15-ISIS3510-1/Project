@@ -1,28 +1,88 @@
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker, declarative_base
-from app.core.config import settings
+# app/db/base.py
 
-# Crear engine asíncrono
-engine = create_async_engine(
-    settings.database_url_async,
-    echo=settings.debug,
-    future=True
+from __future__ import annotations
+
+import os
+import re
+import logging
+from typing import AsyncGenerator, Generator, Optional
+
+from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy import create_engine
+
+from sqlalchemy.ext.asyncio import (
+    create_async_engine,
+    AsyncSession,
 )
 
-# Crear sesión asíncrona
-AsyncSessionLocal = sessionmaker(
-    engine,
-    class_=AsyncSession,
-    expire_on_commit=False
-)
+# If you have a settings object, we still allow it as a fallback.
+try:
+    from app.core.config import settings  # optional
+except Exception:  # pragma: no cover
+    settings = None  # type: ignore
 
-# Base para los modelos
 Base = declarative_base()
 
-# Dependency para obtener la sesión de la base de datos
-async def get_db():
-    async with AsyncSessionLocal() as session:
-        try:
+# Prefer env var so Alembic / runtime can control behavior;
+# fall back to settings.database_url if present.
+DATABASE_URL: str = (
+    os.getenv("DATABASE_URL")
+    or (getattr(settings, "database_url", None) if settings else None)
+    or ""
+)
+
+if not DATABASE_URL:
+    raise RuntimeError("DATABASE_URL is not set")
+
+# Mask password for logs
+masked = re.sub(r":([^:@/]+)@", r":***@", DATABASE_URL)
+logging.getLogger("uvicorn.error").info("DB URL: %s", masked)
+
+USE_ASYNC = DATABASE_URL.startswith("postgresql+asyncpg://")
+
+if USE_ASYNC:
+    # -------- ASYNC engine/session (FastAPI runtime) --------
+    engine = create_async_engine(
+        DATABASE_URL,
+        echo=getattr(settings, "debug", False) if settings else False,
+        future=True,
+    )
+    AsyncSessionLocal = sessionmaker(
+        bind=engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
+        autoflush=False,
+        autocommit=False,
+    )
+
+    async def get_db() -> AsyncGenerator[AsyncSession, None]:
+        """
+        FastAPI dependency (async). Use this when the app runs with an ASYNC URL.
+        """
+        async with AsyncSessionLocal() as session:
             yield session
+
+else:
+    # -------- SYNC engine/session (Alembic) --------
+    engine = create_engine(
+        DATABASE_URL,
+        echo=getattr(settings, "debug", False) if settings else False,
+        future=True,
+    )
+    SessionLocal = sessionmaker(
+        bind=engine,
+        expire_on_commit=False,
+        autoflush=False,
+        autocommit=False,
+    )
+
+    def get_db() -> Generator:
+        """
+        Placeholder generator for tooling contexts (like Alembic).
+        Your FastAPI app won't use this path because it should run with an ASYNC URL.
+        """
+        db = SessionLocal()
+        try:
+            yield db
         finally:
-            await session.close()
+            db.close()
