@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_app/data/repositories/pricing_repository.dart';
 import 'package:flutter_app/data/repositories/vehicle_repository.dart';
+import 'package:image_picker/image_picker.dart';
 
 class AddVehicleViewModel extends ChangeNotifier {
   final VehicleRepository vehicles;
@@ -8,7 +9,6 @@ class AddVehicleViewModel extends ChangeNotifier {
 
   AddVehicleViewModel({required this.vehicles, required this.pricing});
 
-  // ----- UI state -----
   bool loading = false;
   bool fetchingSuggest = false;
   bool suggestionStale = false;
@@ -16,10 +16,9 @@ class AddVehicleViewModel extends ChangeNotifier {
   double? suggested;
   String? reason;
 
-  // Opcional: mantener selección de combos en el VM
-  String transmission = 'AT'; // AT | MT
-  String fuelType = 'gas'; // gas|diesel|hybrid|ev
-  String status = 'active'; // active|inactive|pending_review
+  String transmission = 'AT'; 
+  String fuelType = 'gas'; 
+  String status = 'active'; 
 
   void setTransmission(String v) {
     transmission = v;
@@ -45,9 +44,6 @@ class AddVehicleViewModel extends ChangeNotifier {
     }
   }
 
-  // ----- Actions -----
-
-  /// Pide precio sugerido (usa los campos ya validados en la vista)
   Future<void> fetchSuggestedPrice({
     String? make,
     String? model,
@@ -89,7 +85,6 @@ class AddVehicleViewModel extends ChangeNotifier {
     }
   }
 
-  /// Crea vehículo y registra pricing. Devuelve true si todo ok.
   Future<bool> submit({
     required String title,
     required String make,
@@ -102,11 +97,19 @@ class AddVehicleViewModel extends ChangeNotifier {
     required double lng,
     required double dailyPrice,
     String? imageUrl,
+    XFile? imageFile,
   }) async {
     loading = true;
     notifyListeners();
     try {
-      // 1) Crear vehículo -> id
+      String? finalImageUrl;
+
+      if (imageFile != null) {
+        finalImageUrl = await vehicles.uploadVehiclePhoto(file: imageFile);
+      } else if (imageUrl != null && imageUrl.isNotEmpty) {
+        finalImageUrl = imageUrl;
+      }
+
       final vehicleId = await vehicles.createVehicle(
         title: title,
         make: make,
@@ -121,10 +124,9 @@ class AddVehicleViewModel extends ChangeNotifier {
         status: status,
         lat: lat,
         lng: lng,
-        imageUrl: imageUrl,
+        imageUrl: finalImageUrl,
       );
 
-      // 2) Upsert/crear pricing
       await pricing.upsertForVehicle(
         vehicleId: vehicleId,
         dailyPrice: dailyPrice,

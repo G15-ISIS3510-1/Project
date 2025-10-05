@@ -11,13 +11,16 @@
 // }
 
 import 'dart:convert';
-
+import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
 import 'package:flutter_app/data/models/vehicle_model.dart';
 import 'package:flutter_app/data/sources/remote/vehicle_remote_source.dart';
 
 abstract class VehicleRepository {
   Future<List<Vehicle>> list();
   Future<Vehicle> getById(String vehicleId);
+
+  Future<String> uploadVehiclePhoto({required XFile file});
 
   /// Crea vehículo y devuelve su `vehicle_id`.
   Future<String> createVehicle({
@@ -61,6 +64,30 @@ class VehicleRepositoryImpl implements VehicleRepository {
         .cast<Map<String, dynamic>>()
         .map((j) => Vehicle.fromJson(j))
         .toList();
+  }
+
+  @override
+  Future<String> uploadVehiclePhoto({required XFile file}) async {
+    final url = Uri.parse('TU_BASE_URL/upload-photo'); 
+    
+    final request = http.MultipartRequest('POST', url)
+      ..files.add(await http.MultipartFile.fromPath('file', file.path));
+      
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to upload image ${response.statusCode}: ${response.body}');
+    }
+
+    final jsonResponse = json.decode(response.body);
+    final photoUrl = jsonResponse['photo_url'];
+
+    if (photoUrl is! String || photoUrl.isEmpty) {
+      throw Exception('Upload successful but photo_url is missing in response.');
+    }
+    
+    return photoUrl;
   }
 
   @override

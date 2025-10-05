@@ -1,22 +1,29 @@
-// lib/settings/profile_settings_view.dart
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import '../../profile/view/visited_places_view.dart';
-import '../../auth/view/login_view.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
+
+import 'package:flutter_app/data/repositories/vehicle_repository.dart';
+import 'package:flutter_app/data/repositories/pricing_repository.dart';
+import 'package:flutter_app/presentation/features/vehicle/viewmodel/add_vehicle_viewmodel.dart';
+import 'package:flutter_app/presentation/features/booking_reminders/view/booking_reminders_view.dart';
+import '../../profile/view/visited_places_view.dart';
+import '../../auth/view/login_view.dart';
 import '../../app_shell/viewmodel/host_mode_provider.dart';
+import 'package:flutter_app/presentation/features/vehicle/view/add_vehicle_view.dart';
 
 class UserProfile {
+  final String id;
   final String name;
   final String email;
   final String? phone;
 
-  const UserProfile({required this.name, required this.email, this.phone});
+  const UserProfile({required this.id, required this.name, required this.email, this.phone});
 
   factory UserProfile.fromJson(Map<String, dynamic> j) {
     return UserProfile(
+      id: (j['id'] ?? j['_id'] ?? j['user_id'] ?? j['email']).toString(),
       name: (j['name'] ?? j['full_name'] ?? j['username'] ?? '').toString(),
       email: (j['email'] ?? '').toString(),
       phone: j['phone']?.toString(),
@@ -62,33 +69,30 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
       final data = jsonDecode(res.body) as Map<String, dynamic>;
       return UserProfile.fromJson(data);
     } else if (res.statusCode == 401) {
-      await _signOut(context, showMessage: false);
+      await _signOut(showMessage: false);
       throw Exception('Sesión expirada. Vuelve a iniciar sesión.');
     } else {
       throw Exception('Error ${res.statusCode}: ${res.body}');
     }
   }
 
-  Future<void> _signOut(BuildContext context, {bool showMessage = true}) async {
+  Future<void> _signOut({bool showMessage = true}) async {
     await _storage.delete(key: 'access_token');
     await _storage.delete(key: 'refresh_token');
 
-    if (context.mounted) {
-      // opcional: resetear Host Mode
-      try {
-        context.read<HostModeProvider>().setHostMode(false);
-      } catch (_) {}
-    }
+    if (!mounted) return;
 
-    if (context.mounted) {
+    try {
+      context.read<HostModeProvider>().setHostMode(false);
+    } catch (_) {}
+
+    if (mounted) {
       if (showMessage) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Sesión cerrada')));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sesión cerrada')));
       }
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const LoginScreen()),
-        (route) => false,
+            (route) => false,
       );
     }
   }
@@ -100,7 +104,6 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
     final scheme = theme.colorScheme;
     final text = theme.textTheme;
 
-    // Botón “pill” consistente con tema
     Widget pillButton(IconData icon, String label, {VoidCallback? onTap}) {
       return SizedBox(
         width: double.infinity,
@@ -165,22 +168,16 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
                       constraints: const BoxConstraints(),
                     ),
                     const SizedBox(height: 12),
-
                     Text(
                       'Settings',
                       style: text.headlineLarge?.copyWith(
                         fontWeight: FontWeight.w700,
                         color: scheme.onBackground,
-                        // sin letterSpacing negativo
-                        // opcionalmente: height: 1.1,
                       ),
                     ),
-
                     const SizedBox(height: 12),
                     Divider(thickness: 2, color: scheme.outlineVariant),
                     const SizedBox(height: 16),
-
-                    // ======= Perfil dinámico =======
                     FutureBuilder<UserProfile>(
                       future: _futureProfile,
                       builder: (context, snap) {
@@ -214,7 +211,7 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
                               const SizedBox(height: 8),
                               OutlinedButton.icon(
                                 onPressed: () => setState(
-                                  () => _futureProfile = _fetchProfile(),
+                                      () => _futureProfile = _fetchProfile(),
                                 ),
                                 icon: const Icon(Icons.refresh),
                                 label: const Text('Reintentar'),
@@ -223,7 +220,10 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
                             ],
                           );
                         }
-                        final p = snap.data!;
+                        final p = snap.data;
+                        if (p == null) {
+                          return const Text('El perfil no se pudo cargar.');
+                        }
                         return Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -261,11 +261,24 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
                         );
                       },
                     ),
-
                     const SizedBox(height: 24),
-
-                    // ======= Botones =======
-                    pillButton(Icons.directions_car_filled_rounded, 'Add Car'),
+                    pillButton(
+                      Icons.directions_car_filled_rounded,
+                      'Add Car',
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => ChangeNotifierProvider(
+                              create: (ctx) => AddVehicleViewModel(
+                                vehicles: ctx.read<VehicleRepository>(),
+                                pricing: ctx.read<PricingRepository>(),
+                              ),
+                              child: const AddVehicleView(),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
                     const SizedBox(height: 16),
                     pillButton(
                       Icons.place_outlined,
@@ -273,9 +286,33 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
                       onTap: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (context) => const VisitedPlacesScreen(),
+                            builder: (context) => const VisitedPlacesView(),
                           ),
                         );
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    pillButton(
+                      Icons.access_time,
+                      'Booking Reminders',
+                      onTap: () async {
+                        try {
+                          final user = await _futureProfile;
+                          if (mounted) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => BookingRemindersView(userId: user.id),
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('No se pudo obtener el perfil de usuario.')),
+                            );
+                          }
+                        }
                       },
                     ),
                     const SizedBox(height: 16),
@@ -285,15 +322,13 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
                     ),
                     const SizedBox(height: 16),
                     pillButton(Icons.credit_card_rounded, 'Payment'),
-
                     const SizedBox(height: 16),
                     Divider(thickness: 2, color: scheme.outlineVariant),
                     const SizedBox(height: 16),
-
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton(
-                        onPressed: () => _signOut(context),
+                        onPressed: () => _signOut(),
                         style: outlineDestructive,
                         child: const Text('Sign Out'),
                       ),

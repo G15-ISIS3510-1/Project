@@ -369,12 +369,19 @@ import 'package:flutter_app/presentation/features/home/viewmodel/home_viewmodel.
 import 'package:flutter_app/presentation/features/host_home/viewmodel/host_home_viewmodel.dart';
 import 'package:flutter_app/presentation/features/vehicle/viewmodel/add_vehicle_viewmodel.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_app/presentation/features/profile/viewmodel/visited_places_viewmodel.dart';
+import 'package:flutter_app/presentation/features/profile/view/visited_places_view.dart';
 
 import 'presentation/features/auth/view/login_view.dart';
 import 'presentation/features/app_shell/viewmodel/host_mode_provider.dart';
 
 // 👇 Tema auto por hora (auto/claro/oscuro)
 import 'app/theme/theme_controller.dart';
+
+import 'package:flutter_app/data/repositories/analytics_repository.dart';
+import 'package:flutter_app/data/sources/remote/analytics_remote_source.dart';
+import 'package:flutter_app/presentation/features/booking_reminders/viewmodel/booking_reminder_viewmodel.dart';
+import 'package:http/http.dart' as http;
 
 // (Opcional) si quieres fijar base al arrancar, descomenta:
 // import 'data/sources/remote/api_client.dart'; // Api.I()
@@ -407,6 +414,7 @@ const String kApiBaseWithPrefix = kApiBase;
 void main() {
   final api = Api.I();
   api.setBase(kApiBase);
+  final httpClient = http.Client();
 
   runApp(
     MultiProvider(
@@ -443,6 +451,29 @@ void main() {
               PricingRepositoryImpl(remote: ctx.read<PricingService>()),
         ),
 
+        Provider<http.Client>.value(value: httpClient),
+
+        Provider<AnalyticsRemoteSource>(
+          create: (ctx) => AnalyticsRemoteSourceImpl(
+            client: ctx.read<http.Client>(),
+            baseUrl: kApiBase,
+          ),
+        ),
+
+        Provider<AnalyticsRepository>(
+          create: (ctx) => AnalyticsRepositoryImpl(
+            remoteSource: ctx.read<AnalyticsRemoteSource>(),
+          ),
+        ),
+
+
+
+        ChangeNotifierProvider<BookingReminderViewModel>(
+          create: (ctx) => BookingReminderViewModel(
+            ctx.read<AnalyticsRepository>(),
+          ),
+        ),
+
         ChangeNotifierProvider<AuthViewModel>(
           create: (ctx) => AuthViewModel(
             ctx.read<AuthRepository>(),
@@ -471,6 +502,10 @@ void main() {
             vehicles: ctx.read<VehicleRepository>(),
             pricing: ctx.read<PricingRepository>(),
           ),
+        ),
+
+        ChangeNotifierProvider<VisitedPlacesViewModel>(
+          create: (ctx) => VisitedPlacesViewModel(),
         ),
       ],
       child: const MyApp(),
