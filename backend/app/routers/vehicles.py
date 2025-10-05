@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.base import get_db
-from app.db.models import User, Vehicle
+from app.db.models import User, Vehicle, Pricing
 from app.schemas.vehicle import VehicleResponse, VehicleCreate, VehicleUpdate
 
 from app.core.security import get_current_user_token
@@ -13,6 +13,9 @@ from fastapi import UploadFile, File
 import shutil
 from pathlib import Path
 from sqlalchemy import select, update
+
+from typing import Optional
+from sqlalchemy import or_
 
 router = APIRouter(prefix="/vehicles", tags=["vehicles"])
 
@@ -32,7 +35,7 @@ async def get_vehicles(
 @router.get("/active", response_model=List[VehicleResponse])
 async def get_active_vehicles(db: AsyncSession = Depends(get_db)):
     result = await db.execute(
-        select(Vehicle).where(Vehicle.status.in_(["active", "inactive"]))  
+        select(Vehicle).where(Vehicle.status.in_(["active"]))  
     )
     vehicles = result.scalars().all()
     
@@ -40,6 +43,74 @@ async def get_active_vehicles(db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=404, detail="No hay vehículos disponibles")
     
     return vehicles
+
+@router.get("/active-with-pricing", response_model=List[dict])
+async def get_active_vehicles_with_pricing(
+    search: Optional[str] = None,
+    category: Optional[str] = None, 
+    db: AsyncSession = Depends(get_db)
+):
+    """Obtiene vehículos activos con sus precios (con búsqueda y filtros)"""
+    
+    
+    query = select(Vehicle).where(Vehicle.status == "active")
+    
+    
+    if search:
+        search_filter = or_(
+            Vehicle.make.ilike(f"%{search}%"),
+            Vehicle.model.ilike(f"%{search}%")
+        )
+        query = query.where(search_filter)
+    
+    
+    if category:
+        
+        category_keywords = {
+            "SUVs": ["SUV", "4Runner", "Explorer", "Wrangler"],
+            "Trucks": ["Truck", "F-150", "Silverado", "Tacoma"],
+            "Vans": ["Van", "Caravan", "Transit"],
+            "Minivans": ["Minivan", "Odyssey", "Sienna"],
+            "Luxury": ["Mercedes", "BMW", "Audi", "Lexus", "Porsche"],
+            "Cars": []  
+        }
+        
+        if category in category_keywords and category != "Cars":
+            keywords = category_keywords[category]
+            category_filter = or_(
+                *[Vehicle.model.ilike(f"%{kw}%") for kw in keywords],
+                *[Vehicle.make.ilike(f"%{kw}%") for kw in keywords]
+            )
+            query = query.where(category_filter)
+    
+    result = await db.execute(query)
+    vehicles = result.scalars().all()
+    
+    if not vehicles:
+        return []  
+    
+    response = []
+    for vehicle in vehicles:
+        pricing_result = await db.execute(
+            select(Pricing).where(Pricing.vehicle_id == vehicle.vehicle_id)
+        )
+        pricing = pricing_result.scalar_one_or_none()
+        
+        response.append({
+            "id": vehicle.vehicle_id,
+            "brand": vehicle.make,
+            "model": vehicle.model,
+            "year": vehicle.year,
+            "transmission": vehicle.transmission,
+            "imageUrl": vehicle.photo_url,
+            "status": vehicle.status,
+            "dailyRate": pricing.daily_price if pricing else 0.0,
+            "currency": pricing.currency if pricing else "USD",
+            "minDays": pricing.min_days if pricing else 1,
+            "maxDays": pricing.max_days if pricing else None
+        })
+    
+    return response
 
 @router.get("/{vehicle_id}", response_model=VehicleResponse)
 async def get_vehicle(
