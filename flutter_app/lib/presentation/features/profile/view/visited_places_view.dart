@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart'; 
 import '../../settings/view/profile_settings_view.dart';
-import '../viewmodel/visited_places_viewmodel.dart'; // Importar el ViewModel
+import '../viewmodel/visited_places_viewmodel.dart';
 
-class VisitedPlacesScreen extends StatelessWidget {
-  const VisitedPlacesScreen({super.key});
+class VisitedPlacesView extends StatelessWidget {
+  const VisitedPlacesView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Inyectar el ViewModel (si no lo haces en la navegación, hazlo aquí)
-    final vm = context.watch<VisitedPlacesViewModel>(); 
+    final vm = context.watch<VisitedPlacesViewModel>();
 
     return Scaffold(
       appBar: AppBar(
@@ -35,20 +33,21 @@ class VisitedPlacesScreen extends StatelessWidget {
       body: Column(
         children: [
           _buildSearchAndFilterSection(),
-          // Mostrar errores del ViewModel, si existen
           if (vm.error != null)
             Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Text('Error: ${vm.error!}', style: TextStyle(color: Colors.red)),
+              child: Text(
+                'Error: ${vm.error!}',
+                style: const TextStyle(color: Colors.red),
+              ),
             ),
-            
           Expanded(
-            child: ListView(
+            child: vm.loading
+                ? const Center(child: CircularProgressIndicator())
+                : ListView(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              children: vm.places.map((place) { // Usar la lista del ViewModel
-                return _PlaceCard(
-                  place: place, // Pasar el objeto VisitedPlace completo
-                );
+              children: vm.places.map((place) {
+                return _PlaceCard(place: place);
               }).toList(),
             ),
           ),
@@ -89,21 +88,9 @@ class VisitedPlacesScreen extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _FilterChip(
-                label: 'All',
-                isSelected: true,
-                onTap: () {},
-              ),
-              _FilterChip(
-                label: 'Favorites',
-                isSelected: false,
-                onTap: () {},
-              ),
-              _FilterChip(
-                label: 'Tagged',
-                isSelected: false,
-                onTap: () {},
-              ),
+              _FilterChip(label: 'All', isSelected: true, onTap: () {}),
+              _FilterChip(label: 'Favorites', isSelected: false, onTap: () {}),
+              _FilterChip(label: 'Tagged', isSelected: false, onTap: () {}),
             ],
           ),
         ],
@@ -139,23 +126,20 @@ class VisitedPlacesScreen extends StatelessWidget {
 }
 
 // ----------------------------------------------------------------------
-// WIDGET _PlaceCard MODIFICADO PARA USAR EL VIEWMODEL
+// CARD
 // ----------------------------------------------------------------------
 
 class _PlaceCard extends StatelessWidget {
   final VisitedPlace place;
 
-  const _PlaceCard({
-    required this.place,
-  });
+  const _PlaceCard({required this.place});
 
   @override
   Widget build(BuildContext context) {
     final vm = context.read<VisitedPlacesViewModel>();
-    
+
     return GestureDetector(
-      // Llamamos a la función del ViewModel al hacer tap
-      onTap: () => vm.launchMap(place.latitude, place.longitude, place.city), 
+      onTap: () => vm.launchMap(place.latitude, place.longitude, place.city),
       child: Container(
         margin: const EdgeInsets.only(bottom: 16.0),
         padding: const EdgeInsets.all(16.0),
@@ -202,7 +186,7 @@ class _PlaceCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8.0),
               ),
               child: const Icon(
-                Icons.location_on, // Icono de ubicación para indicar que es un mapa
+                Icons.location_on,
                 color: Color(0xFFC0C0C0),
                 size: 40,
               ),
@@ -215,7 +199,7 @@ class _PlaceCard extends StatelessWidget {
 }
 
 // ----------------------------------------------------------------------
-// WIDGET _FilterChip (Sin cambios)
+// FILTER CHIP
 // ----------------------------------------------------------------------
 
 class _FilterChip extends StatelessWidget {

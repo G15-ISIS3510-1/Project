@@ -14,6 +14,13 @@ class BookingReminderViewModel extends ChangeNotifier {
 
   BookingReminderListModel? get bookingReminders => _bookingReminders;
   UpcomingBookingsListModel? get upcomingBookings => _upcomingBookings;
+
+  // Método para inyectar datos de prueba (Mocking)
+  void setMockUpcomingBookings(UpcomingBookingsListModel bookings) {
+    _upcomingBookings = bookings;
+    notifyListeners();
+  }
+
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 

@@ -11,7 +11,8 @@
 // }
 
 import 'dart:convert';
-
+import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
 import 'package:flutter_app/data/models/vehicle_model.dart';
 import 'package:flutter_app/data/sources/remote/vehicle_remote_source.dart';
 

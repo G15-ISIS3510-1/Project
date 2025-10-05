@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.services.analytics_service import BookingReminderAnalytics
+from app.services.analytics_service import BookingReminderAnalytics 
 from app.schemas.analytics_schemas import (
     BookingReminderListResponse,
     BookingReminderStatusResponse,
@@ -18,11 +18,11 @@ router = APIRouter()
     summary="Obtener reservas que necesitan recordatorio",
     description="Devuelve todas las reservas confirmadas que comienzan en la próxima hora"
 )
-def get_bookings_needing_reminders(
+async def get_bookings_needing_reminders(
     db: Session = Depends(get_db)
 ):
     analytics = BookingReminderAnalytics(db)
-    bookings = analytics.get_bookings_needing_reminder()
+    bookings = await analytics.get_bookings_needing_reminder()
     
     return {
         "bookings": bookings,
@@ -37,13 +37,13 @@ def get_bookings_needing_reminders(
     summary="Verificar estado de recordatorio de una reserva",
     description="Verifica si una reserva específica ha alcanzado el umbral para notificación"
 )
-def check_booking_reminder(
+async def check_booking_reminder(
     booking_id: str,
     user_id: str = Query(..., description="ID del usuario que realizó la reserva"),
     db: Session = Depends(get_db)
 ):
     analytics = BookingReminderAnalytics(db)
-    result = analytics.check_specific_booking(booking_id, user_id)
+    result = await analytics.check_specific_booking(booking_id, user_id)
     
     return result
 
@@ -54,7 +54,7 @@ def check_booking_reminder(
     summary="Obtener próximas reservas de un usuario",
     description="Lista todas las reservas confirmadas próximas de un usuario en una ventana de tiempo"
 )
-def get_user_upcoming_bookings(
+async def get_user_upcoming_bookings(
     user_id: str,
     hours_ahead: int = Query(
         default=24,
@@ -65,7 +65,7 @@ def get_user_upcoming_bookings(
     db: Session = Depends(get_db)
 ):
     analytics = BookingReminderAnalytics(db)
-    bookings = analytics.get_upcoming_bookings_by_user(user_id, hours_ahead)
+    bookings = await analytics.get_upcoming_bookings_by_user(user_id, hours_ahead)
     
     return {
         "user_id": user_id,
@@ -80,11 +80,11 @@ def get_user_upcoming_bookings(
     summary="Resumen de recordatorios",
     description="Estadísticas generales sobre recordatorios de reservas"
 )
-def get_reminders_summary(
+async def get_reminders_summary(
     db: Session = Depends(get_db)
 ):
     analytics = BookingReminderAnalytics(db)
-    bookings = analytics.get_bookings_needing_reminder()
+    bookings = await analytics.get_bookings_needing_reminder()
     
     if not bookings:
         return {

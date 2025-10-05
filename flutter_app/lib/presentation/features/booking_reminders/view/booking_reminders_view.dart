@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../viewmodel/booking_reminder_viewmodel.dart';
 import 'package:intl/intl.dart';
+
+import '../../booking/viewmodel/booking_viewmodel.dart';
+import '../../booking/view/create_booking_view.dart';
+import 'package:flutter_app/data/models/booking_reminder_model.dart';
+import '../viewmodel/booking_reminder_viewmodel.dart';
+
 
 class BookingRemindersView extends StatefulWidget {
   final String userId;
@@ -21,11 +26,93 @@ class _BookingRemindersViewState extends State<BookingRemindersView> {
     });
   }
 
+  void _navigateToCreateBooking(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) {
+          return ChangeNotifierProvider(
+            create: (_) => BookingViewModel(),
+            child: const CreateBookingScreen(),
+          );
+        },
+      ),
+    ).then((_) {
+      context.read<BookingReminderViewModel>().loadUpcomingBookings(widget.userId);
+    });
+  }
+
+  Future<void> _createTestBooking(BuildContext context) async {
+    final viewModel = context.read<BookingReminderViewModel>();
+
+    final now = DateTime.now();
+    final startTs = now.add(const Duration(minutes: 5));
+    final endTs = startTs.add(const Duration(days: 2));
+    final timeRemaining = startTs.difference(now);
+
+    final double hoursUntilStart = timeRemaining.inHours.toDouble();
+
+    String formatDuration(Duration d) {
+      String twoDigits(int n) => n.toString().padLeft(2, "0");
+      return "${twoDigits(d.inHours)}h ${twoDigits(d.inMinutes.remainder(60))}m";
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Creating a MOCK booking...')),
+    );
+
+    try {
+      final currentBookingsData = viewModel.upcomingBookings;
+
+      final List<UpcomingBookingModel> typedUpdatedList =
+      (currentBookingsData?.bookings?.isNotEmpty == true
+          ? currentBookingsData!.bookings.map((b) => b as UpcomingBookingModel).toList()
+          : []
+      );
+
+      final newMockBooking = UpcomingBookingModel(
+        bookingId: 'MOCK-${now.microsecondsSinceEpoch}',
+        vehicleId: 'MOCK-VEHICLE-A${now.hour}${now.minute}',
+        startTs: startTs,
+        endTs: endTs,
+
+        reachedThreshold: hoursUntilStart < 48,
+        timeRemainingFormatted: formatDuration(timeRemaining),
+        hoursUntilStart: hoursUntilStart,
+
+      );
+
+      typedUpdatedList.insert(0, newMockBooking);
+
+      final newUpcomingList = UpcomingBookingsListModel(
+        bookings: typedUpdatedList,
+        totalCount: typedUpdatedList.length,
+        userId: widget.userId,
+        hoursAhead: 48,
+      );
+
+      viewModel.setMockUpcomingBookings(newUpcomingList);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('MOCK booking generated.')),
+      );
+
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error while creating MOCK: ${e.toString()}', maxLines: 2)),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final t = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mis Reservas'),
+        title: const Text('My Bookings'),
         elevation: 0,
         backgroundColor: Colors.blue[700],
       ),
@@ -43,8 +130,8 @@ class _BookingRemindersViewState extends State<BookingRemindersView> {
                   Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
                   const SizedBox(height: 16),
                   Text(
-                    'Error al cargar las reservas',
-                    style: Theme.of(context).textTheme.titleLarge,
+                    'Failed to load bookings',
+                    style: t.textTheme.titleLarge,
                   ),
                   const SizedBox(height: 8),
                   Padding(
@@ -62,7 +149,7 @@ class _BookingRemindersViewState extends State<BookingRemindersView> {
                       viewModel.loadUpcomingBookings(widget.userId);
                     },
                     icon: const Icon(Icons.refresh),
-                    label: const Text('Reintentar'),
+                    label: const Text('Retry'),
                   ),
                 ],
               ),
@@ -79,18 +166,21 @@ class _BookingRemindersViewState extends State<BookingRemindersView> {
                   Icon(Icons.calendar_today, size: 64, color: Colors.grey[400]),
                   const SizedBox(height: 16),
                   Text(
-                    'No tienes reservas próximas',
-                    style: Theme.of(context).textTheme.titleLarge,
+                    'No upcoming bookings',
+                    style: t.textTheme.titleLarge,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '¡Explora vehículos disponibles!',
+                    'Explore available vehicles!',
                     style: TextStyle(color: Colors.grey[600]),
                   ),
                 ],
               ),
             );
           }
+
+          final List<UpcomingBookingModel> bookings =
+          upcomingBookings.bookings.cast<UpcomingBookingModel>();
 
           return RefreshIndicator(
             onRefresh: () => viewModel.loadUpcomingBookings(widget.userId),
@@ -99,7 +189,7 @@ class _BookingRemindersViewState extends State<BookingRemindersView> {
               children: [
                 _buildSummaryCard(upcomingBookings),
                 const SizedBox(height: 16),
-                ...upcomingBookings.bookings.map((booking) {
+                ...bookings.map((booking) {
                   return _buildBookingCard(context, booking);
                 }).toList(),
               ],
@@ -107,11 +197,32 @@ class _BookingRemindersViewState extends State<BookingRemindersView> {
           );
         },
       ),
+      floatingActionButton: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          FloatingActionButton(
+            heroTag: 'testBookingBtn',
+            onPressed: () => _createTestBooking(context),
+            backgroundColor: Colors.red[700],
+            child: const Icon(Icons.flash_on, color: Colors.white),
+          ),
+          const SizedBox(width: 10),
+          FloatingActionButton(
+            heroTag: 'createBookingBtn',
+            onPressed: () => _navigateToCreateBooking(context),
+            backgroundColor: Colors.blue[700],
+            child: const Icon(Icons.add, color: Colors.white),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildSummaryCard(upcomingBookings) {
-    final urgentBookings = upcomingBookings.bookings
+    final List<UpcomingBookingModel> bookings =
+    upcomingBookings.bookings.cast<UpcomingBookingModel>();
+
+    final urgentBookings = bookings
         .where((b) => b.reachedThreshold)
         .length;
 
@@ -138,7 +249,7 @@ class _BookingRemindersViewState extends State<BookingRemindersView> {
                 ),
                 _buildStatItem(
                   icon: Icons.access_time,
-                  label: 'Próximas',
+                  label: 'Upcoming',
                   value: '$urgentBookings',
                   color: urgentBookings > 0 ? Colors.orange : Colors.green,
                 ),
@@ -154,12 +265,12 @@ class _BookingRemindersViewState extends State<BookingRemindersView> {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.notification_important, 
-                         color: Colors.orange[700], size: 20),
+                    Icon(Icons.notification_important,
+                        color: Colors.orange[700], size: 20),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Tienes $urgentBookings reserva${urgentBookings > 1 ? 's' : ''} que comienza${urgentBookings > 1 ? 'n' : ''} pronto',
+                        'You have $urgentBookings booking${urgentBookings > 1 ? 's' : ''} starting soon',
                         style: TextStyle(
                           color: Colors.orange[900],
                           fontSize: 12,
@@ -222,8 +333,7 @@ class _BookingRemindersViewState extends State<BookingRemindersView> {
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () {
-        },
+        onTap: () {},
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -249,7 +359,7 @@ class _BookingRemindersViewState extends State<BookingRemindersView> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Vehículo ${booking.vehicleId.substring(0, 8)}',
+                          'Vehicle ${booking.vehicleId.substring(0, 8)}',
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -278,11 +388,11 @@ class _BookingRemindersViewState extends State<BookingRemindersView> {
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.access_time, 
-                               color: Colors.orange[900], size: 14),
+                          Icon(Icons.access_time,
+                              color: Colors.orange[900], size: 14),
                           const SizedBox(width: 4),
                           Text(
-                            'Próxima',
+                            'Upcoming',
                             style: TextStyle(
                               color: Colors.orange[900],
                               fontSize: 12,
@@ -339,7 +449,7 @@ class _BookingRemindersViewState extends State<BookingRemindersView> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'Comienza en:',
+                          'Starts in:',
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey[700],

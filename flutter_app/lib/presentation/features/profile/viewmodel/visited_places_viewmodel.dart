@@ -1,15 +1,12 @@
-// lib/presentation/features/visited_places/viewmodel/visited_places_viewmodel.dart
-
 import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-// Modelo de datos simple para un lugar visitado
+// Modelo de datos para un lugar visitado
 class VisitedPlace {
   final String city;
   final String date;
   final double latitude;
   final double longitude;
-  // Añade otros campos si los tienes (ej. photoUrl)
 
   const VisitedPlace({
     required this.city,
@@ -26,32 +23,37 @@ class VisitedPlacesViewModel extends ChangeNotifier {
   bool get loading => _loading;
   String? get error => _error;
 
-  // Datos quemados para este ejemplo. En una app real, vendrían del Repository.
+  // Datos quemados para este ejemplo. En una app real vendrían de un Repository o API.
   final List<VisitedPlace> _allPlaces = const [
     VisitedPlace(city: 'Bogotá, Colombia', date: 'March 2025', latitude: 4.7110, longitude: -74.0721),
     VisitedPlace(city: 'Tunja, Colombia', date: 'January 2025', latitude: 5.5350, longitude: -73.3677),
-    VisitedPlace(city: 'Sao Paulo, Brasil', date: 'November 2024', latitude: -23.5505, longitude: -46.6333),
+    VisitedPlace(city: 'São Paulo, Brasil', date: 'November 2024', latitude: -23.5505, longitude: -46.6333),
     VisitedPlace(city: 'Washington D.C., USA', date: 'October 2024', latitude: 38.9072, longitude: -77.0369),
   ];
-  
-  // Lista expuesta que la vista usará
-  List<VisitedPlace> get places => _allPlaces; 
 
-  void _setLoading(bool v) {
-    if (_loading == v) return;
-    _loading = v;
+  // Lista filtrada que la vista usará
+  List<VisitedPlace> _places = [];
+  List<VisitedPlace> get places => _places;
+
+  VisitedPlacesViewModel() {
+    _places = _allPlaces; // inicializar con todos
+  }
+
+  void _setLoading(bool value) {
+    _loading = value;
     notifyListeners();
   }
 
-  void _setError(String? e) {
-    _error = e;
+  void _setError(String? value) {
+    _error = value;
     notifyListeners();
   }
 
-  /// Construye la URL de Google Maps y la lanza.
+  /// Abre Google Maps con las coordenadas del lugar
   Future<void> launchMap(double lat, double lng, String city) async {
     final uri = Uri.parse(
-        'https://www.google.com/maps/search/?api=1&query=$lat,$lng&query_place_id=');
+      'https://www.google.com/maps/search/?api=1&query=$lat,$lng',
+    );
 
     _setLoading(true);
     try {
@@ -67,5 +69,17 @@ class VisitedPlacesViewModel extends ChangeNotifier {
     }
   }
 
-  // TODO: Añadir lógica de búsqueda/filtrado (e.g., filterPlaces(String query))
+  /// Filtro simple por texto
+  void filterPlaces(String query) {
+    if (query.isEmpty) {
+      _places = _allPlaces;
+    } else {
+      _places = _allPlaces
+          .where((p) =>
+      p.city.toLowerCase().contains(query.toLowerCase()) ||
+          p.date.toLowerCase().contains(query.toLowerCase()))
+          .toList();
+    }
+    notifyListeners();
+  }
 }

@@ -369,6 +369,8 @@ import 'package:flutter_app/presentation/features/home/viewmodel/home_viewmodel.
 import 'package:flutter_app/presentation/features/host_home/viewmodel/host_home_viewmodel.dart';
 import 'package:flutter_app/presentation/features/vehicle/viewmodel/add_vehicle_viewmodel.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_app/presentation/features/profile/viewmodel/visited_places_viewmodel.dart';
+import 'package:flutter_app/presentation/features/profile/view/visited_places_view.dart';
 
 import 'presentation/features/auth/view/login_view.dart';
 import 'presentation/features/app_shell/viewmodel/host_mode_provider.dart';
@@ -464,6 +466,8 @@ void main() {
           ),
         ),
 
+
+
         ChangeNotifierProvider<BookingReminderViewModel>(
           create: (ctx) => BookingReminderViewModel(
             ctx.read<AnalyticsRepository>(),
@@ -498,6 +502,10 @@ void main() {
             vehicles: ctx.read<VehicleRepository>(),
             pricing: ctx.read<PricingRepository>(),
           ),
+        ),
+
+        ChangeNotifierProvider<VisitedPlacesViewModel>(
+          create: (ctx) => VisitedPlacesViewModel(),
         ),
       ],
       child: const MyApp(),
