@@ -54,12 +54,12 @@ fun PaymentAnalyticsScreen() {
             TopAppBar(
                 title = { Text("Payment Analytics") },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    containerColor = Color.Black,
+                    titleContentColor = Color.White
                 )
             )
         },
-        containerColor = Color(0xFFF5F5F5)
+        containerColor = Color.White
     ) { padding ->
         Column(
             modifier = Modifier
@@ -71,7 +71,7 @@ fun PaymentAnalyticsScreen() {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                    containerColor = Color.Black
                 ),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
@@ -79,19 +79,20 @@ fun PaymentAnalyticsScreen() {
                     Icon(
                         imageVector = Icons.Default.TrendingDown,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
+                        tint = Color.White,
                         modifier = Modifier.size(32.dp)
                     )
                     Spacer(Modifier.height(8.dp))
                     Text(
                         "Lowest Adoption Methods",
                         style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
                     )
                     Text(
                         "Last 3 months",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.Gray
+                        color = Color.White.copy(alpha = 0.7f)
                     )
                 }
             }
@@ -105,9 +106,9 @@ fun PaymentAnalyticsScreen() {
                         contentAlignment = Alignment.Center
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            CircularProgressIndicator()
+                            CircularProgressIndicator(color = Color.Black)
                             Spacer(Modifier.height(16.dp))
-                            Text("Loading analytics...")
+                            Text("Loading analytics...", color = Color.Black)
                         }
                     }
                 }
@@ -115,7 +116,7 @@ fun PaymentAnalyticsScreen() {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFFFFEBEE)
+                            containerColor = Color(0xFFF5F5F5)
                         )
                     ) {
                         Column(
@@ -125,14 +126,15 @@ fun PaymentAnalyticsScreen() {
                             Icon(
                                 imageVector = Icons.Default.Error,
                                 contentDescription = null,
-                                tint = Color(0xFFD32F2F),
+                                tint = Color.Black,
                                 modifier = Modifier.size(48.dp)
                             )
                             Spacer(Modifier.height(8.dp))
                             Text(
                                 "Error loading data",
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                color = Color.Black
                             )
                             Text(
                                 error ?: "Unknown error",
@@ -144,7 +146,8 @@ fun PaymentAnalyticsScreen() {
                             Button(
                                 onClick = { vm.loadAnalytics() },
                                 colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.error
+                                    containerColor = Color.Black,
+                                    contentColor = Color.White
                                 )
                             ) {
                                 Icon(Icons.Default.Refresh, contentDescription = null)
@@ -155,7 +158,12 @@ fun PaymentAnalyticsScreen() {
                     }
                 }
                 analytics.isEmpty() -> {
-                    Card(modifier = Modifier.fillMaxWidth()) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color(0xFFF5F5F5)
+                        )
+                    ) {
                         Column(
                             modifier = Modifier
                                 .padding(32.dp)
@@ -172,7 +180,8 @@ fun PaymentAnalyticsScreen() {
                             Text(
                                 "No payment data",
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                color = Color.Black
                             )
                             Text(
                                 "No payments recorded in the last 3 months",
@@ -202,7 +211,7 @@ fun PaymentMethodCard(method: PaymentMethodAnalytics, rank: Int) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5))
     ) {
         Row(
             modifier = Modifier
@@ -214,10 +223,10 @@ fun PaymentMethodCard(method: PaymentMethodAnalytics, rank: Int) {
             Surface(
                 shape = CircleShape,
                 color = when (rank) {
-                    1 -> Color(0xFFFFD700)
-                    2 -> Color(0xFFC0C0C0)
-                    3 -> Color(0xFFCD7F32)
-                    else -> Color(0xFFE0E0E0)
+                    1 -> Color.Black
+                    2 -> Color(0xFF424242)
+                    3 -> Color(0xFF616161)
+                    else -> Color(0xFF9E9E9E)
                 },
                 modifier = Modifier.size(48.dp)
             ) {
@@ -237,7 +246,8 @@ fun PaymentMethodCard(method: PaymentMethodAnalytics, rank: Int) {
                 Text(
                     method.name,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
                 )
                 Spacer(Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -258,14 +268,14 @@ fun PaymentMethodCard(method: PaymentMethodAnalytics, rank: Int) {
 
             Surface(
                 shape = RoundedCornerShape(8.dp),
-                color = MaterialTheme.colorScheme.primaryContainer
+                color = Color.Black
             ) {
                 Text(
                     "${"%.1f".format(method.percentage)}%",
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    color = Color.White
                 )
             }
         }

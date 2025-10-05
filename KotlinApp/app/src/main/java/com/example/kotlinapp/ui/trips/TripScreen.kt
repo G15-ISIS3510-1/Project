@@ -26,6 +26,7 @@ import com.example.kotlinapp.ui.navigation.BottomTab
 import com.example.kotlinapp.ui.navigation.PillBottomNavBar
 
 
+
 @Composable
 fun TripScreen(
     onBottomClick: (BottomTab) -> Unit = {}
@@ -87,7 +88,13 @@ private fun TopLogoBar() {
                 .padding(top = 8.dp, bottom = 4.dp),
             contentAlignment = Alignment.Center
         ) {
-            Text("QOVO", fontSize = 28.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.sp)
+            Text(
+                "QOVO",
+                fontSize = 28.sp,
+                fontWeight = FontWeight.SemiBold,
+                letterSpacing = 1.sp,
+                color = MaterialTheme.colorScheme.onSurface
+            )
         }
     }
 }
@@ -104,16 +111,6 @@ private fun TripSearchBar(
         onValueChange = onChange,
         placeholder = { Text("Search") },
         leadingIcon = { Icon(Icons.Filled.Search, contentDescription = "Search") },
-        trailingIcon = {
-            Box(
-                modifier = Modifier
-                    .size(28.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .clickable { onMic() },
-                contentAlignment = Alignment.Center
-            ) { Icon(Icons.Filled.Mic, contentDescription = "Mic") }
-        },
         singleLine = true,
         shape = RoundedCornerShape(24.dp),
         colors = TextFieldDefaults.colors(

@@ -34,6 +34,7 @@ import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -43,6 +44,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -56,24 +58,32 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Fill
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
+
+import com.example.kotlinapp.ui.navigation.BottomTab
+import com.example.kotlinapp.ui.navigation.PillBottomNavBar
 
 
 @Composable
 fun HomeScreen(
+    viewModel: HomeViewModel = viewModel(),
     onCardClick: (VehicleItem) -> Unit = {},
     onBottomClick: (BottomTab) -> Unit = {},
     onTopRatedClick: () -> Unit = {}
 ) {
-    var query by remember { mutableStateOf("") }
     val categories = listOf("Cars", "SUVs", "Minivans", "Trucks", "Vans", "Luxury")
-    val items = sampleVehicles
 
+
+    val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
         topBar = { TopLogoBar() },
@@ -93,19 +103,120 @@ fun HomeScreen(
         ) {
             item {
                 SearchBar(
-                    value = query,
-                    onChange = { query = it },
+                    value = uiState.searchQuery,
+                    onChange = { viewModel.onSearchQueryChange(it) },
                     onMic = { }
                 )
             }
-            item { 
+            item {
                 TopRatedButton(onClick = onTopRatedClick)
             }
-            item { CategoryChips(categories = categories) }
-            items(items) { v ->
-                VehicleCard(v, onFavorite = { }) { onCardClick(v) }
+            item {
+                CategoryChips(
+                    categories = categories,
+                    selectedCategory = uiState.selectedCategory,
+                    onCategoryClick = { viewModel.onCategorySelected(it) }
+                )
             }
+
+
+            if (uiState.searchQuery.isNotBlank() || uiState.selectedCategory != null) {
+                item {
+                    FilterIndicator(
+                        searchQuery = uiState.searchQuery,
+                        selectedCategory = uiState.selectedCategory,
+                        onClear = { viewModel.clearFilters() }
+                    )
+                }
+            }
+
+
+            when {
+                uiState.loading -> {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
+                        }
+                    }
+                }
+                uiState.error != null -> {
+                    item {
+                        ErrorMessage(
+                            error = uiState.error ?: "Unknown error",
+                            onRetry = { viewModel.retry() }
+                        )
+                    }
+                }
+                uiState.vehicles.isEmpty() -> {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                "No vehicles available",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+                else -> {
+
+                    items(uiState.vehicles) { vehicle ->
+                        val priceText = "${vehicle.currency} ${String.format("%.2f", vehicle.dailyRate)}/día"
+
+                        val vehicleItem = VehicleItem(
+                            title = "${vehicle.brand} ${vehicle.model} ${vehicle.year}",
+                            rating = 4.5,
+                            transmission = vehicle.transmission,
+                            price = priceText,
+                            imageUrl = vehicle.imageUrl
+                        )
+                        VehicleCard(vehicleItem, onFavorite = { }) { onCardClick(vehicleItem) }
+                    }
+                }
+            }
+
             item { Spacer(Modifier.height(24.dp)) }
+        }
+    }
+}
+
+@Composable
+private fun ErrorMessage(error: String, onRetry: () -> Unit) {
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "⚠️ Error",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onErrorContainer
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = error,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onErrorContainer
+            )
+            Spacer(Modifier.height(12.dp))
+            Button(onClick = onRetry) {
+                Text("Reintentar")
+            }
         }
     }
 }
@@ -119,7 +230,13 @@ private fun TopLogoBar() {
                 .padding(top = 8.dp, bottom = 4.dp),
             contentAlignment = Alignment.Center
         ) {
-            Text("QOVO", fontSize = 28.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.sp, color = MaterialTheme.colorScheme.onSurface)
+            Text(
+                "QOVO",
+                fontSize = 28.sp,
+                fontWeight = FontWeight.SemiBold,
+                letterSpacing = 1.sp,
+                color = MaterialTheme.colorScheme.onSurface
+            )
         }
     }
 }
@@ -130,25 +247,21 @@ private fun SearchBar(
     onChange: (String) -> Unit,
     onMic: () -> Unit
 ) {
-    // Colores del sistema Material Design
     val surfaceVariantColor = MaterialTheme.colorScheme.surfaceVariant
     val onSurfaceVariantColor = MaterialTheme.colorScheme.onSurfaceVariant
-    
+
     TextField(
         value = value,
         onValueChange = onChange,
         placeholder = { Text("Search", color = onSurfaceVariantColor) },
-        leadingIcon = { Icon(imageVector = Icons.Filled.Search, contentDescription = "Search", tint = onSurfaceVariantColor) },
-        trailingIcon = {
-            Box(
-                modifier = Modifier
-                    .size(28.dp)
-                    .clip(CircleShape)
-                    .background(surfaceVariantColor)
-                    .clickable { onMic() },
-                contentAlignment = Alignment.Center
-            ) { Icon(imageVector = Icons.Filled.Mic, contentDescription = "Mic", tint = onSurfaceVariantColor) }
+        leadingIcon = {
+            Icon(
+                imageVector = Icons.Filled.Search,
+                contentDescription = "Search",
+                tint = onSurfaceVariantColor
+            )
         },
+
         singleLine = true,
         shape = RoundedCornerShape(24.dp),
         colors = TextFieldDefaults.colors(
@@ -162,22 +275,41 @@ private fun SearchBar(
 }
 
 @Composable
-private fun CategoryChips(categories: List<String>) {
-    // Colores del sistema Material Design
-    val surfaceColor = MaterialTheme.colorScheme.surface
+private fun CategoryChips(
+    categories: List<String>,
+    selectedCategory: String?,
+    onCategoryClick: (String) -> Unit
+) {
     val onSurfaceColor = MaterialTheme.colorScheme.onSurface
-    
-    // Color del sistema para chips
-    val chipColor = MaterialTheme.colorScheme.surfaceVariant
-    
+
     LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         items(categories) { label ->
+            val isSelected = selectedCategory == label
+            val chipColor = if (isSelected) {
+                MaterialTheme.colorScheme.primaryContainer
+            } else {
+                MaterialTheme.colorScheme.surfaceVariant
+            }
+            val textColor = if (isSelected) {
+                MaterialTheme.colorScheme.onPrimaryContainer
+            } else {
+                onSurfaceColor
+            }
+
             AssistChip(
-                onClick = { },
-                label = { Text(label, color = onSurfaceColor) },
+                onClick = { onCategoryClick(label) },
+                label = { Text(label, color = textColor, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal) },
                 shape = RoundedCornerShape(16.dp),
-                       colors = AssistChipDefaults.assistChipColors(containerColor = chipColor),
-                border = AssistChipDefaults.assistChipBorder(true)
+                colors = AssistChipDefaults.assistChipColors(containerColor = chipColor),
+                border = if (isSelected) {
+                    AssistChipDefaults.assistChipBorder(
+                        enabled = true,
+                        borderColor = MaterialTheme.colorScheme.primary,
+                        borderWidth = 2.dp
+                    )
+                } else {
+                    AssistChipDefaults.assistChipBorder(true)
+                }
             )
         }
     }
@@ -189,17 +321,14 @@ private fun VehicleCard(
     onFavorite: (VehicleItem) -> Unit,
     onClick: (VehicleItem) -> Unit
 ) {
-    // Colores del sistema Material Design
     val surfaceColor = MaterialTheme.colorScheme.surface
     val onSurfaceColor = MaterialTheme.colorScheme.onSurface
     val surfaceVariantColor = MaterialTheme.colorScheme.surfaceVariant
     val onSurfaceVariantColor = MaterialTheme.colorScheme.onSurfaceVariant
-    
-    // Colores del sistema Material Design
-    val starColor = MaterialTheme.colorScheme.tertiary // Naranja para estrellas
-    val priceColor = MaterialTheme.colorScheme.primary // Azul para precios
-    val favoriteColor = MaterialTheme.colorScheme.error // Rojo para favoritos
-    
+    val starColor = MaterialTheme.colorScheme.tertiary
+    val priceColor = MaterialTheme.colorScheme.primary
+    val favoriteColor = MaterialTheme.colorScheme.error
+
     ElevatedCard(
         onClick = { onClick(item) },
         shape = RoundedCornerShape(16.dp),
@@ -213,12 +342,25 @@ private fun VehicleCard(
                 .background(surfaceVariantColor),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector = Icons.Filled.Image,
-                contentDescription = null,
-                tint = onSurfaceVariantColor,
-                modifier = Modifier.size(48.dp)
-            )
+
+            if (item.imageUrl != null) {
+                AsyncImage(
+                    model = item.imageUrl,
+                    contentDescription = item.title,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop,
+                    error = painterResource(android.R.drawable.ic_menu_gallery),
+                    placeholder = painterResource(android.R.drawable.ic_menu_gallery)
+                )
+            } else {
+                Icon(
+                    imageVector = Icons.Filled.Image,
+                    contentDescription = null,
+                    tint = onSurfaceVariantColor,
+                    modifier = Modifier.size(48.dp)
+                )
+            }
+
             Icon(
                 imageVector = Icons.Outlined.FavoriteBorder,
                 contentDescription = "Fav",
@@ -231,16 +373,26 @@ private fun VehicleCard(
         }
 
         Column(Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 Text(
                     item.title,
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.SemiBold
+                    ),
                     modifier = Modifier.weight(1f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     color = onSurfaceColor
                 )
-                Icon(Icons.Filled.Star, contentDescription = null, tint = starColor, modifier = Modifier.size(16.dp))
+                Icon(
+                    Icons.Filled.Star,
+                    contentDescription = null,
+                    tint = starColor,
+                    modifier = Modifier.size(16.dp)
+                )
                 Spacer(Modifier.width(4.dp))
                 Text(item.rating.toString(), fontSize = 12.sp, color = starColor)
             }
@@ -251,14 +403,107 @@ private fun VehicleCard(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(item.transmission, color = onSurfaceVariantColor)
-                Text(item.price, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = priceColor)
+                Text(
+                    item.price,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold
+                    ),
+                    color = priceColor
+                )
             }
         }
     }
 }
 
+@Composable
+private fun FilterIndicator(
+    searchQuery: String,
+    selectedCategory: String?,
+    onClear: () -> Unit
+) {
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "Filtros activos",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(Modifier.height(4.dp))
+                val filters = buildList {
+                    if (searchQuery.isNotBlank()) add("Búsqueda: \"$searchQuery\"")
+                    if (selectedCategory != null) add("Categoría: $selectedCategory")
+                }
+                Text(
+                    filters.joinToString(", "),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+            }
+            Button(
+                onClick = onClear,
+                modifier = Modifier.height(32.dp),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+            ) {
+                Text("Limpiar", style = MaterialTheme.typography.labelSmall)
+            }
+        }
+    }
+}
 
-enum class BottomTab(val label: String) { Home("Home"), Trip("Trip"), Messages("Messages"), Host("Host"), Account("Account") }
+@Composable
+private fun TopRatedButton(onClick: () -> Unit) {
+    ElevatedCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        ),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column {
+                Text(
+                    text = "🏆 Vehículos Top Rated",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                Text(
+                    text = "Descubre los vehículos mejor calificados",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+            Icon(
+                imageVector = Icons.Filled.Star,
+                contentDescription = "Top Rated",
+                tint = Color.Yellow,
+                modifier = Modifier.size(32.dp)
+            )
+        }
+    }
+}
+
 
 @Composable
 fun PillBottomNavBar(
@@ -271,9 +516,8 @@ fun PillBottomNavBar(
 
 @Composable
 private fun PillBar(selected: BottomTab, onSelect: (BottomTab) -> Unit) {
-    // Colores del sistema Material Design para navegación
-    val blue = MaterialTheme.colorScheme.primary // Azul para seleccionado
-    val grey = MaterialTheme.colorScheme.onSurfaceVariant // Gris para no seleccionado
+    val blue = MaterialTheme.colorScheme.primary
+    val grey = MaterialTheme.colorScheme.onSurfaceVariant
     val bg = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
 
     Box(
@@ -301,7 +545,6 @@ private fun PillBar(selected: BottomTab, onSelect: (BottomTab) -> Unit) {
                 onClick = { onSelect(BottomTab.Home) },
                 icon = { DiamondIcon(it) }
             )
-
             BottomItem(
                 isSelected = selected == BottomTab.Trip,
                 label = BottomTab.Trip.label,
@@ -310,7 +553,6 @@ private fun PillBar(selected: BottomTab, onSelect: (BottomTab) -> Unit) {
                 onClick = { onSelect(BottomTab.Trip) },
                 icon = { CircleIcon(it) }
             )
-
             BottomItem(
                 isSelected = selected == BottomTab.Messages,
                 label = BottomTab.Messages.label,
@@ -319,7 +561,6 @@ private fun PillBar(selected: BottomTab, onSelect: (BottomTab) -> Unit) {
                 onClick = { onSelect(BottomTab.Messages) },
                 icon = { TriangleIcon(it) }
             )
-
             BottomItem(
                 isSelected = selected == BottomTab.Host,
                 label = BottomTab.Host.label,
@@ -328,7 +569,6 @@ private fun PillBar(selected: BottomTab, onSelect: (BottomTab) -> Unit) {
                 onClick = { onSelect(BottomTab.Host) },
                 icon = { TriangleIcon(it) }
             )
-
             BottomItem(
                 isSelected = selected == BottomTab.Account,
                 label = BottomTab.Account.label,
@@ -337,7 +577,6 @@ private fun PillBar(selected: BottomTab, onSelect: (BottomTab) -> Unit) {
                 onClick = { onSelect(BottomTab.Account) },
                 icon = { TriangleIcon(it) }
             )
-
         }
     }
 }
@@ -392,9 +631,12 @@ private fun DiamondIcon(
         )
     }
 }
-@Composable private fun CircleIcon(tint: Color) {
+
+@Composable
+private fun CircleIcon(tint: Color) {
     Box(modifier = Modifier.size(24.dp).background(tint, CircleShape))
 }
+
 @Composable
 private fun TriangleIcon(
     tint: Color,
@@ -411,13 +653,17 @@ private fun TriangleIcon(
 
         fun Offset.len() = kotlin.math.sqrt(x * x + y * y)
         fun Offset.norm(): Offset {
-            val l = len(); return if (l == 0f) this else Offset(x / l, y / l)
+            val l = len()
+            return if (l == 0f) this else Offset(x / l, y / l)
         }
         fun along(from: Offset, to: Offset, d: Float) = from + (to - from).norm() * d
 
-        val a1 = along(a, b, r); val a2 = along(a, c, r)
-        val b1 = along(b, c, r); val b2 = along(b, a, r)
-        val c1 = along(c, a, r); val c2 = along(c, b, r)
+        val a1 = along(a, b, r)
+        val a2 = along(a, c, r)
+        val b1 = along(b, c, r)
+        val b2 = along(b, a, r)
+        val c1 = along(c, a, r)
+        val c2 = along(c, b, r)
 
         val path = Path().apply {
             moveTo(a1.x, a1.y)
@@ -438,51 +684,4 @@ data class VehicleItem(
     val transmission: String,
     val price: String,
     val imageUrl: String? = null
-)
-
-@Composable
-private fun TopRatedButton(onClick: () -> Unit) {
-    ElevatedCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
-        colors = CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        ),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Column {
-                Text(
-                    text = "🏆 Vehículos Top Rated",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-                Text(
-                    text = "Descubre los vehículos mejor calificados",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-            }
-            Icon(
-                imageVector = Icons.Filled.Star,
-                contentDescription = "Top Rated",
-                tint = Color.Yellow,
-                modifier = Modifier.size(32.dp)
-            )
-        }
-    }
-}
-
-private val sampleVehicles = listOf(
-    VehicleItem("Mercedes Blue 2023", 4.8, "Automatic", "$176,037.11"),
-    VehicleItem("Audi A4 2022", 4.7, "Automatic", "$92,510.00"),
-    VehicleItem("BMW X3 2021", 4.6, "Manual", "$80,990.00")
 )

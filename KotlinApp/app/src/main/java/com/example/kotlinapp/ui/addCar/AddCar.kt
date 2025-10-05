@@ -67,9 +67,6 @@ import androidx.compose.ui.res.painterResource
 fun AddCar(
     onDone: () -> Unit = {}
 ) {
-
-
-
     var make by remember { mutableStateOf("") }
     var model by remember { mutableStateOf("") }
     var year by remember { mutableStateOf("") }
@@ -79,19 +76,16 @@ fun AddCar(
     var fuelType by remember { mutableStateOf("gas") }
     var mileage by remember { mutableStateOf("") }
 
-
     var dailyPrice by remember { mutableStateOf("") }
     var minDays by remember { mutableStateOf("1") }
     var maxDays by remember { mutableStateOf("") }
     var currency by remember { mutableStateOf("USD") }
-
 
     var photoUri by remember { mutableStateOf<Uri?>(null) }
     var photoFile by remember { mutableStateOf<File?>(null) }
     var latValue by remember { mutableStateOf<Double?>(null) }
     var lngValue by remember { mutableStateOf<Double?>(null) }
     var validationError by remember { mutableStateOf<String?>(null) }
-
 
     val vm: AddCarViewModel = viewModel()
     val ui by vm.ui.collectAsState()
@@ -102,7 +96,6 @@ fun AddCar(
         contract = ActivityResultContracts.TakePicture()
     ) { success ->
         if (success && photoFile != null) {
-
             photoUri = Uri.fromFile(photoFile)
         } else {
             photoUri = null
@@ -110,12 +103,10 @@ fun AddCar(
         }
     }
 
-    //Permiso para camara
     val cameraPermissionState = rememberPermissionState(
         android.Manifest.permission.CAMERA
     )
 
-    //Permiso para ubicacion
     val locationPermissionState = rememberMultiplePermissionsState(
         permissions = listOf(
             android.Manifest.permission.ACCESS_FINE_LOCATION,
@@ -123,11 +114,9 @@ fun AddCar(
         )
     )
 
-    //Obtener ubicacion
     val fusedLocationClient = remember {
         LocationServices.getFusedLocationProviderClient(context)
     }
-
 
     fun getLocation() {
         if (locationPermissionState.allPermissionsGranted) {
@@ -178,21 +167,31 @@ fun AddCar(
     }
 
     LaunchedEffect(ui.success) {
-        if (ui.success) onDone()
+        if (ui.success){
+            make = ""
+            model = ""
+            year = ""
+            plate = ""
+            seats = ""
+            transmission = "AT"
+            fuelType = "gas"
+            mileage = ""
+            dailyPrice = ""
+            minDays = "1"
+            maxDays = ""
+            currency = "USD"
+            photoUri = null
+            photoFile = null
+            latValue = null
+            lngValue = null
+            validationError = null
+            onDone()
+        }
     }
-
-    if (ui.error != null) {
-        Text(
-            text = ui.error!!,
-            color = Color.Red,
-            modifier = Modifier.fillMaxWidth()
-        )
-    }
-
 
     Scaffold(
         topBar = { TopAddCar() },
-        containerColor = Color(0xFFF7F7F7)
+        containerColor = MaterialTheme.colorScheme.surface
     ) { padding ->
         val scroll = rememberScrollState()
         Column(
@@ -205,15 +204,16 @@ fun AddCar(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
 
-
             if (ui.error != null) {
                 Card(
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE)),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    ),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
                         text = ui.error!!,
-                        color = Color.Red,
+                        color = MaterialTheme.colorScheme.onErrorContainer,
                         modifier = Modifier.padding(12.dp)
                     )
                 }
@@ -221,27 +221,34 @@ fun AddCar(
 
             if (validationError != null) {
                 Card(
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF3E0)),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                    ),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
                         text = validationError!!,
-                        color = Color(0xFFE65100),
+                        color = MaterialTheme.colorScheme.onTertiaryContainer,
                         modifier = Modifier.padding(12.dp)
                     )
                 }
             }
 
-
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("Photo of the vehicle", fontWeight = FontWeight.Bold)
+                    Text(
+                        "Photo of the vehicle",
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                     Spacer(Modifier.height(8.dp))
 
                     if (photoFile != null && photoFile!!.exists()) {
@@ -257,11 +264,19 @@ fun AddCar(
                         )
                         Spacer(Modifier.height(8.dp))
                     } else if (photoUri != null) {
-
-                        Text("Photo captured but not available", color = Color.Gray)
+                        Text(
+                            "Photo captured but not available",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                        )
                     }
 
-                    Button(onClick = { takePhoto() }) {
+                    Button(
+                        onClick = { takePhoto() },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Black,
+                            contentColor = Color.White
+                        )
+                    ) {
                         Icon(Icons.Default.CameraAlt, contentDescription = null)
                         Spacer(Modifier.width(8.dp))
                         Text(if (photoUri == null) "Take foto" else "Change foto")
@@ -269,31 +284,42 @@ fun AddCar(
                 }
             }
 
-
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("vehicle location", fontWeight = FontWeight.Bold)
+                    Text(
+                        "vehicle location",
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                     Spacer(Modifier.height(8.dp))
 
                     if (latValue != null && lngValue != null) {
                         Text(
                             "Lat: %.6f, Lng: %.6f".format(latValue, lngValue),
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color.Gray
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                         )
                     } else {
                         Text(
                             "Location not obtained",
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color.Gray
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                         )
                     }
 
                     Spacer(Modifier.height(8.dp))
-                    Button(onClick = { getLocation() }) {
+                    Button(
+                        onClick = { getLocation() },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Black,
+                            contentColor = Color.White
+                        )
+                    ) {
                         Icon(Icons.Default.MyLocation, contentDescription = null)
                         Spacer(Modifier.width(8.dp))
                         Text("Get location")
@@ -301,45 +327,80 @@ fun AddCar(
                 }
             }
 
-
             OutlinedTextField(
                 value = make,
                 onValueChange = { make = it },
                 label = { Text("Make") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                    focusedLabelColor = MaterialTheme.colorScheme.primary,
+                    unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             )
             OutlinedTextField(
                 value = model,
                 onValueChange = { model = it },
                 label = { Text("Model") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                    focusedLabelColor = MaterialTheme.colorScheme.primary,
+                    unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             )
             OutlinedTextField(
                 value = year,
                 onValueChange = { year = it.filter(Char::isDigit) },
                 label = { Text("Year") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                    focusedLabelColor = MaterialTheme.colorScheme.primary,
+                    unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             )
             OutlinedTextField(
                 value = plate,
                 onValueChange = { plate = it.uppercase() },
                 label = { Text("Plate") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                    focusedLabelColor = MaterialTheme.colorScheme.primary,
+                    unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             )
             OutlinedTextField(
                 value = seats,
                 onValueChange = { seats = it.filter(Char::isDigit) },
                 label = { Text("Seats") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                    focusedLabelColor = MaterialTheme.colorScheme.primary,
+                    unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             )
             OutlinedTextField(
                 value = mileage,
                 onValueChange = { mileage = it.filter(Char::isDigit) },
                 label = { Text("Mileage") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                    focusedLabelColor = MaterialTheme.colorScheme.primary,
+                    unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             )
 
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -364,21 +425,39 @@ fun AddCar(
                 onValueChange = { dailyPrice = it.filter { ch -> ch.isDigit() || ch == '.' } },
                 label = { Text("Daily price") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                    focusedLabelColor = MaterialTheme.colorScheme.primary,
+                    unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             )
             OutlinedTextField(
                 value = minDays,
                 onValueChange = { minDays = it.filter(Char::isDigit) },
                 label = { Text("Min days") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                    focusedLabelColor = MaterialTheme.colorScheme.primary,
+                    unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             )
             OutlinedTextField(
                 value = maxDays,
                 onValueChange = { maxDays = it.filter(Char::isDigit) },
                 label = { Text("Max days (optional)") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                    focusedLabelColor = MaterialTheme.colorScheme.primary,
+                    unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             )
 
             SimpleDropdown(
@@ -395,7 +474,6 @@ fun AddCar(
                 onClick = {
                     validationError = null
 
-                    // Validar ubicación, que se tomo con el sensor
                     if (latValue == null || lngValue == null) {
                         validationError = "Debes obtener la ubicación del vehículo"
                         return@Button
@@ -439,13 +517,18 @@ fun AddCar(
                                 currency = currency
                             )
 
-
                             vm.submit(vReq, pReq, photoFile)
                         }
                     }
                 },
                 enabled = !ui.loading,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Black,
+                    contentColor = Color.White,
+                    disabledContainerColor = Color.Black.copy(alpha = 0.5f),
+                    disabledContentColor = Color.White.copy(alpha = 0.5f)
+                )
             ) {
                 if (ui.loading) {
                     CircularProgressIndicator(

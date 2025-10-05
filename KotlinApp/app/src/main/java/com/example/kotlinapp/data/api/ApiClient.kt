@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit
 object ApiClient {
     
     // URL universal que funciona en cualquier red
-    private const val BASE_URL = "http://10.0.2.2:8000/"  // Emulador Android (funciona siempre)  
+    private const val BASE_URL = "http://192.168.100.27:8000/"  // Emulador Android (funciona siempre)
     
     private val gson = GsonBuilder()
         .setLenient()
@@ -38,6 +38,9 @@ object ApiClient {
     
     val authApiService: AuthApiService = retrofit.create(AuthApiService::class.java)
     val vehicleRatingApi: VehicleRatingApi = retrofit.create(VehicleRatingApi::class.java)
+
+    val vehiclesApi: VehiclesApiService = retrofit.create(VehiclesApiService::class.java)
+    val pricingApi: PricingApiService = retrofit.create(PricingApiService::class.java)
 
     fun <T> create(service: Class<T>): T = retrofit.create(service)
 }
