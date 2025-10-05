@@ -16,9 +16,9 @@ class ThemeController(private val context: Context) {
         private const val KEY_DARK_START_HOUR = "dark_start_hour"
         private const val KEY_DARK_END_HOUR = "dark_end_hour"
         
-        // Valores por defecto
-        private const val DEFAULT_DARK_START_HOUR = 16 // 4 PM (inicio tema oscuro)
-        private const val DEFAULT_DARK_END_HOUR = 7    // 7 AM (fin tema oscuro)
+        private const val DEFAULT_DARK_START_HOUR = 18 // las 6 PM
+        private const val DEFAULT_DARK_END_HOUR = 7    // 7 AM 
+
         
         // Modos de tema
         const val THEME_LIGHT = "light"
@@ -96,11 +96,9 @@ class ThemeController(private val context: Context) {
         
         return when {
             darkStartHour > darkEndHour -> {
-                // El tema oscuro cruza la medianoche (ej: 19:00 - 07:00)
                 currentHour >= darkStartHour || currentHour < darkEndHour
             }
             else -> {
-                // El tema oscuro está dentro del mismo día (ej: 19:00 - 23:00)
                 currentHour >= darkStartHour && currentHour < darkEndHour
             }
         }

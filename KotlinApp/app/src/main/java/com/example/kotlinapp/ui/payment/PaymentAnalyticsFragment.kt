@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
@@ -54,12 +55,12 @@ fun PaymentAnalyticsScreen() {
             TopAppBar(
                 title = { Text("Payment Analytics") },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Black,
-                    titleContentColor = Color.White
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary
                 )
             )
         },
-        containerColor = Color.White
+        containerColor = MaterialTheme.colorScheme.onPrimary
     ) { padding ->
         Column(
             modifier = Modifier
@@ -71,7 +72,7 @@ fun PaymentAnalyticsScreen() {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color.Black
+                    containerColor = MaterialTheme.colorScheme.surface
                 ),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
@@ -79,7 +80,7 @@ fun PaymentAnalyticsScreen() {
                     Icon(
                         imageVector = Icons.Default.TrendingDown,
                         contentDescription = null,
-                        tint = Color.White,
+                        tint = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.size(32.dp)
                     )
                     Spacer(Modifier.height(8.dp))
@@ -87,12 +88,12 @@ fun PaymentAnalyticsScreen() {
                         "Lowest Adoption Methods",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = MaterialTheme.colorScheme.onPrimary
                     )
                     Text(
                         "Last 3 months",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.7f)
+                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
                     )
                 }
             }
@@ -106,9 +107,9 @@ fun PaymentAnalyticsScreen() {
                         contentAlignment = Alignment.Center
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            CircularProgressIndicator(color = Color.Black)
+                            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                             Spacer(Modifier.height(16.dp))
-                            Text("Loading analytics...", color = Color.Black)
+                            Text("Loading analytics...", color = MaterialTheme.colorScheme.onSurface)
                         }
                     }
                 }
@@ -116,7 +117,7 @@ fun PaymentAnalyticsScreen() {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFFF5F5F5)
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
                         )
                     ) {
                         Column(
@@ -126,7 +127,7 @@ fun PaymentAnalyticsScreen() {
                             Icon(
                                 imageVector = Icons.Default.Error,
                                 contentDescription = null,
-                                tint = Color.Black,
+                                tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(48.dp)
                             )
                             Spacer(Modifier.height(8.dp))
@@ -134,20 +135,20 @@ fun PaymentAnalyticsScreen() {
                                 "Error loading data",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.Black
+                                color = MaterialTheme.colorScheme.primary
                             )
                             Text(
                                 error ?: "Unknown error",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = Color.Gray,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 textAlign = TextAlign.Center
                             )
                             Spacer(Modifier.height(16.dp))
                             Button(
                                 onClick = { vm.loadAnalytics() },
                                 colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color.Black,
-                                    contentColor = Color.White
+                                    containerColor = MaterialTheme.colorScheme.surface,
+                                    contentColor = MaterialTheme.colorScheme.onPrimary
                                 )
                             ) {
                                 Icon(Icons.Default.Refresh, contentDescription = null)
@@ -161,7 +162,7 @@ fun PaymentAnalyticsScreen() {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFFF5F5F5)
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
                         )
                     ) {
                         Column(
@@ -174,19 +175,19 @@ fun PaymentAnalyticsScreen() {
                                 imageVector = Icons.Default.Receipt,
                                 contentDescription = null,
                                 modifier = Modifier.size(64.dp),
-                                tint = Color.Gray
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Spacer(Modifier.height(16.dp))
                             Text(
                                 "No payment data",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.Black
+                                color = MaterialTheme.colorScheme.primary
                             )
                             Text(
                                 "No payments recorded in the last 3 months",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = Color.Gray,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 textAlign = TextAlign.Center
                             )
                         }
@@ -211,7 +212,7 @@ fun PaymentMethodCard(method: PaymentMethodAnalytics, rank: Int) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5))
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Row(
             modifier = Modifier
@@ -223,10 +224,10 @@ fun PaymentMethodCard(method: PaymentMethodAnalytics, rank: Int) {
             Surface(
                 shape = CircleShape,
                 color = when (rank) {
-                    1 -> Color.Black
-                    2 -> Color(0xFF424242)
-                    3 -> Color(0xFF616161)
-                    else -> Color(0xFF9E9E9E)
+                    1 -> MaterialTheme.colorScheme.primary
+                    2 -> MaterialTheme.colorScheme.onSurfaceVariant
+                    3 -> MaterialTheme.colorScheme.outline
+                    else -> MaterialTheme.colorScheme.outlineVariant
                 },
                 modifier = Modifier.size(48.dp)
             ) {
@@ -235,7 +236,7 @@ fun PaymentMethodCard(method: PaymentMethodAnalytics, rank: Int) {
                         "#$rank",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = MaterialTheme.colorScheme.onPrimary
                     )
                 }
             }
@@ -247,7 +248,7 @@ fun PaymentMethodCard(method: PaymentMethodAnalytics, rank: Int) {
                     method.name,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = Color.Black
+                    color = MaterialTheme.colorScheme.primary
                 )
                 Spacer(Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -255,27 +256,27 @@ fun PaymentMethodCard(method: PaymentMethodAnalytics, rank: Int) {
                         imageVector = Icons.Default.Receipt,
                         contentDescription = null,
                         modifier = Modifier.size(16.dp),
-                        tint = Color.Gray
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(Modifier.width(4.dp))
                     Text(
                         "${method.count} transactions",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.Gray
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
 
             Surface(
                 shape = RoundedCornerShape(8.dp),
-                color = Color.Black
+                color = MaterialTheme.colorScheme.primary
             ) {
                 Text(
                     "${"%.1f".format(method.percentage)}%",
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    color = MaterialTheme.colorScheme.onPrimary
                 )
             }
         }

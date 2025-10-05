@@ -105,7 +105,6 @@ class CurrencyFragment : Fragment(R.layout.fragment_currency) {
                 ).setAction("Deshacer") {
                     viewLifecycleOwner.lifecycleScope.launch {
                         prefs.clearPreferred()
-                        // Opcional: deja el highlight como estaba; aquí lo removemos resaltando nada.
                         highlight("___NONE___")
                     }
                 }.show()
@@ -149,7 +148,10 @@ class CurrencyFragment : Fragment(R.layout.fragment_currency) {
     private fun highlight(code: String) {
         fun sel(card: MaterialCardView, selected: Boolean) {
             val density = resources.displayMetrics.density
-            card.strokeColor = if (selected) Color.parseColor("#4F46E5") else Color.parseColor("#D8D6DC")
+            card.strokeColor = if (selected) 
+                ContextCompat.getColor(requireContext(), com.google.android.material.R.color.material_dynamic_primary80)
+            else 
+                ContextCompat.getColor(requireContext(), com.google.android.material.R.color.material_dynamic_neutral80)
             card.strokeWidth = ((if (selected) 3 else 1) * density).roundToInt()
         }
         sel(binding.cardUSD, code == "USD")

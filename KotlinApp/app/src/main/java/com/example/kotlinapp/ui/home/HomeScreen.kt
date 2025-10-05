@@ -497,7 +497,7 @@ private fun TopRatedButton(onClick: () -> Unit) {
             Icon(
                 imageVector = Icons.Filled.Star,
                 contentDescription = "Top Rated",
-                tint = Color.Yellow,
+                tint = MaterialTheme.colorScheme.tertiary,
                 modifier = Modifier.size(32.dp)
             )
         }

@@ -65,7 +65,6 @@ class AuthRepository {
                     Result.success(userResponse)
                 } ?: Result.failure(Exception("Error del servidor"))
             } else {
-                // Manejar errores específicos del servidor
                 when (response.code()) {
                     409 -> Result.failure(Exception("El email ya está registrado"))
                     400 -> Result.failure(Exception("Datos inválidos"))
@@ -113,28 +112,24 @@ class AuthRepository {
                 else -> Result.failure(Exception("Error del servidor: ${e.message()}"))
             }
         } catch (e: IOException) {
-            Result.failure(Exception("Error de conexión. Verifica tu conexión a internet"))
+            Result.failure(Exception("Error de conexión. "))
         } catch (e: Exception) {
             Result.failure(Exception("Error inesperado: ${e.message}"))
         }
     }
     
-    // Método para obtener información del usuario desde SharedPreferences
     fun getCachedUserInfo(): UserResponse? {
         return preferencesManager.getUserInfo()
     }
     
-    // Método para verificar si el usuario está logueado
     fun isLoggedIn(): Boolean {
         return preferencesManager.isLoggedIn()
     }
     
-    // Método para cerrar sesión
     fun logout() {
         preferencesManager.logout()
     }
     
-    // Método para obtener token de autorización
     fun getAuthToken(): String? {
         return preferencesManager.getAccessToken()
     }

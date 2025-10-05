@@ -32,12 +32,10 @@ class PreferencesManager(context: Context) {
             .apply()
     }
     
-    // Obtener token de acceso
     fun getAccessToken(): String? {
         return sharedPreferences.getString(KEY_ACCESS_TOKEN, null)
     }
     
-    // Obtener token completo para headers
     fun getAuthHeader(): String? {
         val token = getAccessToken()
         val tokenType = sharedPreferences.getString(KEY_TOKEN_TYPE, "bearer") ?: "bearer"
@@ -77,17 +75,14 @@ class PreferencesManager(context: Context) {
         }
     }
     
-    // Verificar si el usuario está logueado
     fun isLoggedIn(): Boolean {
         return sharedPreferences.getBoolean(KEY_IS_LOGGED_IN, false) && getAccessToken() != null
     }
     
-    // Cerrar sesión (limpiar todo)
     fun logout() {
         sharedPreferences.edit().clear().apply()
     }
     
-    // Verificar si el token existe y es válido (básico)
     fun hasValidToken(): Boolean {
         return getAccessToken()?.isNotEmpty() == true
     }

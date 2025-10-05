@@ -10,10 +10,8 @@ class AuthInterceptor : Interceptor {
         val originalRequest = chain.request()
         val preferencesManager = App.getPreferencesManager()
         
-        // Obtener token de autorización
         val authHeader = preferencesManager.getAuthHeader()
         
-        // Si tenemos un token, agregarlo al header
         val newRequest = if (authHeader != null) {
             originalRequest.newBuilder()
                 .header("Authorization", authHeader)
