@@ -40,7 +40,6 @@ class MessagesFragment : Fragment() {
     private fun setupMessages() {
         val messagesContainer = binding.messagesContainer
         
-        // Mensajes de ejemplo
         val sampleMessages = listOf(
             "Juan Diaz - Hey! How was your trip yesterday?",
             "Jairo Fierro - Thanks for the great experience!",

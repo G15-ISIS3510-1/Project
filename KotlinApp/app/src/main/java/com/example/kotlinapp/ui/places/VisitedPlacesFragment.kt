@@ -16,7 +16,6 @@ class VisitedPlacesFragment : Fragment(R.layout.fragment_visited_places) {
         _binding = FragmentVisitedPlacesBinding.bind(view)
 
         binding.btnBack.setOnClickListener { findNavController().popBackStack() }
-        // (Opcional) listeners para tabs / search si luego quieres filtrar
     }
 
     override fun onDestroyView() {

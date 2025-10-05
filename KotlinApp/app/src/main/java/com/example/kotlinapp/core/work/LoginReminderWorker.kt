@@ -14,7 +14,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.example.kotlinapp.R
-import com.example.kotlinapp.MainActivity // ajusta si tu Activity principal tiene otro nombre
+import com.example.kotlinapp.MainActivity 
 import java.util.concurrent.TimeUnit
 
 class LoginReminderWorker(
@@ -24,8 +24,7 @@ class LoginReminderWorker(
 
     override suspend fun doWork(): Result {
         ensureChannel()
-
-        // PendingIntent que abre MainActivity y navega a messagesFragment
+        
         val contentIntent: PendingIntent = NavDeepLinkBuilder(applicationContext)
             .setComponentName(MainActivity::class.java) // Activity con tu NavHostFragment
             .setGraph(R.navigation.nav_graph)          

@@ -59,7 +59,7 @@ fun HostScreen(
                 fontSize = logoSizeSp,
                 fontWeight = FontWeight.SemiBold,
                 letterSpacing = 2.sp,
-                color = Color.Black
+                color = MaterialTheme.colorScheme.onSurface
             )
 
             Spacer(Modifier.height(spaceAfterLogo))
@@ -148,7 +148,7 @@ private fun PinRow(
                 textStyle = TextStyle(
                     fontSize = 24.sp,
                     textAlign = TextAlign.Center,
-                    color = Color.Black
+                    color = MaterialTheme.colorScheme.onSurface
                 ),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
