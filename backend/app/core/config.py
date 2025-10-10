@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     # Database
 
     GOOGLE_API_KEY: Optional[str] = None
-    database_url: str = "postgresql://username:password@localhost:5432/mobile_app_db"
+    database_url: str = "https://qovo-api-gfa6drobhq-uc.a.run.app"
     database_url_async: str = "postgresql+asyncpg://username:password@localhost:5432/mobile_app_db"
     
     # Security
@@ -24,7 +24,8 @@ class Settings(BaseSettings):
         "http://10.0.2.2:8000",  # Android emulator
         "http://127.0.0.1:8000", # Local development
         "http://0.0.0.0:8000",   # All interfaces
-        "http://192.168.0.198:8000",  
+        "http://192.168.0.198:8000",
+        "https://qovo-api-gfa6drobhq-uc.a.run.app"  
         "*"  # Allow all origins for development
     ]
     

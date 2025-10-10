@@ -407,6 +407,7 @@
 
 // lib/presentation/features/messages/view/messages_view.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_app/data/sources/remote/api_client.dart';
 import 'package:provider/provider.dart';
 
 import 'package:flutter_app/presentation/features/conversation/view/conversation_view.dart';
@@ -475,7 +476,8 @@ class _MessagesViewState extends State<MessagesView>
   Widget build(BuildContext context) {
     super.build(context);
     final bottomInset = MediaQuery.of(context).padding.bottom;
-    final scheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final text = Theme.of(context).textTheme;
 
     return SafeArea(
@@ -543,10 +545,10 @@ class _MessagesViewState extends State<MessagesView>
                       physics: const NeverScrollableScrollPhysics(),
                       shrinkWrap: true,
                       itemCount: items.length,
-                      separatorBuilder: (_, __) => const Divider(
+                      separatorBuilder: (_, __) => Divider(
                         height: 0.8,
                         thickness: 0.8,
-                        color: Color(0xFFFAFAFA),
+                        color: scheme.outlineVariant,
                       ),
                       itemBuilder: (_, i) {
                         final it = items[i];
@@ -563,7 +565,6 @@ class _MessagesViewState extends State<MessagesView>
                                 .push<bool>(
                                   MaterialPageRoute(
                                     builder: (_) => ConversationPage(
-                                      currentUserId: widget.currentUserId,
                                       otherUserId: it.otherUserId,
                                       conversationId: it.conversationId,
                                     ),
@@ -611,6 +612,32 @@ class _ConversationTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final avatarBg = isDark ? const Color(0xFF1E2634) : const Color(0xFFF3F4F6);
+    final avatarIcon = isDark
+        ? scheme.onSurfaceVariant
+        : const Color(0xFFB8BDC7);
+
+    final titleStyle = text.titleMedium?.copyWith(
+      fontSize: 18,
+      fontWeight: FontWeight.w700,
+      color: scheme.onSurface, // 👈 antes: Colors.black87
+    );
+
+    final subtitleStyle = text.bodyMedium?.copyWith(
+      fontSize: 15,
+      color: scheme.onSurfaceVariant, // 👈 antes: Colors.black54
+      fontWeight: FontWeight.w500,
+    );
+
+    final timeStyle = text.bodySmall?.copyWith(
+      fontSize: 13,
+      color: scheme.onSurfaceVariant, // 👈 antes: Colors.black45
+      fontWeight: FontWeight.w600,
+    );
+
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -621,11 +648,11 @@ class _ConversationTile extends StatelessWidget {
             Container(
               width: 52,
               height: 52,
-              decoration: const BoxDecoration(
-                color: Color(0xFFF3F4F6),
+              decoration: BoxDecoration(
+                color: avatarBg,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.person_outline, color: Color(0xFFB8BDC7)),
+              child: Icon(Icons.person_outline, color: avatarIcon),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -636,22 +663,14 @@ class _ConversationTile extends StatelessWidget {
                     title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: text.titleMedium?.copyWith(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black87,
-                    ),
+                    style: titleStyle,
                   ),
                   const SizedBox(height: 6),
                   Text(
                     subtitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: text.bodyMedium?.copyWith(
-                      fontSize: 15,
-                      color: Colors.black54,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: subtitleStyle,
                   ),
                 ],
               ),
@@ -660,21 +679,14 @@ class _ConversationTile extends StatelessWidget {
             Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  time,
-                  style: text.bodySmall?.copyWith(
-                    fontSize: 13,
-                    color: Colors.black45,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                Text(time, style: timeStyle),
                 const SizedBox(height: 8),
                 if (unreadDot)
                   Container(
                     width: 10,
                     height: 10,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF007AFF),
+                    decoration: BoxDecoration(
+                      color: scheme.primary, // 👈 usa el primario del tema
                       shape: BoxShape.circle,
                     ),
                   ),

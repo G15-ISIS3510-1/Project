@@ -1,4 +1,5 @@
 import 'package:flutter_app/app/utils/result.dart';
+import 'package:flutter_app/data/sources/remote/api_client.dart';
 import 'package:flutter_app/data/sources/remote/auth_remote_source.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -38,7 +39,15 @@ class AuthRepositoryImpl implements AuthRepository {
   }) async {
     try {
       final token = await remote.login(email: email, password: password);
-      final me = await remote.me(token: token);
+
+      // 1) Inyecta token global para TODAS las requests
+      Api.I().setToken(token);
+
+      // 2) Persiste para próximos arranques
+      await saveToken(token);
+
+      // 3) Ya no pases token: AuthService usa Api.I()
+      final me = await remote.me();
       final userId = (me['user_id'] as String?) ?? '';
       if (userId.isEmpty) {
         return Result.err('No se pudo determinar user_id desde /me');

@@ -122,11 +122,16 @@
 // }
 
 import 'package:http/http.dart' as http;
-import 'api_client.dart'; // Api.I()
+import 'package:flutter_app/data/sources/remote/api_client.dart';
 
 class ChatService {
+  final _api = Api.I();
+
   Future<http.Response> getConversations({int skip = 0, int limit = 100}) {
-    return Api.I().get('/api/conversations?skip=$skip&limit=$limit');
+    print(
+      '[ChatService] Api hash=${identityHashCode(_api)}, headers=${_api.authHeaders}',
+    );
+    return _api.get('/api/conversations/?skip=$skip&limit=$limit');
   }
 
   Future<http.Response> getThread(
@@ -136,13 +141,13 @@ class ChatService {
     bool onlyUnread = false,
   }) {
     final unread = onlyUnread ? '&only_unread=true' : '';
-    return Api.I().get(
+    return _api.get(
       '/api/messages/thread/$otherUserId?skip=$skip&limit=$limit$unread',
     );
   }
 
   Future<http.Response> markThreadAsRead(String otherUserId) {
-    return Api.I().post('/api/messages/thread/$otherUserId/read', {});
+    return _api.post('/api/messages/thread/$otherUserId/read', {});
   }
 
   Future<http.Response> sendMessage({
@@ -157,11 +162,11 @@ class ChatService {
       if (conversationId != null) 'conversation_id': conversationId,
       if (meta != null) 'meta': meta,
     };
-    return Api.I().post('/api/messages/', body);
+    return _api.post('/api/messages/', body);
   }
 
   Future<http.Response> ensureDirectConversation(String otherUserId) {
-    return Api.I().post('/api/conversations/direct', {
+    return _api.post('/api/conversations/direct', {
       'other_user_id': otherUserId,
     });
   }

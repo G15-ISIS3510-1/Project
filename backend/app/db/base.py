@@ -38,7 +38,7 @@ if not DATABASE_URL:
 masked = re.sub(r":([^:@/]+)@", r":***@", DATABASE_URL)
 logging.getLogger("uvicorn.error").info("DB URL: %s", masked)
 
-USE_ASYNC = DATABASE_URL.startswith("postgresql+asyncpg://")
+USE_ASYNC = DATABASE_URL.startswith("https://qovo-api-gfa6drobhq-uc.a.run.app")
 
 if USE_ASYNC:
     # -------- ASYNC engine/session (FastAPI runtime) --------

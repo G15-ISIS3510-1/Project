@@ -1,37 +1,32 @@
+// lib/data/sources/remote/auth_remote_source.dart
 import 'dart:convert';
-import 'package:http/http.dart' as http;
+
+import 'package:flutter_app/data/sources/remote/api_client.dart';
 
 class AuthService {
-  final String baseUrl;
-  AuthService({required this.baseUrl});
+  final _api = Api.I();
 
   Future<String> login({
     required String email,
     required String password,
   }) async {
-    final url = Uri.parse('$baseUrl/api/auth/login');
-    final res = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': email, 'password': password}),
-    );
+    final res = await _api.post('/api/auth/login', {
+      'email': email,
+      'password': password,
+    });
     if (res.statusCode != 200) {
       throw Exception('Login ${res.statusCode}: ${res.body}');
     }
     final data = jsonDecode(res.body) as Map<String, dynamic>;
-    final token = (data['access_token'] as String?) ?? '';
+    final token = (data['access_token'] as String?)?.trim() ?? '';
     if (token.isEmpty) throw Exception('No llegó access_token del backend');
     return token;
   }
 
-  Future<Map<String, dynamic>> me({required String token}) async {
-    final url = Uri.parse('$baseUrl/api/auth/me');
-    final res = await http.get(
-      url,
-      headers: {'Authorization': 'Bearer $token'},
-    );
+  Future<Map<String, dynamic>> me() async {
+    final res = await _api.get('/api/auth/me'); // Authorization via Api.I()
     if (res.statusCode != 200) {
-      throw Exception('Token inválido: ${res.statusCode} ${res.body}');
+      throw Exception('GET /me ${res.statusCode}: ${res.body}');
     }
     return jsonDecode(res.body) as Map<String, dynamic>;
   }
@@ -41,26 +36,19 @@ class AuthService {
     required String email,
     required String password,
     String? phone,
-    required String role, // 'renter' | 'host'
+    required String role,
   }) async {
-    final url = Uri.parse('$baseUrl/api/auth/register');
-    final body = {
+    final res = await _api.post('/api/auth/register', {
       'name': name,
       'email': email,
       'password': password,
       'phone': phone,
       'role': role,
-    };
-    final res = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(body),
-    );
+    });
     return _RegisterResult(res.statusCode, res.body);
   }
 }
 
-// Simple DTO para mantener semántica de tus status codes
 class _RegisterResult {
   final int code;
   final String body;

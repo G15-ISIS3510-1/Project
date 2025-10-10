@@ -29,17 +29,18 @@ class ConversationViewModel extends ChangeNotifier {
   bool _didChange = false;
   bool get didChange => _didChange;
 
-  // paginación sencilla
   int _skip = 0;
   final int _limit = 50;
   bool _hasMore = true;
   bool get hasMore => _hasMore;
 
+  /// Inicializa la conversación: carga mensajes y marca como leídos
   Future<void> init() async {
     await load(reset: true);
     await markAsRead();
   }
 
+  /// Carga los mensajes del hilo
   Future<void> load({bool reset = false}) async {
     try {
       if (reset) {
@@ -58,7 +59,7 @@ class ConversationViewModel extends ChangeNotifier {
         onlyUnread: false,
       );
 
-      // backend → DESC; UI → antiguos arriba
+      // Backend devuelve DESC; la UI los quiere ASC
       final orderedAsc = list.reversed.toList();
 
       if (reset) {
@@ -81,6 +82,7 @@ class ConversationViewModel extends ChangeNotifier {
     }
   }
 
+  /// Envía un mensaje nuevo
   Future<void> send(String text) async {
     final content = text.trim();
     if (content.isEmpty) return;
@@ -90,9 +92,7 @@ class ConversationViewModel extends ChangeNotifier {
         content: content,
         conversationId: conversationId,
       );
-      _messages.add(
-        m,
-      ); // ya viene con timestamps; lo ponemos al final (parte baja)
+      _messages.add(m);
       _didChange = true;
       notifyListeners();
     } catch (_) {
@@ -100,6 +100,7 @@ class ConversationViewModel extends ChangeNotifier {
     }
   }
 
+  /// Marca el hilo como leído
   Future<void> markAsRead() async {
     try {
       await _repo.markThreadAsRead(otherUserId);
