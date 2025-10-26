@@ -126,7 +126,7 @@ import 'api_client.dart'; // Api.I()
 
 class ChatService {
   Future<http.Response> getConversations({int skip = 0, int limit = 100}) {
-    return Api.I().get('/api/conversations?skip=$skip&limit=$limit');
+    return Api.I().get('/api/conversations/?skip=$skip&limit=$limit');
   }
 
   Future<http.Response> getThread(
