@@ -354,6 +354,7 @@
 
 // lib/main.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_app/data/models/conversation_model.dart';
 import 'package:flutter_app/data/repositories/auth_repository.dart';
 import 'package:flutter_app/data/repositories/booking_repository.dart';
 import 'package:flutter_app/data/repositories/chat_repository.dart';
@@ -368,6 +369,7 @@ import 'package:flutter_app/data/sources/remote/user_remote_source.dart';
 import 'package:flutter_app/data/sources/remote/vehicle_remote_source.dart';
 import 'package:flutter_app/presentation/features/auth/viewmodel/auth_viewmodel.dart';
 import 'package:flutter_app/presentation/features/booking/viewmodel/booking_viewmodel.dart';
+import 'package:flutter_app/presentation/features/conversation/viewmodel/conversation_viewmodel.dart';
 import 'package:flutter_app/presentation/features/home/viewmodel/home_viewmodel.dart';
 import 'package:flutter_app/presentation/features/host_home/viewmodel/host_home_viewmodel.dart';
 import 'package:flutter_app/presentation/features/trips/viewmodel/trips_viewmodel.dart';

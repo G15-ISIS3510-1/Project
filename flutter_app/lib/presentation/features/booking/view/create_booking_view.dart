@@ -1,5 +1,6 @@
 // lib/presentation/features/booking/view/create_booking_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_app/app/utils/date_format.dart';
 import 'package:flutter_app/app/utils/result.dart';
 import 'package:flutter_app/data/models/availability_model.dart';
 import 'package:flutter_app/data/repositories/availability_repository.dart';
@@ -36,7 +37,6 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
   List<AvailabilityWindow> _slots = [];
   bool _loadingSlots = true;
   String? _slotsError;
-  AvailabilityWindow? _slotForStart; // slot que contiene el inicio elegido
 
   DateTime? _startDateTime;
   DateTime? _endDateTime;
@@ -86,9 +86,7 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
             .listByVehicle(vehicleId, skip: skip, limit: pageSize);
 
         if (r.isErr) {
-          // si es la primera página, mostramos el error
           if (acc.isEmpty) throw Exception(r.errOrNull);
-          // si ya acumulamos algo, salimos
           break;
         }
 
@@ -99,7 +97,7 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
         if (hasMore) skip += pageSize;
       }
 
-      // Ajuste de zona horaria y filtro por tipo
+      // Ajuste de zona horaria y filtro por tipo para mostrar en UI
       final fixed = acc
           .map(
             (w) => AvailabilityWindow(
@@ -184,46 +182,10 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
     );
   }
 
-  bool _dateTouchesAnySlot(DateTime d) {
-    if (_slots.isEmpty) return true; // si no hay slots, no bloqueamos el día
-    final dayStart = DateTime(d.year, d.month, d.day);
-    final dayEnd = dayStart.add(const Duration(days: 1));
-    // Si el slot se cruza con ese día, habilitamos el día
-    return _slots.any(
-      (s) => s.start.isBefore(dayEnd) && s.end.isAfter(dayStart),
-    );
-  }
-
-  AvailabilityWindow? _slotContaining(DateTime dt) {
-    for (final s in _slots) {
-      final inside =
-          !dt.isBefore(s.start) && dt.isBefore(s.end); // [start, end)
-      if (inside) return s;
-    }
-    return null;
-  }
-
-  bool _slotContainsRange(AvailabilityWindow s, DateTime a, DateTime b) {
-    return !a.isBefore(s.start) && b.isBefore(s.end); // [a,b] dentro del slot
-  }
-
   Future<void> _pickDateTime(bool isStart, StateSetter setter) async {
-    if (_loadingSlots) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Cargando disponibilidad...')),
-      );
-      return;
-    }
-    if (_slotsError != null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(_slotsError!)));
-      return;
-    }
-
+    // ⚠️ Picker libre (no restringimos por disponibilidad)
     final now = DateTime.now();
 
-    // 1) Elegir fecha (habilitamos solo días que tocan slots)
     final pickedDate = await showDatePicker(
       context: context,
       initialDate: isStart
@@ -231,11 +193,10 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
           : (_endDateTime ?? now.add(const Duration(days: 1))),
       firstDate: now,
       lastDate: now.add(const Duration(days: 365)),
-      selectableDayPredicate: _dateTouchesAnySlot, // 👈 aquí se bloquean días
+      // sin selectableDayPredicate
     );
     if (pickedDate == null) return;
 
-    // 2) Elegir hora (no se puede restringir visualmente)
     final pickedTime = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.fromDateTime(
@@ -252,80 +213,27 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
       pickedTime.minute,
     );
 
-    // 3) Validación de pertenencia al slot
-    if (_slots.isNotEmpty) {
-      final slot = _slotContaining(picked);
-      if (slot == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'La hora elegida no está dentro de la disponibilidad.',
-            ),
-          ),
-        );
-        return;
-      }
-
+    setter(() {
       if (isStart) {
-        setter(() {
-          _startDateTime = picked;
-          _slotForStart = slot;
-        });
-
-        // si ya había fin, valida que siga en el mismo slot y dentro del rango
-        if (_endDateTime != null &&
-            (!_slotContainsRange(slot, _startDateTime!, _endDateTime!))) {
-          setter(() {
-            _endDateTime = null; // invalidamos fin
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'El fin salió del bloque de disponibilidad. Vuelve a elegir fin.',
-              ),
-            ),
-          );
+        _startDateTime = picked;
+        // si fin ya existe y quedó antes o igual, lo invalidamos
+        if (_endDateTime != null && !_endDateTime!.isAfter(_startDateTime!)) {
+          _endDateTime = null;
         }
       } else {
-        // Fin: necesita inicio válido antes
-        if (_startDateTime == null || _slotForStart == null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Primero elige la fecha de inicio')),
-          );
-          return;
-        }
-        if (!picked.isAfter(_startDateTime!)) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Fin debe ser posterior al inicio')),
-          );
-          return;
-        }
-        // Mismo slot que el inicio y dentro del rango del slot
-        if (slot.availability_id != _slotForStart!.availability_id ||
-            !_slotContainsRange(_slotForStart!, _startDateTime!, picked)) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Inicio y fin deben quedar dentro del mismo bloque de disponibilidad.',
-              ),
-            ),
-          );
-          return;
-        }
-
-        setter(() {
-          _endDateTime = picked;
-        });
+        _endDateTime = picked;
       }
-    } else {
-      // Sin slots (no llegaron o 404): permite elegir como antes (puede fallar en backend)
-      setter(() {
-        if (isStart) {
-          _startDateTime = picked;
-        } else {
-          _endDateTime = picked;
-        }
-      });
+    });
+
+    // Validación mínima: fin > inicio
+    if (!isStart &&
+        _startDateTime != null &&
+        !_endDateTime!.isAfter(_startDateTime!)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Fin debe ser posterior al inicio')),
+      );
+      setter(() => _endDateTime = null);
+      return;
     }
 
     _recalcTotals();
@@ -347,12 +255,9 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
       validator: (v) {
         if (ro) return null; // campos de solo lectura no validan
         if (v == null || v.trim().isEmpty) return '$label es requerido';
-        if (kt == TextInputType.number ||
-            kt is TextInputType &&
-                (kt == const TextInputType.numberWithOptions(decimal: true))) {
-          if (double.tryParse(v!) == null) {
-            return 'Debe ser un número válido';
-          }
+        if (kt == const TextInputType.numberWithOptions(decimal: true) &&
+            double.tryParse(v) == null) {
+          return 'Debe ser un número válido';
         }
         return null;
       },
@@ -419,25 +324,37 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
     final ok = await vm.createBooking(booking);
 
     if (!mounted) return;
-    if (ok) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Reserva creada')));
-      Navigator.pop(context, true);
-    } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(vm.errorMessage ?? 'Error')));
-    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(ok ? 'Reserva creada' : (vm.errorMessage ?? 'Error')),
+      ),
+    );
+    if (ok) Navigator.pop(context, true);
   }
 
   @override
   Widget build(BuildContext context) {
-    // Puedes crear el VM localmente (como tienes) o inyectarlo global en main.dart.
     final chatRepo = context.read<ChatRepository>();
     final bookingRepo = BookingsRepositoryImpl(BookingService());
 
-    final df = DateFormat('EEE, d MMM yyyy - HH:mm');
+    // Textos de disponibilidad (se muestran en "Datos de la Reserva")
+    String topAvailLine1 = '';
+    String topAvailLine2 = '';
+    if (_slotsError != null) {
+      topAvailLine1 = 'Error al cargar disponibilidad.';
+      topAvailLine2 = '';
+    } else if (_loadingSlots) {
+      topAvailLine1 = 'Cargando disponibilidad...';
+      topAvailLine2 = '';
+    } else if (_slots.isEmpty) {
+      topAvailLine1 = 'No hay disponibilidad para este vehículo.';
+      topAvailLine2 = '';
+    } else {
+      final first = _slots.first.start;
+      final last = _slots.last.end;
+      topAvailLine1 = 'Disponible desde: ${formatDateTime(first)}';
+      topAvailLine2 = 'Hasta: ${formatDateTime(last)}';
+    }
 
     return ChangeNotifierProvider(
       create: (_) =>
@@ -445,161 +362,166 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
       child: Scaffold(
         appBar: AppBar(title: const Text('Crear Nueva Reserva')),
         body: SafeArea(
-          child: _loadingSlots
-              ? const Center(child: CircularProgressIndicator())
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24.0,
-                    vertical: 20,
-                  ),
-                  child: Form(
-                    key: _formKey,
-                    child: Consumer<BookingViewModel>(
-                      builder: (context, vm, _) {
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            if (_slotsError != null) ...[
-                              Text(
-                                _slotsError!,
-                                style: TextStyle(
-                                  color: Theme.of(context).colorScheme.error,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                            ],
-                            Text(
-                              'Datos de la Reserva',
-                              style: Theme.of(context).textTheme.headlineMedium,
-                            ),
-                            const SizedBox(height: 20),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
+            child: Form(
+              key: _formKey,
+              child: Consumer<BookingViewModel>(
+                builder: (context, vm, _) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        'Datos de la Reserva',
+                        style: Theme.of(context).textTheme.headlineMedium,
+                      ),
+                      const SizedBox(height: 20),
 
-                            // IDs (solo lectura, sin controllers de edición)
-                            Text(
-                              'IDs',
-                              style: Theme.of(context).textTheme.titleLarge,
-                            ),
-                            const SizedBox(height: 8),
-                            _InfoLine(
-                              label: 'Vehicle ID',
-                              value: widget.initialVehicleId,
-                            ),
-                            _InfoLine(
-                              label: 'Host ID',
-                              value: widget.initialHostId,
-                            ),
-                            _InfoLine(
-                              label: 'Renter ID',
-                              value: context.read<AuthProvider>().userId ?? '—',
-                            ),
-                            const SizedBox(height: 20),
+                      // IDs (solo lectura)
+                      _InfoLine(
+                        label: 'Vehicle ID',
+                        value: widget.initialVehicleId,
+                      ),
+                      _InfoLine(label: 'Host ID', value: widget.initialHostId),
+                      _InfoLine(
+                        label: 'Renter ID',
+                        value: context.read<AuthProvider>().userId ?? '—',
+                      ),
 
-                            Text(
-                              'Rango de Tiempo',
-                              style: Theme.of(context).textTheme.titleLarge,
+                      const SizedBox(height: 12),
+                      // 🔹 Disponibilidad como dos textos dentro de "Datos de la Reserva"
+                      if (topAvailLine1.isNotEmpty) ...[
+                        Text(
+                          topAvailLine1,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: _slots.isEmpty
+                                ? Theme.of(context).colorScheme.error
+                                : Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
+                        if (topAvailLine2.isNotEmpty)
+                          Text(
+                            topAvailLine2,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: _slots.isEmpty
+                                  ? Theme.of(context).colorScheme.error
+                                  : Theme.of(context).colorScheme.primary,
                             ),
-                            const SizedBox(height: 12),
+                          ),
+                        const SizedBox(height: 8),
+                      ],
 
-                            StatefulBuilder(
-                              builder: (context, setSt) => InkWell(
-                                onTap: () => _pickDateTime(true, setSt),
-                                child: InputDecorator(
-                                  decoration: _dec(
-                                    context,
-                                    'Seleccionar',
-                                  ).copyWith(labelText: 'Inicio'),
-                                  child: Text(
-                                    _startDateTime != null
-                                        ? df.format(_startDateTime!)
-                                        : 'Selecciona fecha y hora',
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            StatefulBuilder(
-                              builder: (context, setSt) => InkWell(
-                                onTap: () => _pickDateTime(false, setSt),
-                                child: InputDecorator(
-                                  decoration: _dec(
-                                    context,
-                                    'Seleccionar',
-                                  ).copyWith(labelText: 'Fin'),
-                                  child: Text(
-                                    _endDateTime != null
-                                        ? df.format(_endDateTime!)
-                                        : 'Selecciona fecha y hora',
-                                  ),
-                                ),
-                              ),
-                            ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Rango de Tiempo',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: 12),
 
-                            const SizedBox(height: 24),
-                            Text(
-                              'Precio',
-                              style: Theme.of(context).textTheme.titleLarge,
+                      // ⏰ Pickers libres (sin restricciones por disponibilidad)
+                      StatefulBuilder(
+                        builder: (context, setSt) => InkWell(
+                          onTap: () => _pickDateTime(true, setSt),
+                          child: InputDecorator(
+                            decoration: _dec(
+                              context,
+                              'Seleccionar',
+                            ).copyWith(labelText: 'Inicio'),
+                            child: Text(
+                              _startDateTime != null
+                                  ? formatDateTime(_startDateTime!)
+                                  : 'Selecciona fecha y hora',
                             ),
-                            const SizedBox(height: 12),
-                            _tf(
-                              _dailyPriceC,
-                              'Daily Price',
-                              'Precio Diario',
-                              kt: const TextInputType.numberWithOptions(
-                                decimal: true,
-                              ),
-                              onChanged: (_) => _recalcTotals(),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      StatefulBuilder(
+                        builder: (context, setSt) => InkWell(
+                          onTap: () => _pickDateTime(false, setSt),
+                          child: InputDecorator(
+                            decoration: _dec(
+                              context,
+                              'Seleccionar',
+                            ).copyWith(labelText: 'Fin'),
+                            child: Text(
+                              _endDateTime != null
+                                  ? formatDateTime(_endDateTime!)
+                                  : 'Selecciona fecha y hora',
                             ),
-                            const SizedBox(height: 12),
-                            _tf(
-                              _subtotalC,
-                              'Subtotal',
-                              'Subtotal',
-                              kt: TextInputType.number,
-                              ro: true,
-                            ),
-                            const SizedBox(height: 12),
-                            _tf(
-                              _feesC,
-                              'Fees',
-                              'Comisiones',
-                              kt: TextInputType.number,
-                              ro: true,
-                            ),
-                            const SizedBox(height: 12),
-                            _tf(
-                              _taxesC,
-                              'Taxes',
-                              'Impuestos',
-                              kt: TextInputType.number,
-                              ro: true,
-                            ),
-                            const SizedBox(height: 12),
-                            _tf(
-                              _totalC,
-                              'Total',
-                              'Total a Pagar',
-                              kt: TextInputType.number,
-                              ro: true,
-                            ),
+                          ),
+                        ),
+                      ),
 
-                            const SizedBox(height: 28),
-                            FilledButton(
-                              onPressed: vm.isLoading ? null : _submit,
-                              child: vm.isLoading
-                                  ? const SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: CircularProgressIndicator(),
-                                    )
-                                  : const Text('Confirmar Reserva'),
-                            ),
-                            const SizedBox(height: 40),
-                          ],
-                        );
-                      },
-                    ),
-                  ),
-                ),
+                      const SizedBox(height: 24),
+                      Text(
+                        'Precio',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: 12),
+                      _tf(
+                        _dailyPriceC,
+                        'Daily Price',
+                        'Precio Diario',
+                        kt: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        onChanged: (_) => _recalcTotals(),
+                      ),
+                      const SizedBox(height: 12),
+                      _tf(
+                        _subtotalC,
+                        'Subtotal',
+                        'Subtotal',
+                        kt: TextInputType.number,
+                        ro: true,
+                      ),
+                      const SizedBox(height: 12),
+                      _tf(
+                        _feesC,
+                        'Fees',
+                        'Comisiones',
+                        kt: TextInputType.number,
+                        ro: true,
+                      ),
+                      const SizedBox(height: 12),
+                      _tf(
+                        _taxesC,
+                        'Taxes',
+                        'Impuestos',
+                        kt: TextInputType.number,
+                        ro: true,
+                      ),
+                      const SizedBox(height: 12),
+                      _tf(
+                        _totalC,
+                        'Total',
+                        'Total a Pagar',
+                        kt: TextInputType.number,
+                        ro: true,
+                      ),
+
+                      const SizedBox(height: 28),
+                      FilledButton(
+                        onPressed: vm.isLoading ? null : _submit,
+                        child: vm.isLoading
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(),
+                              )
+                            : const Text('Confirmar Reserva'),
+                      ),
+                      const SizedBox(height: 40),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ),
         ),
       ),
     );

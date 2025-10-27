@@ -30,6 +30,12 @@ class _TripsViewState extends State<TripsView> {
       if (_scroll.position.pixels >= _scroll.position.maxScrollExtent - 200) {
         vm.loadMore();
       }
+
+      if (_scroll.position.pixels <= _scroll.position.minScrollExtent + 50 &&
+          !_scroll.position.outOfRange &&
+          !vm.isRefreshing) {
+        vm.refresh();
+      }
     });
 
     // No llames vm.init() aquí; ya lo hiciste en main.dart con ..init()

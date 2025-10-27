@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app/app/utils/date_format.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_app/data/models/booking_reminder_model.dart';
@@ -214,7 +215,6 @@ Widget _buildStatItem({
 }
 
 Widget _buildBookingCard(BuildContext context, booking) {
-  final dateFormat = DateFormat('dd MMM yyyy, HH:mm');
   final isUrgent = booking.reachedThreshold;
 
   return Card(
@@ -307,7 +307,7 @@ Widget _buildBookingCard(BuildContext context, booking) {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    dateFormat.format(booking.startTs),
+                    formatDateTime(booking.startTs),
                     style: TextStyle(fontSize: 14, color: Colors.grey[800]),
                   ),
                 ),
@@ -320,7 +320,7 @@ Widget _buildBookingCard(BuildContext context, booking) {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    dateFormat.format(booking.endTs),
+                    formatDateTime(booking.endTs),
                     style: TextStyle(fontSize: 14, color: Colors.grey[800]),
                   ),
                 ),

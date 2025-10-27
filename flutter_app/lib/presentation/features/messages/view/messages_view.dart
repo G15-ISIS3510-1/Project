@@ -427,6 +427,8 @@ class MessagesView extends StatefulWidget {
 
 class _MessagesViewState extends State<MessagesView>
     with AutomaticKeepAliveClientMixin<MessagesView> {
+  final ScrollController _scroll = ScrollController();
+
   @override
   bool get wantKeepAlive => true;
 
@@ -444,6 +446,15 @@ class _MessagesViewState extends State<MessagesView>
       // escuchar cambio de modo host/renter y refrescar lista
       context.read<HostModeProvider>().addListener(_onModeChanged);
     });
+
+    _scroll.addListener(() {
+      final vm = context.read<MessagesViewModel>();
+      if (_scroll.position.pixels <= _scroll.position.minScrollExtent + 50 &&
+          !_scroll.position.outOfRange &&
+          !vm.loading) {
+        vm.refresh();
+      }
+    });
   }
 
   void _onModeChanged() {
@@ -457,6 +468,7 @@ class _MessagesViewState extends State<MessagesView>
     try {
       context.read<HostModeProvider>().removeListener(_onModeChanged);
     } catch (_) {}
+    _scroll.dispose();
     super.dispose();
   }
 
@@ -484,6 +496,7 @@ class _MessagesViewState extends State<MessagesView>
       child: Consumer<MessagesViewModel>(
         builder: (_, vm, __) {
           return CustomScrollView(
+            controller: _scroll,
             slivers: [
               // Header
               SliverToBoxAdapter(

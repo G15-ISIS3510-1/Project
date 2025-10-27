@@ -1,75 +1,71 @@
-import 'dart:convert';
-
-import 'package:flutter/material.dart';
+// lib/presentation/features/booking/viewmodel/booking_viewmodel.dart
+import 'package:flutter/foundation.dart';
+import 'package:flutter_app/app/utils/result.dart';
+import 'package:flutter_app/app/utils/date_format.dart';
 import 'package:flutter_app/data/models/booking_create_model.dart';
+import 'package:flutter_app/data/models/booking_model.dart';
 import 'package:flutter_app/data/repositories/booking_repository.dart';
 import 'package:flutter_app/data/repositories/chat_repository.dart';
-import 'package:flutter_app/data/sources/remote/booking_remote_source.dart';
 
 class BookingViewModel extends ChangeNotifier {
-  BookingViewModel({required this.bookingsRepo, required this.chatRepo});
-
-  final BookingsRepository bookingsRepo; // si lo usas para otras cosas
+  final BookingsRepository bookingsRepo;
   final ChatRepository chatRepo;
 
-  bool _loading = false;
-  String? _error;
-  bool get isLoading => _loading;
-  String? get errorMessage => _error;
+  bool isLoading = false;
+  String? errorMessage;
 
-  void _setLoading(bool v) {
-    _loading = v;
-    notifyListeners();
-  }
-
-  void _setError(String? m) {
-    _error = m;
-    notifyListeners();
-  }
+  BookingViewModel({required this.bookingsRepo, required this.chatRepo});
 
   Future<bool> createBooking(BookingCreateModel data) async {
-    _setLoading(true);
-    _setError(null);
-    try {
-      final resp = await BookingService().create(data.toJson());
-      _setLoading(false);
+    isLoading = true;
+    errorMessage = null;
+    notifyListeners();
 
-      if (resp.statusCode == 201) {
-        // parsea el booking_id para crear thread
-        final j = jsonDecode(resp.body) as Map<String, dynamic>;
-        final bookingId = j['booking_id']?.toString() ?? '';
-        final renterId = j['renter_id']?.toString() ?? data.renterId;
-        final hostId = j['host_id']?.toString() ?? data.hostId;
-        final vehicleId = j['vehicle_id']?.toString() ?? data.vehicleId;
+    final res = await bookingsRepo.createBooking(data);
 
-        // crea conversación renter-host vinculada al booking
+    return res.when(
+      ok: (Booking booking) async {
+        isLoading = false;
+        notifyListeners();
+
+        // ---- Crear/Asegurar thread sin bloquear el éxito del booking ----
         try {
+          final startLocal = booking.startTs.toLocal();
+          final endLocal = booking.endTs.toLocal();
+          final initialMessage =
+              '✅ Reserva creada para el vehículo ${booking.vehicleId}\n'
+              'Del ${formatDateTime(startLocal)} al ${formatDateTime(endLocal)}\n'
+              'Total: ${booking.total.toStringAsFixed(2)} ${booking.currency}';
+
+          // intenta crear un thread con metadata de booking/vehicle
           await chatRepo.createThread(
-            renterId: renterId,
-            hostId: hostId,
-            vehicleId: vehicleId,
-            bookingId: bookingId,
-            initialMessage:
-                '¡Hola! Tengo una reserva del ${data.startTs} al ${data.endTs}.',
+            renterId: booking.renterId,
+            hostId: booking.hostId,
+            vehicleId: booking.vehicleId,
+            bookingId: booking.bookingId,
+            initialMessage: initialMessage,
           );
-        } catch (_) {
-          // si falla chat, no rompas la reserva
+        } catch (e) {
+          // Si ya existe o falló (409/400/etc.), asegúralo directo entre usuarios
+          try {
+            // Elegimos "otro usuario" en función de quién es el renter
+            final otherUserId = data.renterId == booking.renterId
+                ? booking.hostId
+                : booking.renterId;
+            await chatRepo.ensureDirectConversation(otherUserId);
+          } catch (_) {
+            // No interrumpimos la UX; solo podrías loguearlo si quieres
+          }
         }
 
         return true;
-      } else {
-        String detail = 'Error ${resp.statusCode}';
-        try {
-          final j = jsonDecode(resp.body);
-          detail = j['detail']?.toString() ?? detail;
-        } catch (_) {}
-        _setError(detail);
+      },
+      err: (msg) async {
+        isLoading = false;
+        errorMessage = msg;
+        notifyListeners();
         return false;
-      }
-    } catch (e) {
-      _setLoading(false);
-      _setError(e.toString());
-      return false;
-    }
+      },
+    );
   }
 }
