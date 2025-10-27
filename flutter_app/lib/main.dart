@@ -355,18 +355,22 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_app/data/repositories/auth_repository.dart';
+import 'package:flutter_app/data/repositories/booking_repository.dart';
 import 'package:flutter_app/data/repositories/chat_repository.dart';
 import 'package:flutter_app/data/repositories/pricing_repository.dart';
 import 'package:flutter_app/data/repositories/vehicle_repository.dart';
 import 'package:flutter_app/data/sources/remote/api_client.dart';
 import 'package:flutter_app/data/sources/remote/auth_remote_source.dart';
+import 'package:flutter_app/data/sources/remote/booking_remote_source.dart';
 import 'package:flutter_app/data/sources/remote/chat_remote_source.dart';
 import 'package:flutter_app/data/sources/remote/pricing_remote_source.dart';
 import 'package:flutter_app/data/sources/remote/user_remote_source.dart';
 import 'package:flutter_app/data/sources/remote/vehicle_remote_source.dart';
 import 'package:flutter_app/presentation/features/auth/viewmodel/auth_viewmodel.dart';
+import 'package:flutter_app/presentation/features/booking/viewmodel/booking_viewmodel.dart';
 import 'package:flutter_app/presentation/features/home/viewmodel/home_viewmodel.dart';
 import 'package:flutter_app/presentation/features/host_home/viewmodel/host_home_viewmodel.dart';
+import 'package:flutter_app/presentation/features/trips/viewmodel/trips_viewmodel.dart';
 import 'package:flutter_app/presentation/features/vehicle/viewmodel/add_vehicle_viewmodel.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_app/presentation/features/profile/viewmodel/visited_places_viewmodel.dart';
@@ -430,6 +434,11 @@ void main() {
         Provider<UserService>(create: (_) => UserService()),
         Provider<AuthService>(
           create: (_) => AuthService(baseUrl: kApiBaseWithPrefix),
+        ),
+
+        Provider<BookingService>(create: (_) => BookingService()),
+        Provider<BookingsRepository>(
+          create: (ctx) => BookingsRepositoryImpl(ctx.read<BookingService>()),
         ),
 
         Provider<VehicleRepository>(
@@ -503,6 +512,19 @@ void main() {
 
         ChangeNotifierProvider<VisitedPlacesViewModel>(
           create: (ctx) => VisitedPlacesViewModel(),
+        ),
+
+        ChangeNotifierProvider<TripsViewModel>(
+          create: (ctx) =>
+              TripsViewModel(ctx.read<BookingsRepository>())
+                ..init(), // 👈 evita el init en la pantalla
+        ),
+
+        ChangeNotifierProvider<BookingViewModel>(
+          create: (ctx) => BookingViewModel(
+            bookingsRepo: ctx.read<BookingsRepository>(),
+            chatRepo: ctx.read<ChatRepository>(),
+          ),
         ),
       ],
       child: const MyApp(),

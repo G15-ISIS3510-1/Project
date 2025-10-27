@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter_app/app/utils/pagination.dart';
 import 'package:flutter_app/data/models/conversation_model.dart';
 import 'package:flutter_app/data/models/message_model.dart';
 import 'package:flutter_app/data/sources/remote/chat_remote_source.dart';
@@ -21,6 +22,14 @@ abstract class ChatRepository {
   });
   Future<Conversation> ensureDirectConversation(String otherUserId);
 
+  Future<String> createThread({
+    required String renterId,
+    required String hostId,
+    required String vehicleId,
+    required String bookingId,
+    String? initialMessage,
+  });
+
   /// Utilidad: último mensaje del hilo (opcionalmente último recibido por X).
   Future<MessageModel?> getLastMessageInThread(
     String otherUserId, {
@@ -33,6 +42,30 @@ class ChatRepositoryImpl implements ChatRepository {
   ChatRepositoryImpl({required this.remote});
 
   @override
+  Future<String> createThread({
+    required String renterId,
+    required String hostId,
+    required String vehicleId,
+    required String bookingId,
+    String? initialMessage,
+  }) async {
+    final payload = {
+      'participants': [renterId, hostId],
+      'vehicle_id': vehicleId,
+      'booking_id': bookingId, // si tu backend la llama trip_id, cámbialo
+      if (initialMessage != null && initialMessage.isNotEmpty)
+        'initial_message': initialMessage,
+    };
+    final resp = await remote.create(payload);
+    if (resp.statusCode != 201 && resp.statusCode != 200) {
+      throw Exception('Create conversation ${resp.statusCode}: ${resp.body}');
+    }
+    final j = jsonDecode(resp.body);
+    // devuelve el id por si lo quieres abrir luego
+    return (j['conversation_id'] ?? j['id']).toString();
+  }
+
+  @override
   Future<List<Conversation>> listConversations({
     int skip = 0,
     int limit = 100,
@@ -43,12 +76,11 @@ class ChatRepositoryImpl implements ChatRepository {
         'Failed to load conversations (${res.statusCode}): ${res.body}',
       );
     }
-    final data = jsonDecode(res.body);
-    if (data is! List) throw Exception('Unexpected conversations payload');
-    return data
-        .cast<Map<String, dynamic>>()
-        .map((j) => Conversation.fromJson(j))
-        .toList();
+    final page = parsePaginated<Conversation>(
+      res.body,
+      (m) => Conversation.fromJson(m),
+    );
+    return page.items;
   }
 
   @override
@@ -67,12 +99,11 @@ class ChatRepositoryImpl implements ChatRepository {
     if (res.statusCode != 200) {
       throw Exception('Failed to load thread (${res.statusCode}): ${res.body}');
     }
-    final data = jsonDecode(res.body);
-    if (data is! List) throw Exception('Unexpected thread payload');
-    return data
-        .cast<Map<String, dynamic>>()
-        .map((j) => MessageModel.fromJson(j))
-        .toList();
+    final page = parsePaginated<MessageModel>(
+      res.body,
+      (m) => MessageModel.fromJson(m),
+    );
+    return page.items;
   }
 
   @override

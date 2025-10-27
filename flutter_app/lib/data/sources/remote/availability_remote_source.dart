@@ -23,8 +23,6 @@ import '../../models/availability_model.dart';
 
 class AvailabilityService {
   Future<http.Response> getByVehicle(String vehicleId) {
-    return Api.I().get(
-      '/api/vehicle-availability/vehicle?vehicle_id=$vehicleId',
-    );
+    return Api.I().get('/api/vehicle-availability/vehicle/$vehicleId');
   }
 }

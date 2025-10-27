@@ -11,6 +11,7 @@
 // }
 
 import 'dart:convert';
+import 'package:flutter_app/app/utils/pagination.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_app/data/models/vehicle_model.dart';
@@ -56,37 +57,35 @@ class VehicleRepositoryImpl implements VehicleRepository {
       throw Exception('Vehicles list ${res.statusCode}: ${res.body}');
     }
 
-    final data = jsonDecode(res.body);
-    if (data is! List) {
-      throw Exception('Unexpected payload for vehicles list');
-    }
-    return data
-        .cast<Map<String, dynamic>>()
-        .map((j) => Vehicle.fromJson(j))
-        .toList();
+    final page = parsePaginated<Vehicle>(res.body, (m) => Vehicle.fromJson(m));
+    return page.items; // usa page.hasMore/page.nextCursor si lo necesitas
   }
 
   @override
   Future<String> uploadVehiclePhoto({required XFile file}) async {
-    final url = Uri.parse('TU_BASE_URL/upload-photo'); 
-    
+    final url = Uri.parse('TU_BASE_URL/upload-photo');
+
     final request = http.MultipartRequest('POST', url)
       ..files.add(await http.MultipartFile.fromPath('file', file.path));
-      
+
     final streamedResponse = await request.send();
     final response = await http.Response.fromStream(streamedResponse);
 
     if (response.statusCode != 200) {
-      throw Exception('Failed to upload image ${response.statusCode}: ${response.body}');
+      throw Exception(
+        'Failed to upload image ${response.statusCode}: ${response.body}',
+      );
     }
 
     final jsonResponse = json.decode(response.body);
     final photoUrl = jsonResponse['photo_url'];
 
     if (photoUrl is! String || photoUrl.isEmpty) {
-      throw Exception('Upload successful but photo_url is missing in response.');
+      throw Exception(
+        'Upload successful but photo_url is missing in response.',
+      );
     }
-    
+
     return photoUrl;
   }
 

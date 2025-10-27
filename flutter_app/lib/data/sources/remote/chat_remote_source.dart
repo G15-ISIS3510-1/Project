@@ -125,6 +125,10 @@ import 'package:http/http.dart' as http;
 import 'api_client.dart'; // Api.I()
 
 class ChatService {
+  Future<http.Response> create(Map<String, dynamic> body) async {
+    return Api.I().post('/api/conversations', body);
+  }
+
   Future<http.Response> getConversations({int skip = 0, int limit = 100}) {
     return Api.I().get('/api/conversations/?skip=$skip&limit=$limit');
   }

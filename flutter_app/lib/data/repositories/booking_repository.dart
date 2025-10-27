@@ -1,15 +1,16 @@
-// lib/domain/trips/trips_repository.dart
+// lib/domain/trips/bookings_repository.dart
 
+import 'dart:convert';
+import 'package:flutter_app/app/utils/pagination.dart';
 import 'package:flutter_app/app/utils/result.dart';
 import 'package:flutter_app/data/models/booking_model.dart';
 import 'package:flutter_app/data/models/booking_status.dart';
-import 'package:flutter_app/data/sources/remote/booking_remote_source.dart';
-import 'package:flutter_app/presentation/common_widgets/trip_filter.dart';
+import 'package:flutter_app/data/models/booking_create_model.dart';
+import 'package:flutter_app/data/sources/remote/booking_remote_source.dart'; // BookingService
 
 class BookingsPage {
   final List<Booking> items;
-  final bool
-  hasMore; // tu backend actual no devuelve has_more en list, así que lo derivamos
+  final bool hasMore;
   BookingsPage({required this.items, required this.hasMore});
 }
 
@@ -17,12 +18,14 @@ abstract class BookingsRepository {
   Future<Result<BookingsPage>> listMyBookings({
     int skip,
     int limit,
-    BookingStatus? statusFilter, // sólo usado para cancelled/confirmed/etc.
+    BookingStatus? statusFilter,
   });
+
+  Future<Result<Booking>> createBooking(BookingCreateModel data);
 }
 
 class BookingsRepositoryImpl implements BookingsRepository {
-  final BookingsRemoteSource remote;
+  final BookingService remote;
   BookingsRepositoryImpl(this.remote);
 
   @override
@@ -32,32 +35,63 @@ class BookingsRepositoryImpl implements BookingsRepository {
     BookingStatus? statusFilter,
   }) async {
     try {
-      final list = await remote.listMyBookings(
+      final res = await remote.listMyBookings(
         skip: skip,
         limit: limit,
         statusFilter: statusFilter?.asParam,
       );
+      if (res.statusCode != 200) {
+        return Result.err('Bookings ${res.statusCode}: ${res.body}');
+      }
 
-      final items = list.map(_mapBooking).toList();
-      // Como el endpoint devuelve lista directa, inferimos hasMore comparando tamaño con "limit"
-      final hasMore = items.length == limit;
+      final page = parsePaginated<Map<String, dynamic>>(
+        res.body,
+        (m) => m, // primero en bruto, luego mapeamos a Booking
+      );
 
-      return Result.ok(BookingsPage(items: items, hasMore: hasMore));
+      final items = page.items.map(_mapBooking).toList(growable: false);
+      return Result.ok(BookingsPage(items: items, hasMore: page.hasMore));
     } catch (e) {
       return Result.err('No se pudieron cargar las reservas: $e');
     }
   }
 
+  @override
+  Future<Result<Booking>> createBooking(BookingCreateModel data) async {
+    try {
+      final res = await remote.create(data.toJson());
+      if (res.statusCode != 201 && res.statusCode != 200) {
+        // intenta sacar "detail" del body
+        String detail = 'Error al crear la reserva';
+        try {
+          final body = jsonDecode(res.body);
+          detail = (body['detail'] ?? body['message'] ?? res.body).toString();
+        } catch (_) {
+          if (res.body.isNotEmpty) detail = res.body;
+        }
+        return Result.err('Error ${res.statusCode}: $detail');
+      }
+      final decoded = jsonDecode(res.body);
+      if (decoded is! Map<String, dynamic>) {
+        return Result.err('Respuesta inesperada al crear la reserva.');
+      }
+      final booking = _mapBooking(decoded);
+      return Result.ok(booking);
+    } catch (e) {
+      return Result.err('Error de red/conexión: $e');
+    }
+  }
+
+  // ---------- mapping ----------
   Booking _mapBooking(Map<String, dynamic> j) {
     DateTime _parse(Object? v) => DateTime.parse(v.toString()).toLocal();
-
     return Booking(
-      bookingId: j['booking_id']?.toString() ?? '',
+      bookingId: j['booking_id']?.toString() ?? j['id']?.toString() ?? '',
       vehicleId: j['vehicle_id']?.toString() ?? '',
       renterId: j['renter_id']?.toString() ?? '',
       hostId: j['host_id']?.toString() ?? '',
-      startTs: _parse(j['start_ts']),
-      endTs: _parse(j['end_ts']),
+      startTs: _parse(j['start_ts'] ?? j['start_date'] ?? j['start']),
+      endTs: _parse(j['end_ts'] ?? j['end_date'] ?? j['end']),
       status: BookingStatus.fromString(j['status']?.toString()),
       dailyPriceSnapshot: (j['daily_price_snapshot'] as num).toDouble(),
       insuranceDailyCostSnapshot: (j['insurance_daily_cost_snapshot'] as num?)
