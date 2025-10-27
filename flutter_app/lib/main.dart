@@ -785,6 +785,7 @@ class MyApp extends StatelessWidget {
       darkTheme: _dark(),
       themeMode: themeCtrl.currentMode, // ← Auto por hora / Claro / Oscuro
       home: const SplashScreen(),
+      showPerformanceOverlay: true, // TEMP for testing
     );
   }
 }

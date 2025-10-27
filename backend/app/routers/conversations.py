@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
+from pydantic import BaseModel
 
 from app.db.base import get_db
 from app.db.models import User
@@ -13,6 +14,16 @@ from app.services.conversation_service import ConversationService
 from app.routers.users import get_current_user_from_token
 
 router = APIRouter(tags=["conversations"])
+
+
+# ---------- pagination response model ----------
+
+class PaginatedConversationResponse(BaseModel):
+    items: List[ConversationResponse]
+    total: int
+    skip: int
+    limit: int
+
 
 @router.post("/direct", response_model=ConversationResponse, status_code=status.HTTP_201_CREATED)
 async def ensure_direct_conversation(
@@ -31,15 +42,30 @@ async def ensure_direct_conversation(
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
-@router.get("/", response_model=List[ConversationResponse])
+
+@router.get("/", response_model=PaginatedConversationResponse)
 async def list_my_conversations(
     skip: int = 0,
     limit: int = 100,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user_from_token),
 ):
+    """
+    Lista conversaciones del usuario autenticado con paginación.
+    Devuelve { items, total, skip, limit }.
+    """
     svc = ConversationService(db)
-    return await svc.list_for_user(current_user.user_id, skip=skip, limit=limit)
+    data = await svc.list_for_user(current_user.user_id, skip=skip, limit=limit)
+
+    serialized = [ConversationResponse.from_orm(c) for c in data["items"]]
+
+    return {
+        "items": serialized,
+        "total": data["total"],
+        "skip": data["skip"],
+        "limit": data["limit"],
+    }
+
 
 @router.get("/{conversation_id}", response_model=ConversationResponse)
 async def get_conversation(
@@ -53,6 +79,7 @@ async def get_conversation(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Conversación no encontrada")
     return conv
 
+
 @router.put("/{conversation_id}", response_model=ConversationResponse)
 async def update_conversation(
     conversation_id: str,
@@ -65,6 +92,7 @@ async def update_conversation(
     if not conv:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Conversación no encontrada o sin acceso")
     return conv
+
 
 @router.delete("/{conversation_id}")
 async def delete_conversation(

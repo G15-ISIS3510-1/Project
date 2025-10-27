@@ -1,0 +1,61 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15
+    container_name: qovo_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: qovo_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d qovo_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  migrate:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: qovo_migrate
+    depends_on:
+      db:
+        condition: service_healthy
+    working_dir: /app
+    environment:
+      # Alembic uses sync engine (psycopg2)
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/qovo_db
+    command: >
+      sh -c "alembic upgrade head"
+    restart: "no"
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: qovo_api
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      # Runtime async (asyncpg) for FastAPI
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/qovo_db
+      HOST: 0.0.0.0
+      PORT: 8000
+      DEBUG: "false"
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+volumes:
+  db_data:
+
+

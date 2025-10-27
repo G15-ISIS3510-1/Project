@@ -1,21 +1,12 @@
-// import '../sources/remote/vehicle_remote_source.dart';
-
-// abstract class VehicleRepository {
-//   // TODO: define repository interface methods
-// }
-
-// class VehicleRepositoryImpl implements VehicleRepository {
-//   final VehicleRemoteSource remote;
-//   VehicleRepositoryImpl({required this.remote});
-//   // TODO: implement methods using remote
-// }
-
 import 'dart:convert';
 import 'package:flutter_app/app/utils/pagination.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_app/data/models/vehicle_model.dart';
 import 'package:flutter_app/data/sources/remote/vehicle_remote_source.dart';
+
+// Added to use compute for background parsing
+import 'package:flutter/foundation.dart';
 
 abstract class VehicleRepository {
   Future<List<Vehicle>> list();
@@ -139,7 +130,7 @@ class VehicleRepositoryImpl implements VehicleRepository {
       'status': status,
       'lat': lat,
       'lng': lng,
-      'price_per_day': pricePerDay, // si tu API lo acepta en create
+      'price_per_day': pricePerDay,
       if (imageUrl != null && imageUrl.isNotEmpty) 'image_url': imageUrl,
     };
 

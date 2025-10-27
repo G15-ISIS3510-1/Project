@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart'; // Added for compute()
 
 import 'package:flutter_app/app/utils/pagination.dart';
 import 'package:flutter_app/data/models/conversation_model.dart';

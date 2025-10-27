@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime, timezone
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 
-from sqlalchemy import select, or_
+from sqlalchemy import select, or_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import Conversation
@@ -66,21 +66,33 @@ class ConversationService:
 
     async def list_for_user(
         self, user_id: str, skip: int = 0, limit: int = 100
-    ) -> List[Conversation]:
+    ) -> Dict[str, Any]:
         """Lista conversaciones del usuario, ordenadas por actividad reciente."""
-        res = await self.db.execute(
+        base_cond = or_(
+            Conversation.user_low_id == user_id,
+            Conversation.user_high_id == user_id,
+        )
+
+        total_q = await self.db.execute(
+            select(func.count(Conversation.conversation_id)).where(base_cond)
+        )
+        total = total_q.scalar() or 0
+
+        page_q = await self.db.execute(
             select(Conversation)
-            .where(
-                or_(
-                    Conversation.user_low_id == user_id,
-                    Conversation.user_high_id == user_id,
-                )
-            )
+            .where(base_cond)
             .order_by(Conversation.last_message_at.desc().nullslast())
             .offset(skip)
             .limit(limit)
         )
-        return res.scalars().all()
+        items = page_q.scalars().all()
+
+        return {
+            "items": items,
+            "total": total,
+            "skip": skip,
+            "limit": limit,
+        }
 
     async def update_title(self, conversation_id: str, user_id: str, payload: ConversationUpdate) -> Optional[Conversation]:
         conv = await self.get_by_id_for_user(conversation_id, user_id)
