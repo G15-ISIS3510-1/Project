@@ -99,9 +99,6 @@ async def get_availabilities_by_vehicle(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Vehículo no encontrado"
         )
-    
-    availabilities = await availability_service.get_availabilities_by_vehicle(vehicle_id)
-    return availabilities
 
     data = await availability_service.get_availabilities_by_vehicle(
         vehicle_id,

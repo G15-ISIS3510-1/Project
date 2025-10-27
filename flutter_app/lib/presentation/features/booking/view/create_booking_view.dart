@@ -67,13 +67,52 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
       _loadingSlots = true;
       _slotsError = null;
     });
-    try {
-      // Usa tu repo + service (Api.I() adentro)
-      final repo = AvailabilityRepositoryImpl(remote: AvailabilityService());
-      final windows = await repo.listByVehicle(vehicleId);
 
-      // Si tu backend devuelve timestamps en UTC ("Z"), conviene .toLocal() aquí:
-      final fixed = windows
+    try {
+      final repo = AvailabilityRepositoryImpl(remote: AvailabilityService());
+
+      const int pageSize = 100;
+      int skip = 0;
+      bool hasMore = true;
+      final List<AvailabilityWindow> allWindows = [];
+
+      while (hasMore) {
+        // tu backend acepta skip y limit como query params
+        final res = await repo.remote.getByVehicle(
+          '$vehicleId?skip=$skip&limit=$pageSize',
+        );
+
+        if (res.statusCode == 404) {
+          hasMore = false;
+          break;
+        }
+        if (res.statusCode != 200) {
+          throw Exception(
+            'Error al cargar disponibilidad (${res.statusCode}): ${res.body}',
+          );
+        }
+
+        final List<dynamic> data = jsonDecode(res.body);
+        if (data.isEmpty) {
+          hasMore = false;
+          break;
+        }
+
+        final page = data
+            .map((e) => AvailabilityWindow.fromJson(e as Map<String, dynamic>))
+            .toList();
+        allWindows.addAll(page);
+
+        // Si devolvió menos de pageSize, ya no hay más
+        if (page.length < pageSize) {
+          hasMore = false;
+        } else {
+          skip += pageSize;
+        }
+      }
+
+      // Ajuste de zonas horarias y filtro “available”
+      final fixed = allWindows
           .map(
             (w) => AvailabilityWindow(
               availability_id: w.availability_id,
@@ -84,12 +123,11 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
               notes: w.notes,
             ),
           )
+          .where((s) => s.type == 'available')
           .toList();
 
       setState(() {
-        _slots = fixed
-            .where((s) => s.type == 'available')
-            .toList(); // solo “available”
+        _slots = fixed;
         _loadingSlots = false;
       });
     } catch (e) {
