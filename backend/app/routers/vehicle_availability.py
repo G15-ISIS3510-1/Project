@@ -65,13 +65,6 @@ async def get_availabilities_by_vehicle(
             detail="Vehículo no encontrado"
         )
     
-    # Solo el propietario puede ver las disponibilidades de su vehículo
-    if vehicle.owner_id != current_user.user_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Solo puedes ver las disponibilidades de tus propios vehículos"
-        )
-    
     availabilities = await availability_service.get_availabilities_by_vehicle(vehicle_id)
     return availabilities
 
