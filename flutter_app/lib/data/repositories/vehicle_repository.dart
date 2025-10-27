@@ -1,20 +1,11 @@
-// import '../sources/remote/vehicle_remote_source.dart';
-
-// abstract class VehicleRepository {
-//   // TODO: define repository interface methods
-// }
-
-// class VehicleRepositoryImpl implements VehicleRepository {
-//   final VehicleRemoteSource remote;
-//   VehicleRepositoryImpl({required this.remote});
-//   // TODO: implement methods using remote
-// }
-
 import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_app/data/models/vehicle_model.dart';
 import 'package:flutter_app/data/sources/remote/vehicle_remote_source.dart';
+
+// Added to use compute for background parsing
+import 'package:flutter/foundation.dart';
 
 abstract class VehicleRepository {
   Future<List<Vehicle>> list();
@@ -56,7 +47,13 @@ class VehicleRepositoryImpl implements VehicleRepository {
       throw Exception('Vehicles list ${res.statusCode}: ${res.body}');
     }
 
-    final data = jsonDecode(res.body);
+    // Use compute() to parse JSON off the main isolate
+    return await compute(_parseVehicles, res.body);
+  }
+
+  // Top-level parser function for compute()
+  static List<Vehicle> _parseVehicles(String responseBody) {
+    final data = jsonDecode(responseBody);
     if (data is! List) {
       throw Exception('Unexpected payload for vehicles list');
     }
@@ -69,10 +66,10 @@ class VehicleRepositoryImpl implements VehicleRepository {
   @override
   Future<String> uploadVehiclePhoto({required XFile file}) async {
     final url = Uri.parse('TU_BASE_URL/upload-photo'); 
-    
+
     final request = http.MultipartRequest('POST', url)
       ..files.add(await http.MultipartFile.fromPath('file', file.path));
-      
+
     final streamedResponse = await request.send();
     final response = await http.Response.fromStream(streamedResponse);
 
@@ -86,7 +83,7 @@ class VehicleRepositoryImpl implements VehicleRepository {
     if (photoUrl is! String || photoUrl.isEmpty) {
       throw Exception('Upload successful but photo_url is missing in response.');
     }
-    
+
     return photoUrl;
   }
 
@@ -140,7 +137,7 @@ class VehicleRepositoryImpl implements VehicleRepository {
       'status': status,
       'lat': lat,
       'lng': lng,
-      'price_per_day': pricePerDay, // si tu API lo acepta en create
+      'price_per_day': pricePerDay,
       if (imageUrl != null && imageUrl.isNotEmpty) 'image_url': imageUrl,
     };
 
