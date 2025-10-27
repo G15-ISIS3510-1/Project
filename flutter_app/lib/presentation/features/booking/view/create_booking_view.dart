@@ -78,7 +78,7 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
 
       while (hasMore) {
         // tu backend acepta skip y limit como query params
-        final res = await repo.remote.getByVehicle(
+        final res = await repo.listByVehicle(
           '$vehicleId?skip=$skip&limit=$pageSize',
         );
 
