@@ -1,6 +1,6 @@
 // lib/presentation/features/booking/view/create_booking_screen.dart
-import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_app/app/utils/result.dart';
 import 'package:flutter_app/data/models/availability_model.dart';
 import 'package:flutter_app/data/repositories/availability_repository.dart';
 import 'package:flutter_app/data/sources/remote/availability_remote_source.dart';
@@ -48,11 +48,17 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
   final _taxesC = TextEditingController(text: '0.0');
   final _insurancePlanIdC = TextEditingController(text: '');
 
+  late final AvailabilityRepository _availabilityRepo;
+
   @override
   void initState() {
     super.initState();
     _dailyPriceC = TextEditingController(
       text: (widget.initialDailyPrice ?? 50).toStringAsFixed(2),
+    );
+
+    _availabilityRepo = AvailabilityRepositoryImpl(
+      remote: AvailabilityService(),
     );
 
     if (widget.initialVehicleId.isNotEmpty) {
@@ -66,53 +72,35 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
     setState(() {
       _loadingSlots = true;
       _slotsError = null;
+      _slots = [];
     });
 
     try {
-      final repo = AvailabilityRepositoryImpl(remote: AvailabilityService());
-
       const int pageSize = 100;
       int skip = 0;
       bool hasMore = true;
-      final List<AvailabilityWindow> allWindows = [];
+      final List<AvailabilityWindow> acc = [];
 
       while (hasMore) {
-        // tu backend acepta skip y limit como query params
-        final res = await repo.listByVehicle(
-          '$vehicleId?skip=$skip&limit=$pageSize',
-        );
+        final Result<AvailabilityPage> r = await _availabilityRepo
+            .listByVehicle(vehicleId, skip: skip, limit: pageSize);
 
-        if (res.statusCode == 404) {
-          hasMore = false;
-          break;
-        }
-        if (res.statusCode != 200) {
-          throw Exception(
-            'Error al cargar disponibilidad (${res.statusCode}): ${res.body}',
-          );
-        }
-
-        final List<dynamic> data = jsonDecode(res.body);
-        if (data.isEmpty) {
-          hasMore = false;
+        if (r.isErr) {
+          // si es la primera página, mostramos el error
+          if (acc.isEmpty) throw Exception(r.errOrNull);
+          // si ya acumulamos algo, salimos
           break;
         }
 
-        final page = data
-            .map((e) => AvailabilityWindow.fromJson(e as Map<String, dynamic>))
-            .toList();
-        allWindows.addAll(page);
+        final page = r.okOrNull!;
+        acc.addAll(page.items);
+        hasMore = page.hasMore;
 
-        // Si devolvió menos de pageSize, ya no hay más
-        if (page.length < pageSize) {
-          hasMore = false;
-        } else {
-          skip += pageSize;
-        }
+        if (hasMore) skip += pageSize;
       }
 
-      // Ajuste de zonas horarias y filtro “available”
-      final fixed = allWindows
+      // Ajuste de zona horaria y filtro por tipo
+      final fixed = acc
           .map(
             (w) => AvailabilityWindow(
               availability_id: w.availability_id,
@@ -124,7 +112,7 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
             ),
           )
           .where((s) => s.type == 'available')
-          .toList();
+          .toList(growable: false);
 
       setState(() {
         _slots = fixed;
@@ -359,8 +347,12 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
       validator: (v) {
         if (ro) return null; // campos de solo lectura no validan
         if (v == null || v.trim().isEmpty) return '$label es requerido';
-        if (kt == TextInputType.number && double.tryParse(v) == null) {
-          return 'Debe ser un número válido';
+        if (kt == TextInputType.number ||
+            kt is TextInputType &&
+                (kt == const TextInputType.numberWithOptions(decimal: true))) {
+          if (double.tryParse(v!) == null) {
+            return 'Debe ser un número válido';
+          }
         }
         return null;
       },
@@ -453,142 +445,161 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
       child: Scaffold(
         appBar: AppBar(title: const Text('Crear Nueva Reserva')),
         body: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
-            child: Form(
-              key: _formKey,
-              child: Consumer<BookingViewModel>(
-                builder: (context, vm, _) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        'Datos de la Reserva',
-                        style: Theme.of(context).textTheme.headlineMedium,
-                      ),
-                      const SizedBox(height: 20),
-
-                      // IDs (solo lectura, sin controllers de edición)
-                      Text(
-                        'IDs',
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      const SizedBox(height: 8),
-                      _InfoLine(
-                        label: 'Vehicle ID',
-                        value: widget.initialVehicleId,
-                      ),
-                      _InfoLine(label: 'Host ID', value: widget.initialHostId),
-                      _InfoLine(
-                        label: 'Renter ID',
-                        value: context.read<AuthProvider>().userId ?? '—',
-                      ),
-                      const SizedBox(height: 20),
-
-                      Text(
-                        'Rango de Tiempo',
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      const SizedBox(height: 12),
-
-                      StatefulBuilder(
-                        builder: (context, setSt) => InkWell(
-                          onTap: () => _pickDateTime(true, setSt),
-                          child: InputDecorator(
-                            decoration: _dec(
-                              context,
-                              'Seleccionar',
-                            ).copyWith(labelText: 'Inicio'),
-                            child: Text(
-                              _startDateTime != null
-                                  ? df.format(_startDateTime!)
-                                  : 'Selecciona fecha y hora',
+          child: _loadingSlots
+              ? const Center(child: CircularProgressIndicator())
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24.0,
+                    vertical: 20,
+                  ),
+                  child: Form(
+                    key: _formKey,
+                    child: Consumer<BookingViewModel>(
+                      builder: (context, vm, _) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            if (_slotsError != null) ...[
+                              Text(
+                                _slotsError!,
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.error,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                            ],
+                            Text(
+                              'Datos de la Reserva',
+                              style: Theme.of(context).textTheme.headlineMedium,
                             ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      StatefulBuilder(
-                        builder: (context, setSt) => InkWell(
-                          onTap: () => _pickDateTime(false, setSt),
-                          child: InputDecorator(
-                            decoration: _dec(
-                              context,
-                              'Seleccionar',
-                            ).copyWith(labelText: 'Fin'),
-                            child: Text(
-                              _endDateTime != null
-                                  ? df.format(_endDateTime!)
-                                  : 'Selecciona fecha y hora',
+                            const SizedBox(height: 20),
+
+                            // IDs (solo lectura, sin controllers de edición)
+                            Text(
+                              'IDs',
+                              style: Theme.of(context).textTheme.titleLarge,
                             ),
-                          ),
-                        ),
-                      ),
+                            const SizedBox(height: 8),
+                            _InfoLine(
+                              label: 'Vehicle ID',
+                              value: widget.initialVehicleId,
+                            ),
+                            _InfoLine(
+                              label: 'Host ID',
+                              value: widget.initialHostId,
+                            ),
+                            _InfoLine(
+                              label: 'Renter ID',
+                              value: context.read<AuthProvider>().userId ?? '—',
+                            ),
+                            const SizedBox(height: 20),
 
-                      const SizedBox(height: 24),
-                      Text(
-                        'Precio',
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      const SizedBox(height: 12),
-                      _tf(
-                        _dailyPriceC,
-                        'Daily Price',
-                        'Precio Diario',
-                        kt: TextInputType.number,
-                        onChanged: (_) => _recalcTotals(),
-                      ),
-                      const SizedBox(height: 12),
-                      _tf(
-                        _subtotalC,
-                        'Subtotal',
-                        'Subtotal',
-                        kt: TextInputType.number,
-                        ro: true,
-                      ),
-                      const SizedBox(height: 12),
-                      _tf(
-                        _feesC,
-                        'Fees',
-                        'Comisiones',
-                        kt: TextInputType.number,
-                        ro: true,
-                      ),
-                      const SizedBox(height: 12),
-                      _tf(
-                        _taxesC,
-                        'Taxes',
-                        'Impuestos',
-                        kt: TextInputType.number,
-                        ro: true,
-                      ),
-                      const SizedBox(height: 12),
-                      _tf(
-                        _totalC,
-                        'Total',
-                        'Total a Pagar',
-                        kt: TextInputType.number,
-                        ro: true,
-                      ),
+                            Text(
+                              'Rango de Tiempo',
+                              style: Theme.of(context).textTheme.titleLarge,
+                            ),
+                            const SizedBox(height: 12),
 
-                      const SizedBox(height: 28),
-                      FilledButton(
-                        onPressed: vm.isLoading ? null : _submit,
-                        child: vm.isLoading
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(),
-                              )
-                            : const Text('Confirmar Reserva'),
-                      ),
-                      const SizedBox(height: 40),
-                    ],
-                  );
-                },
-              ),
-            ),
-          ),
+                            StatefulBuilder(
+                              builder: (context, setSt) => InkWell(
+                                onTap: () => _pickDateTime(true, setSt),
+                                child: InputDecorator(
+                                  decoration: _dec(
+                                    context,
+                                    'Seleccionar',
+                                  ).copyWith(labelText: 'Inicio'),
+                                  child: Text(
+                                    _startDateTime != null
+                                        ? df.format(_startDateTime!)
+                                        : 'Selecciona fecha y hora',
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            StatefulBuilder(
+                              builder: (context, setSt) => InkWell(
+                                onTap: () => _pickDateTime(false, setSt),
+                                child: InputDecorator(
+                                  decoration: _dec(
+                                    context,
+                                    'Seleccionar',
+                                  ).copyWith(labelText: 'Fin'),
+                                  child: Text(
+                                    _endDateTime != null
+                                        ? df.format(_endDateTime!)
+                                        : 'Selecciona fecha y hora',
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(height: 24),
+                            Text(
+                              'Precio',
+                              style: Theme.of(context).textTheme.titleLarge,
+                            ),
+                            const SizedBox(height: 12),
+                            _tf(
+                              _dailyPriceC,
+                              'Daily Price',
+                              'Precio Diario',
+                              kt: const TextInputType.numberWithOptions(
+                                decimal: true,
+                              ),
+                              onChanged: (_) => _recalcTotals(),
+                            ),
+                            const SizedBox(height: 12),
+                            _tf(
+                              _subtotalC,
+                              'Subtotal',
+                              'Subtotal',
+                              kt: TextInputType.number,
+                              ro: true,
+                            ),
+                            const SizedBox(height: 12),
+                            _tf(
+                              _feesC,
+                              'Fees',
+                              'Comisiones',
+                              kt: TextInputType.number,
+                              ro: true,
+                            ),
+                            const SizedBox(height: 12),
+                            _tf(
+                              _taxesC,
+                              'Taxes',
+                              'Impuestos',
+                              kt: TextInputType.number,
+                              ro: true,
+                            ),
+                            const SizedBox(height: 12),
+                            _tf(
+                              _totalC,
+                              'Total',
+                              'Total a Pagar',
+                              kt: TextInputType.number,
+                              ro: true,
+                            ),
+
+                            const SizedBox(height: 28),
+                            FilledButton(
+                              onPressed: vm.isLoading ? null : _submit,
+                              child: vm.isLoading
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(),
+                                    )
+                                  : const Text('Confirmar Reserva'),
+                            ),
+                            const SizedBox(height: 40),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                ),
         ),
       ),
     );

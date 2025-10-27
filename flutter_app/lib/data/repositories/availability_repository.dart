@@ -1,15 +1,26 @@
+// lib/domain/availability/availability_repository.dart
+
 import 'dart:convert';
-import 'package:flutter/foundation.dart'; // Added for compute()
+import 'package:flutter/foundation.dart'; // compute()
+import 'package:flutter_app/app/utils/pagination.dart';
+import 'package:flutter_app/app/utils/result.dart';
 
 import 'package:flutter_app/data/models/availability_model.dart';
 import 'package:flutter_app/data/sources/remote/availability_remote_source.dart';
 
+class AvailabilityPage {
+  final List<AvailabilityWindow> items;
+  final bool hasMore;
+  AvailabilityPage({required this.items, required this.hasMore});
+}
+
 abstract class AvailabilityRepository {
-  /// Devuelve las ventanas de disponibilidad para un vehículo.
-  /// Si en el futuro agregas caché local, usa [forceRefresh] para saltarla.
-  Future<List<AvailabilityWindow>> listByVehicle(
+  /// Devuelve una página de ventanas de disponibilidad para un vehículo.
+  Future<Result<AvailabilityPage>> listByVehicle(
     String vehicleId, {
-    bool forceRefresh = false,
+    int skip,
+    int limit,
+    bool forceRefresh,
   });
 
   // Si luego agregas endpoints en tu backend:
@@ -20,7 +31,7 @@ abstract class AvailabilityRepository {
 
 class AvailabilityRepositoryImpl implements AvailabilityRepository {
   final AvailabilityService _remote;
-  // final AvailabilityLocalSource? _local; // <-- por si luego agregas cache
+  // final AvailabilityLocalSource? _local;
 
   AvailabilityRepositoryImpl({
     required AvailabilityService remote,
@@ -28,39 +39,54 @@ class AvailabilityRepositoryImpl implements AvailabilityRepository {
   }) : _remote = remote;
 
   @override
-  Future<List<AvailabilityWindow>> listByVehicle(
+  Future<Result<AvailabilityPage>> listByVehicle(
     String vehicleId, {
+    int skip = 0,
+    int limit = 20,
     bool forceRefresh = false,
   }) async {
-    // Red (remote)
-    final res = await _remote.getByVehicle(vehicleId);
-
-    if (res.statusCode == 404) {
-      // No hay disponibilidad para ese vehículo → lista vacía
-      return <AvailabilityWindow>[];
-    }
-    if (res.statusCode != 200) {
-      // Normaliza el error a una excepción de dominio si quieres
-      // (aquí usamos Exception simple para mantenerlo minimal)
-      throw Exception(
-        'Error al cargar disponibilidad (${res.statusCode}): ${res.body}',
+    try {
+      // Red (remote) — se asume soporte de skip/limit en el service
+      final res = await _remote.getByVehicle(
+        vehicleId,
+        skip: skip,
+        limit: limit,
       );
+
+      if (res.statusCode == 404) {
+        // Sin disponibilidad -> página vacía
+        return Result.ok(AvailabilityPage(items: const [], hasMore: false));
+      }
+
+      if (res.statusCode != 200) {
+        return Result.err(
+          'Error al cargar disponibilidad (${res.statusCode}): ${res.body}',
+        );
+      }
+
+      // Offload del parseo y mapeo en isolate
+      final page = await compute(_parseAvailabilityPage, res.body);
+      return Result.ok(page);
+    } catch (e) {
+      return Result.err('No se pudo cargar la disponibilidad: $e');
     }
-
-    // Offload parsing to a background isolate
-    return await compute(_parseAvailability, res.body);
   }
 
-  // Top-level parser for availability list
-  static List<AvailabilityWindow> _parseAvailability(String body) {
-    final data = (jsonDecode(body) as List).cast<Map<String, dynamic>>();
-    return data.map(AvailabilityWindow.fromJson).toList();
-  }
+  // ---------- parser top-level/static para compute ----------
 
-  // Ejemplos para cuando tengas endpoints en backend:
-  // @override
-  // Future<AvailabilityWindow> create(AvailabilityWindow input) async {
-  //   final res = await _remote.createRaw({...});
-  //   ...
-  // }
+  /// Parsea un body paginado y devuelve AvailabilityPage.
+  static AvailabilityPage _parseAvailabilityPage(String body) {
+    // 1) Parse genérico con util de paginación
+    final raw = parsePaginated<Map<String, dynamic>>(
+      body,
+      (m) => m, // primero en bruto
+    );
+
+    // 2) Mapear a modelo de dominio
+    final items = raw.items
+        .map<AvailabilityWindow>(AvailabilityWindow.fromJson)
+        .toList(growable: false);
+
+    return AvailabilityPage(items: items, hasMore: raw.hasMore);
+  }
 }
