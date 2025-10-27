@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import uuid
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 
-from sqlalchemy import select, update, delete
+from sqlalchemy import select, update, delete, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import Payment, Booking, User, PaymentStatus
@@ -20,11 +20,15 @@ class PaymentService:
 
     # ------------- helpers (existence checks) -------------
     async def _get_booking_by_id(self, booking_id: str) -> Optional[Booking]:
-        res = await self.db.execute(select(Booking).where(Booking.booking_id == booking_id))
+        res = await self.db.execute(
+            select(Booking).where(Booking.booking_id == booking_id)
+        )
         return res.scalar_one_or_none()
 
     async def _get_user_by_id(self, user_id: str) -> Optional[User]:
-        res = await self.db.execute(select(User).where(User.user_id == user_id))
+        res = await self.db.execute(
+            select(User).where(User.user_id == user_id)
+        )
         return res.scalar_one_or_none()
 
     # -------------------- CREATE --------------------------
@@ -33,7 +37,7 @@ class PaymentService:
         Creates a payment only if:
           - booking exists
           - payer exists
-          - (policy) payer == booking.renter_id (adjust if you want host/admin to pay)
+          - payer == booking.renter_id
         """
         booking = await self._get_booking_by_id(payment_data.booking_id)
         if not booking:
@@ -43,14 +47,13 @@ class PaymentService:
         if not payer:
             raise ValueError("The payer does not exist")
 
-        # Business policy (simple): only the renter pays
+        # Business policy
         if booking.renter_id != payment_data.payer_id:
             raise ValueError("Only the renter associated with the booking can be the payer")
 
-        # Normalize / coerce fields
+        # Normalize currency and status
         currency = (payment_data.currency or "USD").upper()
 
-        # Accept both str or PaymentStatus for 'status'
         status_val = payment_data.status
         if isinstance(status_val, str):
             try:
@@ -75,54 +78,129 @@ class PaymentService:
 
     # ---------------------- GET ---------------------------
     async def get_payment(self, payment_id: str) -> Optional[Payment]:
-        res = await self.db.execute(select(Payment).where(Payment.payment_id == payment_id))
-        return res.scalar_one_or_none()
-
-    async def get_payments(self, skip: int = 0, limit: int = 100) -> List[Payment]:
-        res = await self.db.execute(select(Payment).offset(skip).limit(limit))
-        return list(res.scalars().all())
-
-    async def get_payment_by_id_user(self, payer_id: str) -> Optional[Payment]:
-        # first payment of a given user (convenience)
         res = await self.db.execute(
-            select(Payment).where(Payment.payer_id == payer_id).limit(1)
+            select(Payment).where(Payment.payment_id == payment_id)
         )
         return res.scalar_one_or_none()
 
-    async def get_payments_by_id_user(self, payer_id: str, skip: int = 0, limit: int = 100) -> List[Payment]:
+    async def get_payments(self, skip: int = 0, limit: int = 100) -> Dict[str, Any]:
+        """
+        All payments (not filtered by user) with pagination.
+        """
+        total_q = await self.db.execute(
+            select(func.count(Payment.payment_id))
+        )
+        total = total_q.scalar() or 0
+
+        page_q = await self.db.execute(
+            select(Payment).offset(skip).limit(limit)
+        )
+        rows = list(page_q.scalars().all())
+
+        return {
+            "items": rows,
+            "total": total,
+            "skip": skip,
+            "limit": limit,
+        }
+
+    async def get_payment_by_id_user(self, payer_id: str) -> Optional[Payment]:
+        """
+        First payment for a given user (convenience).
+        """
         res = await self.db.execute(
+            select(Payment)
+            .where(Payment.payer_id == payer_id)
+            .limit(1)
+        )
+        return res.scalar_one_or_none()
+
+    async def get_payments_by_id_user(
+        self,
+        payer_id: str,
+        skip: int = 0,
+        limit: int = 100
+    ) -> Dict[str, Any]:
+        """
+        Payments for a given payer, paginated.
+        Returns { items, total, skip, limit }.
+        """
+        total_q = await self.db.execute(
+            select(func.count(Payment.payment_id))
+            .where(Payment.payer_id == payer_id)
+        )
+        total = total_q.scalar() or 0
+
+        page_q = await self.db.execute(
             select(Payment)
             .where(Payment.payer_id == payer_id)
             .offset(skip)
             .limit(limit)
         )
-        return list(res.scalars().all())
+        rows = list(page_q.scalars().all())
+
+        return {
+            "items": rows,
+            "total": total,
+            "skip": skip,
+            "limit": limit,
+        }
 
     async def get_payment_by_id_booking(self, booking_id: str) -> Optional[Payment]:
-        # first payment of a given booking (convenience)
+        """
+        First payment for a given booking (convenience).
+        """
         res = await self.db.execute(
-            select(Payment).where(Payment.booking_id == booking_id).limit(1)
+            select(Payment)
+            .where(Payment.booking_id == booking_id)
+            .limit(1)
         )
         return res.scalar_one_or_none()
 
-    async def get_payments_by_id_booking(self, booking_id: str, skip: int = 0, limit: int = 100) -> List[Payment]:
-        res = await self.db.execute(
+    async def get_payments_by_id_booking(
+        self,
+        booking_id: str,
+        skip: int = 0,
+        limit: int = 100
+    ) -> Dict[str, Any]:
+        """
+        Payments for a given booking, paginated.
+        Returns { items, total, skip, limit }.
+        """
+        total_q = await self.db.execute(
+            select(func.count(Payment.payment_id))
+            .where(Payment.booking_id == booking_id)
+        )
+        total = total_q.scalar() or 0
+
+        page_q = await self.db.execute(
             select(Payment)
             .where(Payment.booking_id == booking_id)
             .offset(skip)
             .limit(limit)
         )
-        return list(res.scalars().all())
+        rows = list(page_q.scalars().all())
+
+        return {
+            "items": rows,
+            "total": total,
+            "skip": skip,
+            "limit": limit,
+        }
 
     # -------------------- UPDATE --------------------------
-    async def update_payment(self, payment_id: str, payment_update: PaymentUpdate) -> Optional[Payment]:
+    async def update_payment(
+        self,
+        payment_id: str,
+        payment_update: PaymentUpdate
+    ) -> Optional[Payment]:
         payment = await self.get_payment(payment_id)
         if not payment:
             return None
 
         update_data = payment_update.model_dump(exclude_unset=True)
 
-        # Normalize / coerce
+        # Normalize edits
         if "currency" in update_data and update_data["currency"]:
             update_data["currency"] = update_data["currency"].upper()
 
@@ -133,9 +211,8 @@ class PaymentService:
                     update_data["status"] = PaymentStatus(st)
                 except Exception:
                     raise ValueError("Invalid payment status")
-            # if already PaymentStatus, it's fine
 
-        # Apply partial update
+        # Apply updates
         for field, value in update_data.items():
             setattr(payment, field, value)
 
@@ -143,13 +220,21 @@ class PaymentService:
         await self.db.refresh(payment)
         return payment
 
-    async def update_payment_by_id_user(self, payer_id: str, payment_update: PaymentUpdate) -> Optional[Payment]:
+    async def update_payment_by_id_user(
+        self,
+        payer_id: str,
+        payment_update: PaymentUpdate
+    ) -> Optional[Payment]:
         payment = await self.get_payment_by_id_user(payer_id)
         if not payment:
             return None
         return await self.update_payment(payment.payment_id, payment_update)
 
-    async def update_payment_by_id_booking(self, booking_id: str, payment_update: PaymentUpdate) -> Optional[Payment]:
+    async def update_payment_by_id_booking(
+        self,
+        booking_id: str,
+        payment_update: PaymentUpdate
+    ) -> Optional[Payment]:
         payment = await self.get_payment_by_id_booking(booking_id)
         if not payment:
             return None
@@ -165,7 +250,12 @@ class PaymentService:
         return True
 
     async def delete_payment_by_id_user(self, payer_id: str) -> int:
-        payments = await self.get_payments_by_id_user(payer_id, skip=0, limit=10_000)
+        data = await self.get_payments_by_id_user(
+            payer_id,
+            skip=0,
+            limit=10_000
+        )
+        payments = data["items"]
         if not payments:
             return 0
         for p in payments:
@@ -174,7 +264,12 @@ class PaymentService:
         return len(payments)
 
     async def delete_payment_by_id_booking(self, booking_id: str) -> int:
-        payments = await self.get_payments_by_id_booking(booking_id, skip=0, limit=10_000)
+        data = await self.get_payments_by_id_booking(
+            booking_id,
+            skip=0,
+            limit=10_000
+        )
+        payments = data["items"]
         if not payments:
             return 0
         for p in payments:

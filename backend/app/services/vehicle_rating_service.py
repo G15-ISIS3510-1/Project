@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_, or_
 from sqlalchemy.orm import selectinload
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from datetime import datetime
 import math
 import uuid
@@ -9,17 +9,18 @@ import uuid
 from app.db.models import VehicleRating, Vehicle, User, VehicleAvailability, Pricing, Booking
 from app.schemas.vehicle_rating import VehicleRatingCreate, VehicleRatingUpdate
 
+
 class VehicleRatingService:
     def __init__(self, db: AsyncSession):
         self.db = db
-    
+
     async def create_rating(self, rating_data: VehicleRatingCreate, renter_id: str) -> VehicleRating:
         """Crear una nueva calificación"""
         # Verificar que no existe ya una calificación para esta reserva
         existing_rating = await self.get_rating_by_booking(rating_data.booking_id)
         if existing_rating:
             raise ValueError("Ya existe una calificación para esta reserva")
-        
+
         rating = VehicleRating(
             rating_id=str(uuid.uuid4()),
             vehicle_id=rating_data.vehicle_id,
@@ -28,12 +29,12 @@ class VehicleRatingService:
             rating=rating_data.rating,
             comment=rating_data.comment
         )
-        
+
         self.db.add(rating)
         await self.db.commit()
         await self.db.refresh(rating)
         return rating
-    
+
     async def get_rating_by_id(self, rating_id: str) -> Optional[VehicleRating]:
         """Obtener calificación por ID"""
         result = await self.db.execute(
@@ -43,26 +44,66 @@ class VehicleRatingService:
             .where(VehicleRating.rating_id == rating_id)
         )
         return result.scalar_one_or_none()
-    
+
     async def get_rating_by_booking(self, booking_id: str) -> Optional[VehicleRating]:
         """Obtener calificación por ID de reserva"""
         result = await self.db.execute(
             select(VehicleRating).where(VehicleRating.booking_id == booking_id)
         )
         return result.scalar_one_or_none()
-    
-    async def get_ratings_by_vehicle(self, vehicle_id: str, skip: int = 0, limit: int = 100) -> List[VehicleRating]:
-        """Obtener todas las calificaciones de un vehículo"""
-        result = await self.db.execute(
+
+    async def get_ratings_by_vehicle(
+        self,
+        vehicle_id: Optional[str],
+        skip: int = 0,
+        limit: int = 100,
+    ) -> Dict[str, Any]:
+        """
+        Obtener calificaciones (paginadas).
+
+        - Si vehicle_id es None o "", trae calificaciones de TODOS los vehículos.
+        - Si vehicle_id tiene valor, filtra por ese vehículo.
+
+        Devuelve:
+        {
+          "items": [ VehicleRating, ... ],
+          "total": <int>,
+          "skip": <int>,
+          "limit": <int>
+        }
+        """
+
+        # ---- total count ----
+        total_query = select(func.count(VehicleRating.rating_id))
+        if vehicle_id:
+            total_query = total_query.where(VehicleRating.vehicle_id == vehicle_id)
+
+        total_result = await self.db.execute(total_query)
+        total = total_result.scalar() or 0
+
+        # ---- page of rows ----
+        base_query = (
             select(VehicleRating)
             .options(selectinload(VehicleRating.renter))
-            .where(VehicleRating.vehicle_id == vehicle_id)
+            .options(selectinload(VehicleRating.vehicle))
             .order_by(VehicleRating.created_at.desc())
-            .offset(skip)
-            .limit(limit)
         )
-        return result.scalars().all()
-    
+
+        if vehicle_id:
+            base_query = base_query.where(VehicleRating.vehicle_id == vehicle_id)
+
+        page_result = await self.db.execute(
+            base_query.offset(skip).limit(limit)
+        )
+        rows = page_result.scalars().all()
+
+        return {
+            "items": rows,
+            "total": total,
+            "skip": skip,
+            "limit": limit,
+        }
+
     async def get_average_rating_by_vehicle(self, vehicle_id: str) -> Optional[float]:
         """Obtener calificación promedio de un vehículo"""
         result = await self.db.execute(
@@ -70,7 +111,7 @@ class VehicleRatingService:
             .where(VehicleRating.vehicle_id == vehicle_id)
         )
         return result.scalar()
-    
+
     async def get_rating_count_by_vehicle(self, vehicle_id: str) -> int:
         """Obtener número total de calificaciones de un vehículo"""
         result = await self.db.execute(
@@ -78,64 +119,64 @@ class VehicleRatingService:
             .where(VehicleRating.vehicle_id == vehicle_id)
         )
         return result.scalar() or 0
-    
+
     async def update_rating(self, rating_id: str, rating_update: VehicleRatingUpdate) -> Optional[VehicleRating]:
         """Actualizar una calificación existente"""
         rating = await self.get_rating_by_id(rating_id)
         if not rating:
             return None
-        
+
         update_data = rating_update.dict(exclude_unset=True)
         for field, value in update_data.items():
             setattr(rating, field, value)
-        
+
         await self.db.commit()
         await self.db.refresh(rating)
         return rating
-    
+
     async def delete_rating(self, rating_id: str) -> bool:
         """Eliminar una calificación"""
         rating = await self.get_rating_by_id(rating_id)
         if not rating:
             return False
-        
+
         await self.db.delete(rating)
         await self.db.commit()
         return True
-    
+
     def _calculate_distance(self, lat1: float, lng1: float, lat2: float, lng2: float) -> float:
         """Calcular distancia entre dos puntos en kilómetros usando fórmula de Haversine"""
         R = 6371  # Radio de la Tierra en kilómetros
-        
+
         lat1_rad = math.radians(lat1)
         lng1_rad = math.radians(lng1)
         lat2_rad = math.radians(lat2)
         lng2_rad = math.radians(lng2)
-        
+
         dlat = lat2_rad - lat1_rad
         dlng = lng2_rad - lng1_rad
-        
+
         a = math.sin(dlat/2)**2 + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(dlng/2)**2
         c = 2 * math.asin(math.sqrt(a))
-        
+
         return R * c
-    
+
     async def get_top_rated_vehicles(
-        self, 
-        start_ts: str, 
-        end_ts: str, 
-        lat: float, 
-        lng: float, 
+        self,
+        start_ts: str,
+        end_ts: str,
+        lat: float,
+        lng: float,
         radius_km: float = 50.0,
         limit: int = 3,
         min_rating: float = 3.0
     ) -> List[dict]:
         """Obtener los vehículos con mayor calificación disponibles en fechas y ubicación específicas"""
-        
+
         # Convertir fechas
         start_datetime = datetime.fromisoformat(start_ts.replace('Z', '+00:00'))
         end_datetime = datetime.fromisoformat(end_ts.replace('Z', '+00:00'))
-        
+
         # Subconsulta para obtener calificación promedio por vehículo
         avg_rating_subquery = (
             select(
@@ -146,7 +187,7 @@ class VehicleRatingService:
             .group_by(VehicleRating.vehicle_id)
             .having(func.avg(VehicleRating.rating) >= min_rating)
         ).subquery()
-        
+
         # Query principal
         query = (
             select(
@@ -179,16 +220,16 @@ class VehicleRatingService:
             .order_by(avg_rating_subquery.c.avg_rating.desc())
             .limit(limit * 3)  # Obtener más para filtrar por distancia
         )
-        
+
         result = await self.db.execute(query)
         vehicles_data = result.all()
-        
+
         # Filtrar por distancia y limitar resultados
         filtered_vehicles = []
         for vehicle_data in vehicles_data:
             vehicle = vehicle_data[0]
             distance = self._calculate_distance(lat, lng, vehicle.lat, vehicle.lng)
-            
+
             if distance <= radius_km:
                 filtered_vehicles.append({
                     'vehicle_id': vehicle.vehicle_id,
@@ -209,8 +250,8 @@ class VehicleRatingService:
                     'distance_km': round(distance, 2),
                     'owner_name': vehicle_data[1]  # owner_name
                 })
-                
+
                 if len(filtered_vehicles) >= limit:
                     break
-        
+
         return filtered_vehicles

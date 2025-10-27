@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime, timezone
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 
 from sqlalchemy import func, select, and_, or_, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -27,7 +27,7 @@ class MessageService:
         return res.scalar_one_or_none()
 
     # -----------------
-    # Listados
+    # Listados (paginados)
     # -----------------
     async def list_messages_for_user(
         self,
@@ -35,40 +35,45 @@ class MessageService:
         skip: int = 0,
         limit: int = 100,
         only_unread: bool = False,
-    ) -> List[Message]:
+    ) -> Dict[str, Any]:
         """
         Listar mensajes donde el usuario es emisor o receptor.
         Si only_unread=True, retorna solo los recibidos y no leídos.
+        Devuelve { items, total, skip, limit }.
         """
         if only_unread:
-            query = (
-                select(Message)
-                .where(
-                    and_(
-                        Message.receiver_id == user_id,
-                        Message.read_at.is_(None),
-                    )
-                )
-                .order_by(Message.created_at.desc())
-                .offset(skip)
-                .limit(limit)
+            base_condition = and_(
+                Message.receiver_id == user_id,
+                Message.read_at.is_(None),
             )
         else:
-            query = (
-                select(Message)
-                .where(
-                    or_(
-                        Message.sender_id == user_id,
-                        Message.receiver_id == user_id,
-                    )
-                )
-                .order_by(Message.created_at.desc())
-                .offset(skip)
-                .limit(limit)
+            base_condition = or_(
+                Message.sender_id == user_id,
+                Message.receiver_id == user_id,
             )
 
-        res = await self.db.execute(query)
-        return res.scalars().all()
+        # total
+        count_q = await self.db.execute(
+            select(func.count(Message.message_id)).where(base_condition)
+        )
+        total = count_q.scalar() or 0
+
+        # page
+        page_q = await self.db.execute(
+            select(Message)
+            .where(base_condition)
+            .order_by(Message.created_at.desc())
+            .offset(skip)
+            .limit(limit)
+        )
+        rows = page_q.scalars().all()
+
+        return {
+            "items": rows,
+            "total": total,
+            "skip": skip,
+            "limit": limit,
+        }
 
     async def list_thread(
         self,
@@ -77,41 +82,54 @@ class MessageService:
         skip: int = 0,
         limit: int = 100,
         only_unread: bool = False,
-    ) -> List[Message]:
+    ) -> Dict[str, Any]:
         """
         Listar el hilo entre user_a y user_b.
-        Si only_unread=True, filtra solo los mensajes no leídos por user_a (o sea, recibidos por user_a).
+        Si only_unread=True, filtra solo los mensajes no leídos por user_a
+        (o sea, recibidos por user_a).
+        Devuelve { items, total, skip, limit }.
         """
         if only_unread:
             # SOLO los mensajes que me envió el otro y que yo no he leído
-            query = (
-                select(Message)
-                .where(
-                    (Message.sender_id == user_b_id)
-                    & (Message.receiver_id == user_a_id)
-                    & (Message.read_at.is_(None))
-                )
-                .order_by(Message.created_at.desc())
-                .offset(skip)
-                .limit(limit)
+            base_condition = and_(
+                Message.sender_id == user_b_id,
+                Message.receiver_id == user_a_id,
+                Message.read_at.is_(None),
             )
         else:
-            query = (
-                select(Message)
-                .where(
-                    (
-                        (Message.sender_id == user_a_id) & (Message.receiver_id == user_b_id)
-                    ) | (
-                        (Message.sender_id == user_b_id) & (Message.receiver_id == user_a_id)
-                    )
-                )
-                .order_by(Message.created_at.desc())
-                .offset(skip)
-                .limit(limit)
+            base_condition = or_(
+                and_(
+                    Message.sender_id == user_a_id,
+                    Message.receiver_id == user_b_id,
+                ),
+                and_(
+                    Message.sender_id == user_b_id,
+                    Message.receiver_id == user_a_id,
+                ),
             )
 
-        res = await self.db.execute(query)
-        return res.scalars().all()
+        # total
+        count_q = await self.db.execute(
+            select(func.count(Message.message_id)).where(base_condition)
+        )
+        total = count_q.scalar() or 0
+
+        # page
+        page_q = await self.db.execute(
+            select(Message)
+            .where(base_condition)
+            .order_by(Message.created_at.desc())
+            .offset(skip)
+            .limit(limit)
+        )
+        rows = page_q.scalars().all()
+
+        return {
+            "items": rows,
+            "total": total,
+            "skip": skip,
+            "limit": limit,
+        }
 
     # -----------------
     # Contadores
@@ -126,8 +144,7 @@ class MessageService:
                 )
             )
         )
-        # Nota: con count() sería más eficiente; si tu modelo usa declarative table,
-        # puedes cambiar a select(func.count()). Aquí devolvemos por longitud.
+        # más eficiente sería select(func.count()), pero mantenemos la idea simple
         return len(res.scalars().all())
 
     # -----------------
@@ -142,15 +159,15 @@ class MessageService:
         meta: Optional[dict] = None,
     ) -> Message:
         """Crear y persistir un nuevo mensaje."""
-        # (opcional) podrías verificar que el receiver exista si no lo hiciste en el router
         now = datetime.now(timezone.utc)
-    
+
         if conversation_id is None:
             conv = await ConversationService(self.db).ensure_direct_conversation(
                 user_a_id=sender_id,
                 user_b_id=receiver_id,
             )
             conversation_id = conv.conversation_id
+
         message = Message(
             message_id=str(uuid.uuid4()),
             sender_id=sender_id,
@@ -211,7 +228,7 @@ class MessageService:
     async def update_message(self, message_id: str, content: str) -> Optional[Message]:
         """
         Actualizar el contenido del mensaje.
-        (La validación de permisos/ventana de edición se hace en el router).
+        (La validación de permisos se hace en el router).
         """
         msg = await self.get_by_id(message_id)
         if not msg:
@@ -240,6 +257,8 @@ class MessageService:
     # Utilidades auxiliares (opcionales)
     # -----------------
     async def ensure_user_exists(self, user_id: str) -> Optional[User]:
-        """Verificar existencia de usuario (puede usarse en validaciones si mueves lógica al servicio)."""
-        res = await self.db.execute(select(User).where(User.user_id == user_id))
+        """Verificar existencia de usuario."""
+        res = await self.db.execute(
+            select(User).where(User.user_id == user_id)
+        )
         return res.scalar_one_or_none()
