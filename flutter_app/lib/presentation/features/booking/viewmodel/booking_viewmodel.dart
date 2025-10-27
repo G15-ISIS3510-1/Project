@@ -1,64 +1,74 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:flutter_app/data/models/booking_create_model.dart';
+import 'package:flutter_app/data/repositories/booking_repository.dart';
+import 'package:flutter_app/data/repositories/chat_repository.dart';
+import 'package:flutter_app/data/sources/remote/booking_remote_source.dart';
 
 class BookingViewModel extends ChangeNotifier {
-  final String baseUrl = const String.fromEnvironment(
-    'API_BASE',
-    defaultValue: 'https://qovo-api-gfa6drobhq-uc.a.run.app',
-  );
+  BookingViewModel({required this.bookingsRepo, required this.chatRepo});
+
+  final BookingsRepository bookingsRepo; // si lo usas para otras cosas
+  final ChatRepository chatRepo;
 
   bool _loading = false;
+  String? _error;
   bool get isLoading => _loading;
+  String? get errorMessage => _error;
 
-  String? _errorMessage;
-  String? get errorMessage => _errorMessage;
-
-  void _setLoading(bool value) {
-    _loading = value;
+  void _setLoading(bool v) {
+    _loading = v;
     notifyListeners();
   }
 
-  void _setErrorMessage(String? message) {
-    _errorMessage = message;
+  void _setError(String? m) {
+    _error = m;
     notifyListeners();
   }
 
-  Future<bool> createBooking(BookingCreateModel bookingData) async {
+  Future<bool> createBooking(BookingCreateModel data) async {
     _setLoading(true);
-    _setErrorMessage(null);
-
+    _setError(null);
     try {
-      final url = Uri.parse('$baseUrl/api/bookings');
-
-      final res = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(bookingData.toJson()),
-      );
-
+      final resp = await BookingService().create(data.toJson());
       _setLoading(false);
 
-      if (res.statusCode == 201) {
-        return true;
-      } else {
-        String detail = 'Error desconocido';
+      if (resp.statusCode == 201) {
+        // parsea el booking_id para crear thread
+        final j = jsonDecode(resp.body) as Map<String, dynamic>;
+        final bookingId = j['booking_id']?.toString() ?? '';
+        final renterId = j['renter_id']?.toString() ?? data.renterId;
+        final hostId = j['host_id']?.toString() ?? data.hostId;
+        final vehicleId = j['vehicle_id']?.toString() ?? data.vehicleId;
+
+        // crea conversación renter-host vinculada al booking
         try {
-          final Map<String, dynamic> errorBody = jsonDecode(res.body);
-          detail = errorBody['detail'] ?? 'Error desconocido';
+          await chatRepo.createThread(
+            renterId: renterId,
+            hostId: hostId,
+            vehicleId: vehicleId,
+            bookingId: bookingId,
+            initialMessage:
+                '¡Hola! Tengo una reserva del ${data.startTs} al ${data.endTs}.',
+          );
         } catch (_) {
-          detail = res.body.isEmpty
-              ? 'Respuesta vacía o inválida del servidor.'
-              : res.body;
+          // si falla chat, no rompas la reserva
         }
 
-        _setErrorMessage('Error ${res.statusCode}: $detail');
+        return true;
+      } else {
+        String detail = 'Error ${resp.statusCode}';
+        try {
+          final j = jsonDecode(resp.body);
+          detail = j['detail']?.toString() ?? detail;
+        } catch (_) {}
+        _setError(detail);
         return false;
       }
     } catch (e) {
       _setLoading(false);
-      _setErrorMessage('⚠️ Error de red/conexión: $e');
+      _setError(e.toString());
       return false;
     }
   }

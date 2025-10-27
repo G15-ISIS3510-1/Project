@@ -7,6 +7,7 @@ class CarCard extends StatelessWidget {
   final double price;
   final bool isFavorite;
   final VoidCallback? onFavoriteToggle;
+  final VoidCallback? onTap;
 
   const CarCard({
     super.key,
@@ -16,6 +17,7 @@ class CarCard extends StatelessWidget {
     required this.price,
     this.isFavorite = false,
     this.onFavoriteToggle,
+    this.onTap,
   });
 
   @override
@@ -59,7 +61,7 @@ class CarCard extends StatelessWidget {
                   right: 12,
                   top: 12,
                   child: InkWell(
-                    onTap: onFavoriteToggle,
+                    onTap: onTap,
                     borderRadius: BorderRadius.circular(20),
                     child: Container(
                       width: 36,
