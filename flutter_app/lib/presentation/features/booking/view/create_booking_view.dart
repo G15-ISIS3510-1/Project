@@ -34,7 +34,7 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
   final _formKey = GlobalKey<FormState>();
 
   List<AvailabilityWindow> _slots = [];
-  bool _loadingSlots = false;
+  bool _loadingSlots = true;
   String? _slotsError;
   AvailabilityWindow? _slotForStart; // slot que contiene el inicio elegido
 
