@@ -10,7 +10,8 @@ import java.util.concurrent.TimeUnit
 object ApiClient {
     
     // private const val BASE_URL = "http://192.168.100.27:8000/"  
-    private const val BASE_URL = "http://10.0.2.2:8000/"  // Emulador Android (funciona siempre)  
+    // private const val BASE_URL = "http://10.0.2.2:8000/"  // Emulador Android (funciona siempre)
+    private const val BASE_URL = "https://qovo-api-gfa6drobhq-uc.a.run.app/"  // GCP Cloud Run  
 
     private val gson = GsonBuilder()
         .setLenient()
