@@ -7,7 +7,7 @@
 //   static final storage = const FlutterSecureStorage();
 //   static final String base = const String.fromEnvironment(
 //     'API_BASE',
-//     defaultValue: 'http://10.0.2.2:8000', // emulador Android
+//     defaultValue: 'https://qovo-api-gfa6drobhq-uc.a.run.app', // emulador Android
 //   );
 
 //   static Future<http.Response> get(String path) async {
@@ -57,11 +57,12 @@ class Api {
   // Default base from --dart-define=API_BASE (or emulator fallback)
   static final String _defaultBase = const String.fromEnvironment(
     'API_BASE',
-    defaultValue: 'http://10.0.2.2:8000',
+    defaultValue: 'https://qovo-api-gfa6drobhq-uc.a.run.app',
   );
 
   // -------- State --------
-  String _base; // e.g. http://10.0.2.2:8000 (no trailing slash)
+  String
+  _base; // e.g. https://qovo-api-gfa6drobhq-uc.a.run.app (no trailing slash)
   String? _token;
 
   // Optional secure storage bootstrap

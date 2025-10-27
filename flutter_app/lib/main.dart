@@ -29,7 +29,7 @@
 
 // const String kApiBase = String.fromEnvironment(
 //   'API_BASE',
-//   defaultValue: 'http://10.0.2.2:8000',
+//   defaultValue: 'https://qovo-api-gfa6drobhq-uc.a.run.app',
 // );
 // const String kApiBaseWithPrefix = '$kApiBase/api';
 
@@ -407,7 +407,7 @@ class AuthProvider with ChangeNotifier {
 
 const String kApiBase = String.fromEnvironment(
   'API_BASE',
-  defaultValue: 'http://10.0.2.2:8000',
+  defaultValue: 'https://qovo-api-gfa6drobhq-uc.a.run.app',
 );
 const String kApiBaseWithPrefix = kApiBase;
 
@@ -466,12 +466,9 @@ void main() {
           ),
         ),
 
-
-
         ChangeNotifierProvider<BookingReminderViewModel>(
-          create: (ctx) => BookingReminderViewModel(
-            ctx.read<AnalyticsRepository>(),
-          ),
+          create: (ctx) =>
+              BookingReminderViewModel(ctx.read<AnalyticsRepository>()),
         ),
 
         ChangeNotifierProvider<AuthViewModel>(
@@ -766,6 +763,7 @@ class MyApp extends StatelessWidget {
       darkTheme: _dark(),
       themeMode: themeCtrl.currentMode, // ← Auto por hora / Claro / Oscuro
       home: const SplashScreen(),
+      showPerformanceOverlay: true, // TEMP for testing
     );
   }
 }

@@ -6,7 +6,7 @@ import 'package:flutter_app/data/models/booking_create_model.dart';
 class BookingViewModel extends ChangeNotifier {
   final String baseUrl = const String.fromEnvironment(
     'API_BASE',
-    defaultValue: 'http://10.0.2.2:8000',
+    defaultValue: 'https://qovo-api-gfa6drobhq-uc.a.run.app',
   );
 
   bool _loading = false;
@@ -30,7 +30,7 @@ class BookingViewModel extends ChangeNotifier {
     _setErrorMessage(null);
 
     try {
-      final url = Uri.parse('$baseUrl/api/bookings'); 
+      final url = Uri.parse('$baseUrl/api/bookings');
 
       final res = await http.post(
         url,
@@ -48,9 +48,11 @@ class BookingViewModel extends ChangeNotifier {
           final Map<String, dynamic> errorBody = jsonDecode(res.body);
           detail = errorBody['detail'] ?? 'Error desconocido';
         } catch (_) {
-          detail = res.body.isEmpty ? 'Respuesta vacía o inválida del servidor.' : res.body;
+          detail = res.body.isEmpty
+              ? 'Respuesta vacía o inválida del servidor.'
+              : res.body;
         }
-        
+
         _setErrorMessage('Error ${res.statusCode}: $detail');
         return false;
       }

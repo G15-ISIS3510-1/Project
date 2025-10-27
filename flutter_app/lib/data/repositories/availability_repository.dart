@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart'; // Added for compute()
 
 import 'package:flutter_app/data/models/availability_model.dart';
 import 'package:flutter_app/data/sources/remote/availability_remote_source.dart';
@@ -46,27 +47,20 @@ class AvailabilityRepositoryImpl implements AvailabilityRepository {
       );
     }
 
-    // Parseo a dominio
-    final data = (jsonDecode(res.body) as List).cast<Map<String, dynamic>>();
-    final windows = data.map(AvailabilityWindow.fromJson).toList();
+    // Offload parsing to a background isolate
+    return await compute(_parseAvailability, res.body);
+  }
 
-    return windows;
+  // Top-level parser for availability list
+  static List<AvailabilityWindow> _parseAvailability(String body) {
+    final data = (jsonDecode(body) as List).cast<Map<String, dynamic>>();
+    return data.map(AvailabilityWindow.fromJson).toList();
   }
 
   // Ejemplos para cuando tengas endpoints en backend:
   // @override
   // Future<AvailabilityWindow> create(AvailabilityWindow input) async {
-  //   final res = await _remote.createRaw({
-  //     'vehicle_id': input.vehicle_id,
-  //     'start_ts': input.start.toUtc().toIso8601String(),
-  //     'end_ts': input.end.toUtc().toIso8601String(),
-  //     'type': input.type,            // "available" | "blocked"
-  //     'notes': input.notes,
-  //   });
-  //   if (res.statusCode != 201 && res.statusCode != 200) {
-  //     throw Exception('No se pudo crear availability (${res.statusCode})');
-  //   }
-  //   final j = jsonDecode(res.body) as Map<String, dynamic>;
-  //   return AvailabilityWindow.fromJson(j);
+  //   final res = await _remote.createRaw({...});
+  //   ...
   // }
 }

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart'; // Added for compute()
 
 import 'package:flutter_app/data/models/conversation_model.dart';
 import 'package:flutter_app/data/models/message_model.dart';
@@ -43,7 +44,13 @@ class ChatRepositoryImpl implements ChatRepository {
         'Failed to load conversations (${res.statusCode}): ${res.body}',
       );
     }
-    final data = jsonDecode(res.body);
+    // Use compute() to parse list of conversations off the main isolate
+    return await compute(_parseConversations, res.body);
+  }
+
+  // Top-level parser for conversation list
+  static List<Conversation> _parseConversations(String body) {
+    final data = jsonDecode(body);
     if (data is! List) throw Exception('Unexpected conversations payload');
     return data
         .cast<Map<String, dynamic>>()
@@ -67,7 +74,13 @@ class ChatRepositoryImpl implements ChatRepository {
     if (res.statusCode != 200) {
       throw Exception('Failed to load thread (${res.statusCode}): ${res.body}');
     }
-    final data = jsonDecode(res.body);
+    // Use compute() to parse list of messages off the main isolate
+    return await compute(_parseMessages, res.body);
+  }
+
+  // Top-level parser for message list
+  static List<MessageModel> _parseMessages(String body) {
+    final data = jsonDecode(body);
     if (data is! List) throw Exception('Unexpected thread payload');
     return data
         .cast<Map<String, dynamic>>()

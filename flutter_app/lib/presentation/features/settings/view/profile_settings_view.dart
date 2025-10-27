@@ -19,7 +19,12 @@ class UserProfile {
   final String email;
   final String? phone;
 
-  const UserProfile({required this.id, required this.name, required this.email, this.phone});
+  const UserProfile({
+    required this.id,
+    required this.name,
+    required this.email,
+    this.phone,
+  });
 
   factory UserProfile.fromJson(Map<String, dynamic> j) {
     return UserProfile(
@@ -42,7 +47,7 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
   static const _storage = FlutterSecureStorage();
   final String baseUrl = const String.fromEnvironment(
     'API_BASE',
-    defaultValue: 'http://10.0.2.2:8000',
+    defaultValue: 'https://qovo-api-gfa6drobhq-uc.a.run.app',
   );
 
   late Future<UserProfile> _futureProfile;
@@ -88,11 +93,13 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
 
     if (mounted) {
       if (showMessage) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sesión cerrada')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Sesión cerrada')));
       }
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const LoginScreen()),
-            (route) => false,
+        (route) => false,
       );
     }
   }
@@ -211,7 +218,7 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
                               const SizedBox(height: 8),
                               OutlinedButton.icon(
                                 onPressed: () => setState(
-                                      () => _futureProfile = _fetchProfile(),
+                                  () => _futureProfile = _fetchProfile(),
                                 ),
                                 icon: const Icon(Icons.refresh),
                                 label: const Text('Reintentar'),
@@ -302,14 +309,19 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => BookingRemindersView(userId: user.id),
+                                builder: (context) =>
+                                    BookingRemindersView(userId: user.id),
                               ),
                             );
                           }
                         } catch (e) {
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('No se pudo obtener el perfil de usuario.')),
+                              const SnackBar(
+                                content: Text(
+                                  'No se pudo obtener el perfil de usuario.',
+                                ),
+                              ),
                             );
                           }
                         }
