@@ -8,6 +8,9 @@ import 'package:flutter_app/data/sources/remote/vehicle_remote_source.dart';
 // Added to use compute for background parsing
 import 'package:flutter/foundation.dart';
 
+// NEW: LRU cache
+import 'package:flutter_app/app/utils/lru_cache.dart';
+
 abstract class VehicleRepository {
   /// Returns only the first page's items (kept for backwards compat).
   Future<List<Vehicle>> list();
@@ -40,10 +43,27 @@ abstract class VehicleRepository {
 
 class VehicleRepositoryImpl implements VehicleRepository {
   final VehicleService remote;
+
+  // --- NEW: repo-level LRU page cache (key = skip of 100-chunk) ---
+  // Keep the most recently used 3 chunks (≈ 300 vehicles) in memory.
+  // Each chunk is exactly what your UI already asks: limit=100.
+  final LruCache<int, Paginated<Vehicle>> _pageCache =
+      LruCache<int, Paginated<Vehicle>>(3);
+
   VehicleRepositoryImpl({required this.remote});
+
+  /// Clears the in-memory cache (call on pull-to-refresh or logout).
+  void clearCache() => _pageCache.clear();
 
   @override
   Future<Paginated<Vehicle>> listPaginated({int skip = 0, int limit = 100}) async {
+    // 1) Try cache first (LRU by [skip])
+    final cached = _pageCache.get(skip);
+    if (cached != null && (cached.limit == 0 || cached.limit == limit)) {
+      return cached;
+    }
+
+    // 2) Otherwise hit network and cache the result
     final res = await remote.list(skip: skip, limit: limit);
 
     if (res.statusCode == 401) {
@@ -53,7 +73,9 @@ class VehicleRepositoryImpl implements VehicleRepository {
       throw Exception('Vehicles list ${res.statusCode}: ${res.body}');
     }
 
-    return parsePaginated<Vehicle>(res.body, (m) => Vehicle.fromJson(m));
+    final page = parsePaginated<Vehicle>(res.body, (m) => Vehicle.fromJson(m));
+    _pageCache.put(skip, page);
+    return page;
   }
 
   @override

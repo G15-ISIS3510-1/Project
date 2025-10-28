@@ -8,6 +8,9 @@ import 'package:flutter_app/data/models/booking_status.dart';
 import 'package:flutter_app/data/models/booking_create_model.dart';
 import 'package:flutter_app/data/sources/remote/booking_remote_source.dart'; // BookingService
 
+// NEW: LRU cache
+import 'package:flutter_app/app/utils/lru_cache.dart';
+
 class BookingsPage {
   final List<Booking> items;
   final bool hasMore;
@@ -26,7 +29,18 @@ abstract class BookingsRepository {
 
 class BookingsRepositoryImpl implements BookingsRepository {
   final BookingService remote;
+
+  // NEW: Keep the N most-recent 100-booking chunks (LRU by (skip,limit,status))
+  // TripsViewModel calls with limit=100; capacity 3 ~= 300 bookings in memory.
+  final LruCache<String, BookingsPage> _cache =
+      LruCache<String, BookingsPage>(3);
+
   BookingsRepositoryImpl(this.remote);
+
+  void clearCache() => _cache.clear();
+
+  String _key(int skip, int limit, String? statusParam) =>
+      '$skip|$limit|${statusParam ?? ''}';
 
   @override
   Future<Result<BookingsPage>> listMyBookings({
@@ -34,11 +48,21 @@ class BookingsRepositoryImpl implements BookingsRepository {
     int limit = 20,
     BookingStatus? statusFilter,
   }) async {
+    final statusParam = statusFilter?.asParam;
+    final key = _key(skip, limit, statusParam);
+
+    // 1) Try cache (LRU hit)
+    final cached = _cache.get(key);
+    if (cached != null) {
+      return Result.ok(cached);
+    }
+
+    // 2) Fetch network and cache
     try {
       final res = await remote.listMyBookings(
         skip: skip,
         limit: limit,
-        statusFilter: statusFilter?.asParam,
+        statusFilter: statusParam,
       );
       if (res.statusCode != 200) {
         return Result.err('Bookings ${res.statusCode}: ${res.body}');
@@ -50,7 +74,10 @@ class BookingsRepositoryImpl implements BookingsRepository {
       );
 
       final items = page.items.map(_mapBooking).toList(growable: false);
-      return Result.ok(BookingsPage(items: items, hasMore: page.hasMore));
+      final resultPage = BookingsPage(items: items, hasMore: page.hasMore);
+
+      _cache.put(key, resultPage);
+      return Result.ok(resultPage);
     } catch (e) {
       return Result.err('No se pudieron cargar las reservas: $e');
     }
@@ -71,6 +98,9 @@ class BookingsRepositoryImpl implements BookingsRepository {
         }
         return Result.err('Error ${res.statusCode}: $detail');
       }
+      // On successful creation we should invalidate cache so lists refresh
+      _cache.clear();
+
       final decoded = jsonDecode(res.body);
       if (decoded is! Map<String, dynamic>) {
         return Result.err('Respuesta inesperada al crear la reserva.');
