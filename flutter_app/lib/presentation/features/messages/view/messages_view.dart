@@ -4,12 +4,15 @@ import 'dart:math' as MainSize;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:flutter_app/presentation/features/conversation/view/conversation_view.dart';
-import 'package:flutter_app/presentation/common_widgets/search_bar.dart'
-    as qovo;
-
+import 'package:flutter_app/presentation/common_widgets/search_bar.dart' as qovo;
 import 'package:flutter_app/presentation/features/app_shell/viewmodel/host_mode_provider.dart';
+
 import 'package:flutter_app/presentation/features/messages/viewmodel/messages_viewmodel.dart';
+
+// 👇 we need these two imports for the chat detail screen
+import 'package:flutter_app/presentation/features/conversation/view/conversation_view.dart';
+import 'package:flutter_app/presentation/features/conversation/viewmodel/conversation_viewmodel.dart';
+import 'package:flutter_app/data/repositories/chat_repository.dart';
 
 class MessagesView extends StatefulWidget {
   final String currentUserId;
@@ -170,16 +173,30 @@ class _MessagesViewState extends State<MessagesView>
                             // Optimista: quita el puntito
                             vm.markSeenLocally(i);
 
-                            final didChange = await Navigator.of(context)
-                                .push<bool>(
-                                  MaterialPageRoute(
-                                    builder: (_) => ConversationPage(
+                            final didChange =
+                                await Navigator.of(context).push<bool>(
+                              MaterialPageRoute(
+                                builder: (_) {
+                                  // we grab the outer context so we can read ChatRepository
+                                  final parentCtx = context;
+
+                                  return ChangeNotifierProvider<
+                                      ConversationViewModel>(
+                                    create: (_) => ConversationViewModel(
+                                      repo: parentCtx.read<ChatRepository>(),
+                                      currentUserId: widget.currentUserId,
+                                      otherUserId: it.otherUserId,
+                                      conversationId: it.conversationId,
+                                    )..init(),
+                                    child: ConversationPage(
                                       currentUserId: widget.currentUserId,
                                       otherUserId: it.otherUserId,
                                       conversationId: it.conversationId,
                                     ),
-                                  ),
-                                );
+                                  );
+                                },
+                              ),
+                            );
 
                             if (!mounted) return;
                             if (didChange == true) vm.refresh();
@@ -235,7 +252,10 @@ class _ConversationTile extends StatelessWidget {
                 color: Color(0xFFF3F4F6),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.person_outline, color: Color(0xFFB8BDC7)),
+              child: const Icon(
+                Icons.person_outline,
+                color: Color(0xFFB8BDC7),
+              ),
             ),
             const SizedBox(width: 14),
             Expanded(

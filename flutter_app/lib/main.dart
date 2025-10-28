@@ -1,6 +1,12 @@
 // lib/main.dart
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter/widgets.dart'; // WidgetsFlutterBinding
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:http/http.dart' as http;
+
+// ===== Local DB / DAOs / Local Sources / Stores =====
 import 'package:flutter_app/data/database/app_database.dart';
 import 'package:flutter_app/data/database/daos/bookings_dao.dart';
 import 'package:flutter_app/data/database/daos/conversations_dao.dart';
@@ -10,27 +16,21 @@ import 'package:flutter_app/data/database/daos/messages_dao.dart';
 import 'package:flutter_app/data/database/daos/pricing_dao.dart';
 import 'package:flutter_app/data/database/daos/vehicle_availability_dao.dart';
 import 'package:flutter_app/data/database/daos/vehicles_dao.dart';
-import 'package:flutter_app/data/models/conversation_model.dart';
+
 import 'package:flutter_app/data/prefs/last_read_prefs.dart';
-import 'package:flutter_app/data/repositories/auth_repository.dart';
-import 'package:flutter_app/data/repositories/availability_repository.dart';
-import 'package:flutter_app/data/repositories/availability_repository_cached.dart';
-import 'package:flutter_app/data/repositories/booking_repository.dart';
-import 'package:flutter_app/data/repositories/booking_repository_cached.dart';
-import 'package:flutter_app/data/repositories/chat_repository.dart';
-import 'package:flutter_app/data/repositories/chat_repository_cached.dart';
-import 'package:flutter_app/data/repositories/pricing_repository.dart';
-import 'package:flutter_app/data/repositories/pricing_repository_cached.dart';
-import 'package:flutter_app/data/repositories/user_repository.dart';
-import 'package:flutter_app/data/repositories/users_repository.dart';
-import 'package:flutter_app/data/repositories/vehicle_repository.dart';
-import 'package:flutter_app/data/repositories/vehicle_repository_cached.dart';
+
 import 'package:flutter_app/data/sources/local/availability_local_source.dart';
 import 'package:flutter_app/data/sources/local/booking_local_source.dart';
 import 'package:flutter_app/data/sources/local/conversation_local_source.dart';
 import 'package:flutter_app/data/sources/local/message_local_source.dart';
 import 'package:flutter_app/data/sources/local/pricing_local_source.dart';
 import 'package:flutter_app/data/sources/local/vehicle_local_source.dart';
+
+import 'package:flutter_app/data/stores/booking_reminders_store.dart';
+import 'package:flutter_app/data/stores/drafts_store.dart';
+import 'package:flutter_app/data/stores/suggested_price_store.dart';
+
+// ===== Remote / API =====
 import 'package:flutter_app/data/sources/remote/api_client.dart';
 import 'package:flutter_app/data/sources/remote/auth_remote_source.dart';
 import 'package:flutter_app/data/sources/remote/availability_remote_source.dart';
@@ -39,38 +39,44 @@ import 'package:flutter_app/data/sources/remote/chat_remote_source.dart';
 import 'package:flutter_app/data/sources/remote/pricing_remote_source.dart';
 import 'package:flutter_app/data/sources/remote/user_remote_source.dart';
 import 'package:flutter_app/data/sources/remote/vehicle_remote_source.dart';
-import 'package:flutter_app/data/stores/booking_reminders_store.dart';
-import 'package:flutter_app/data/stores/drafts_store.dart';
-import 'package:flutter_app/data/stores/suggested_price_store.dart';
+import 'package:flutter_app/data/sources/remote/analytics_remote_source.dart';
+
+// ===== Repositories (impl + cached) =====
+import 'package:flutter_app/data/repositories/auth_repository.dart';
+import 'package:flutter_app/data/repositories/booking_repository.dart';
+import 'package:flutter_app/data/repositories/vehicle_repository.dart';
+import 'package:flutter_app/data/repositories/availability_repository.dart';
+import 'package:flutter_app/data/repositories/pricing_repository.dart';
+import 'package:flutter_app/data/repositories/chat_repository.dart';
+import 'package:flutter_app/data/repositories/users_repository.dart';
+import 'package:flutter_app/data/repositories/analytics_repository.dart';
+
+import 'package:flutter_app/data/repositories/vehicle_repository_cached.dart';
+import 'package:flutter_app/data/repositories/availability_repository_cached.dart';
+import 'package:flutter_app/data/repositories/booking_repository_cached.dart';
+import 'package:flutter_app/data/repositories/pricing_repository_cached.dart';
+import 'package:flutter_app/data/repositories/chat_repository_cached.dart';
+
+// ===== UI / ViewModels =====
+import 'package:flutter_app/presentation/features/app_shell/viewmodel/host_mode_provider.dart';
+import 'package:flutter_app/presentation/features/auth/view/login_view.dart';
 import 'package:flutter_app/presentation/features/auth/viewmodel/auth_viewmodel.dart';
 import 'package:flutter_app/presentation/features/booking/viewmodel/booking_viewmodel.dart';
-import 'package:flutter_app/presentation/features/conversation/viewmodel/conversation_viewmodel.dart';
+import 'package:flutter_app/presentation/features/booking_reminders/viewmodel/booking_reminder_viewmodel.dart';
 import 'package:flutter_app/presentation/features/home/viewmodel/home_viewmodel.dart';
 import 'package:flutter_app/presentation/features/host_home/viewmodel/host_home_viewmodel.dart';
 import 'package:flutter_app/presentation/features/messages/viewmodel/messages_viewmodel.dart';
+import 'package:flutter_app/presentation/features/profile/viewmodel/visited_places_viewmodel.dart';
 import 'package:flutter_app/presentation/features/trips/viewmodel/trips_viewmodel.dart';
 import 'package:flutter_app/presentation/features/vehicle/viewmodel/add_vehicle_viewmodel.dart';
-import 'package:provider/provider.dart';
-import 'package:flutter_app/presentation/features/profile/viewmodel/visited_places_viewmodel.dart';
-import 'package:flutter_app/presentation/features/profile/view/visited_places_view.dart';
 
-import 'presentation/features/auth/view/login_view.dart';
-import 'presentation/features/app_shell/viewmodel/host_mode_provider.dart';
-
-// 👇 Tema auto por hora (auto/claro/oscuro)
 import 'app/theme/theme_controller.dart';
 
-import 'package:flutter_app/data/repositories/analytics_repository.dart';
-import 'package:flutter_app/data/sources/remote/analytics_remote_source.dart';
-import 'package:flutter_app/presentation/features/booking_reminders/viewmodel/booking_reminder_viewmodel.dart';
-import 'package:http/http.dart' as http;
-
-// (Opcional) si quieres fijar base al arrancar, descomenta:
-// import 'data/sources/remote/api_client.dart'; // Api.I()
-
+/// Lightweight auth/session holder the UI can read.
 class AuthProvider with ChangeNotifier {
   String? _userId;
   String? _token;
+
   String? get userId => _userId;
   String? get token => _token;
 
@@ -87,13 +93,21 @@ class AuthProvider with ChangeNotifier {
   }
 }
 
+/// Base URL the app talks to (points to your deployed FastAPI)
 const String kApiBase = String.fromEnvironment(
   'API_BASE',
   defaultValue: 'https://qovo-api-862569067561.us-central1.run.app',
 );
 const String kApiBaseWithPrefix = kApiBase;
 
-void main() {
+/// MAIN
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Fixes TripsViewModel date formatting (and any intl usage)
+  await initializeDateFormatting();
+
+  // Init singletons / services
   final api = Api.I();
   api.setBase(kApiBase);
   final httpClient = http.Client();
@@ -101,39 +115,36 @@ void main() {
   runApp(
     MultiProvider(
       providers: [
-        // ---------------- Core app state ----------------
+        // ─────────────────────────
+        // session + app mode + theme
+        // ─────────────────────────
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => HostModeProvider()),
         ChangeNotifierProvider(create: (_) => ThemeController()),
 
-        // ---------------- Database ----------------
+        // ─────────────────────────
+        // Database & DAOs
+        // ─────────────────────────
         Provider<AppDatabase>(create: (_) => AppDatabase()),
-
-        // ---------------- DAOs (must come before anything that reads them) ----------------
         Provider<InfraDao>(create: (c) => InfraDao(c.read<AppDatabase>())),
-        Provider<VehiclesDao>(
-          create: (c) => VehiclesDao(c.read<AppDatabase>()),
-        ),
+        Provider<VehiclesDao>(create: (c) => VehiclesDao(c.read<AppDatabase>())),
         Provider<VehicleAvailabilityDao>(
-          create: (c) => VehicleAvailabilityDao(c.read<AppDatabase>()),
-        ),
+            create: (c) => VehicleAvailabilityDao(c.read<AppDatabase>())),
         Provider<PricingDao>(create: (c) => PricingDao(c.read<AppDatabase>())),
-        Provider<BookingsDao>(
-          create: (c) => BookingsDao(c.read<AppDatabase>()),
-        ),
+        Provider<BookingsDao>(create: (c) => BookingsDao(c.read<AppDatabase>())),
         Provider<ConversationsDao>(
-          create: (c) => ConversationsDao(c.read<AppDatabase>()),
-        ),
-        Provider<MessagesDao>(
-          create: (c) => MessagesDao(c.read<AppDatabase>()),
-        ),
-        Provider<KvDao>(
-          create: (c) => KvDao(c.read<AppDatabase>()),
-        ), // for prefs/stores
-        // ---------------- Local sources / prefs / stores ----------------
+            create: (c) => ConversationsDao(c.read<AppDatabase>())),
+        Provider<MessagesDao>(create: (c) => MessagesDao(c.read<AppDatabase>())),
+        Provider<KvDao>(create: (c) => KvDao(c.read<AppDatabase>())),
+
+        // ─────────────────────────
+        // Local sources / prefs / stores
+        // ─────────────────────────
         Provider<VehicleLocalSource>(
-          create: (c) =>
-              VehicleLocalSource(c.read<VehiclesDao>(), c.read<InfraDao>()),
+          create: (c) => VehicleLocalSource(
+            c.read<VehiclesDao>(),
+            c.read<InfraDao>(),
+          ),
         ),
         Provider<AvailabilityLocalSource>(
           create: (c) => AvailabilityLocalSource(
@@ -142,12 +153,16 @@ void main() {
           ),
         ),
         Provider<PricingLocalSource>(
-          create: (c) =>
-              PricingLocalSource(c.read<PricingDao>(), c.read<InfraDao>()),
+          create: (c) => PricingLocalSource(
+            c.read<PricingDao>(),
+            c.read<InfraDao>(),
+          ),
         ),
         Provider<BookingLocalSource>(
-          create: (c) =>
-              BookingLocalSource(c.read<BookingsDao>(), c.read<InfraDao>()),
+          create: (c) => BookingLocalSource(
+            c.read<BookingsDao>(),
+            c.read<InfraDao>(),
+          ),
         ),
         Provider<ConversationLocalSource>(
           create: (c) => ConversationLocalSource(
@@ -156,10 +171,11 @@ void main() {
           ),
         ),
         Provider<MessageLocalSource>(
-          create: (c) =>
-              MessageLocalSource(c.read<MessagesDao>(), c.read<InfraDao>()),
+          create: (c) => MessageLocalSource(
+            c.read<MessagesDao>(),
+            c.read<InfraDao>(),
+          ),
         ),
-
         Provider<DraftsStore>(create: (c) => DraftsStore(c.read<KvDao>())),
         Provider<SuggestedPriceStore>(
           create: (c) => SuggestedPriceStore(c.read<KvDao>()),
@@ -169,20 +185,19 @@ void main() {
         ),
         Provider<LastReadPrefs>(create: (_) => LastReadPrefs()),
 
-        // ---------------- HTTP / API singletons ----------------
-        Provider<Api>.value(value: Api.I()..setBase(kApiBase)),
-        Provider<http.Client>(create: (_) => http.Client()),
+        // ─────────────────────────
+        // Low-level remote services (1 instance app-wide)
+        // ─────────────────────────
+        Provider<Api>.value(value: api),
+        Provider<http.Client>.value(value: httpClient),
 
-        // ---------------- Remote services (HTTP clients) ----------------
         Provider<VehicleService>(create: (_) => VehicleService()),
         Provider<AvailabilityService>(create: (_) => AvailabilityService()),
         Provider<PricingService>(create: (_) => PricingService()),
         Provider<BookingService>(create: (_) => BookingService()),
         Provider<ChatService>(create: (_) => ChatService()),
         Provider<UserService>(create: (_) => UserService()),
-        Provider<AuthService>(
-          create: (_) => AuthService(baseUrl: kApiBaseWithPrefix),
-        ),
+        Provider<AuthService>(create: (_) => AuthService(baseUrl: kApiBaseWithPrefix)),
         Provider<AnalyticsRemoteSource>(
           create: (c) => AnalyticsRemoteSourceImpl(
             client: c.read<http.Client>(),
@@ -190,21 +205,20 @@ void main() {
           ),
         ),
 
-        // ---------------- Remote repositories (Impl) ----------------
+        // ─────────────────────────
+        // Remote repositories (Impl)
+        // ─────────────────────────
         Provider<UsersRepository>(
           create: (c) => UsersRepository(remote: c.read<UserService>()),
         ),
         Provider<VehicleRepositoryImpl>(
-          create: (c) =>
-              VehicleRepositoryImpl(remote: c.read<VehicleService>()),
+          create: (c) => VehicleRepositoryImpl(remote: c.read<VehicleService>()),
         ),
         Provider<AvailabilityRepositoryImpl>(
-          create: (c) =>
-              AvailabilityRepositoryImpl(remote: c.read<AvailabilityService>()),
+          create: (c) => AvailabilityRepositoryImpl(remote: c.read<AvailabilityService>()),
         ),
         Provider<PricingRepositoryImpl>(
-          create: (c) =>
-              PricingRepositoryImpl(remote: c.read<PricingService>()),
+          create: (c) => PricingRepositoryImpl(remote: c.read<PricingService>()),
         ),
         Provider<BookingsRepositoryImpl>(
           create: (c) => BookingsRepositoryImpl(c.read<BookingService>()),
@@ -221,7 +235,9 @@ void main() {
           ),
         ),
 
-        // ---------------- Cached repositories (wrap Impl + local) ----------------
+        // ─────────────────────────
+        // Cached repositories (wrap Impl + local)
+        // ─────────────────────────
         Provider<VehicleRepository>(
           create: (c) => VehicleRepositoryCached(
             remoteRepo: c.read<VehicleRepositoryImpl>(),
@@ -229,30 +245,26 @@ void main() {
             infraDao: c.read<InfraDao>(),
           ),
         ),
-
         Provider<AvailabilityRepository>(
           create: (c) => AvailabilityRepositoryCached(
             remoteRepo: c.read<AvailabilityRepositoryImpl>(),
             local: c.read<AvailabilityLocalSource>(),
           ),
         ),
-
         Provider<PricingRepository>(
           create: (c) => PricingRepositoryCached(
             remote: c.read<PricingRepositoryImpl>(),
             local: c.read<PricingLocalSource>(),
             suggestStore: c.read<SuggestedPriceStore>(),
-            priceGetter: (sp) => sp.value, // adapt if your store differs
+            priceGetter: (sp) => sp.value,
           ),
         ),
-
         Provider<BookingsRepository>(
           create: (c) => BookingsRepositoryCached(
             remote: c.read<BookingsRepositoryImpl>(),
             local: c.read<BookingLocalSource>(),
           ),
         ),
-
         Provider<ChatRepository>(
           create: (c) => ChatRepositoryCached(
             remote: c.read<ChatRepositoryImpl>(),
@@ -265,27 +277,24 @@ void main() {
           ),
         ),
 
-        // ---------------- ViewModels ----------------
+        // ─────────────────────────
+        // ViewModels
+        // ─────────────────────────
         ChangeNotifierProvider<BookingReminderViewModel>(
-          create: (c) =>
-              BookingReminderViewModel(c.read<AnalyticsRepository>()),
+          create: (c) => BookingReminderViewModel(c.read<AnalyticsRepository>()),
         ),
-
         ChangeNotifierProvider<AuthViewModel>(
           create: (c) => AuthViewModel(
             c.read<AuthRepository>(),
             baseUrl: c.read<Api>().baseUrl + '/api',
           ),
         ),
-
         ChangeNotifierProvider<HomeViewModel>(
           create: (c) => HomeViewModel(
             vehicles: c.read<VehicleRepository>(),
-            pricing: c
-                .read<PricingService>(), // keep as-is if HomeVM expects service
+            pricing: c.read<PricingService>(), // HomeVM usa service
           ),
         ),
-
         ChangeNotifierProvider<HostHomeViewModel>(
           create: (c) => HostHomeViewModel(
             vehiclesRepo: c.read<VehicleRepository>(),
@@ -293,29 +302,24 @@ void main() {
             currentUserId: c.read<AuthProvider>().userId ?? '',
           ),
         ),
-
         ChangeNotifierProvider<TripsViewModel>(
           create: (c) => TripsViewModel(c.read<BookingsRepository>())..init(),
         ),
-
         ChangeNotifierProvider<BookingViewModel>(
           create: (c) => BookingViewModel(
             bookingsRepo: c.read<BookingsRepository>(),
             chatRepo: c.read<ChatRepository>(),
           ),
         ),
-
         ChangeNotifierProvider(
           create: (c) => AddVehicleViewModel(
             vehicles: c.read<VehicleRepository>(),
             pricing: c.read<PricingRepository>(),
           ),
         ),
-
         ChangeNotifierProvider<VisitedPlacesViewModel>(
           create: (_) => VisitedPlacesViewModel(),
         ),
-
         ChangeNotifierProvider<MessagesViewModel>(
           create: (c) => MessagesViewModel(
             chat: c.read<ChatRepository>(),
@@ -324,21 +328,20 @@ void main() {
           ),
         ),
       ],
-
       child: const MyApp(),
     ),
   );
 }
 
+/// Root widget, wires theme + splash routing
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // ========================
-  //   PALETA Y TIPOGRAFÍA
-  // ========================
-  static const seed = Color(0xFF4F46E5); // Indigo-ish (marca)
+  // ===== Brand palette / typography helpers =====
+
+  static const seed = Color(0xFF4F46E5); // Indigo-ish brand color
   static const lightBg = Color(0xFFF7F7F7);
-  static const darkBg = Color(0xFF0F1115); // fondo “true black-ish”
+  static const darkBg = Color(0xFF0F1115);
 
   TextTheme _textBase(Brightness b) {
     final isDark = b == Brightness.dark;
@@ -354,14 +357,8 @@ class MyApp extends StatelessWidget {
       titleMedium: TextStyle(fontFamily: 'Poppins', color: onBg),
       titleSmall: TextStyle(fontFamily: 'Poppins', color: onBg),
       bodyLarge: TextStyle(fontFamily: 'Poppins', color: onBg),
-      bodyMedium: TextStyle(
-        fontFamily: 'Poppins',
-        color: onBg.withOpacity(0.85),
-      ),
-      bodySmall: TextStyle(
-        fontFamily: 'Poppins',
-        color: onBg.withOpacity(0.70),
-      ),
+      bodyMedium: TextStyle(fontFamily: 'Poppins', color: onBg.withOpacity(0.85)),
+      bodySmall: TextStyle(fontFamily: 'Poppins', color: onBg.withOpacity(0.70)),
       labelLarge: TextStyle(fontFamily: 'Poppins', color: onBg),
       labelMedium: TextStyle(fontFamily: 'Poppins', color: onBg),
       labelSmall: TextStyle(fontFamily: 'Poppins', color: onBg),
@@ -375,6 +372,7 @@ class MyApp extends StatelessWidget {
       background: lightBg,
       surface: Colors.white,
     );
+
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
@@ -392,7 +390,7 @@ class MyApp extends StatelessWidget {
           fontSize: 18,
         ).copyWith(color: scheme.onSurface),
       ),
-      cardTheme: CardThemeData(
+      cardTheme: const CardTheme().copyWith(
         color: scheme.surface,
         elevation: 0,
         margin: const EdgeInsets.all(8),
@@ -409,10 +407,7 @@ class MyApp extends StatelessWidget {
         filled: true,
         fillColor: scheme.surface,
         hintStyle: TextStyle(color: scheme.onSurfaceVariant),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 12,
-        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: scheme.outlineVariant),
@@ -477,6 +472,7 @@ class MyApp extends StatelessWidget {
       background: darkBg,
       surface: const Color(0xFF151922),
     );
+
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
@@ -494,7 +490,7 @@ class MyApp extends StatelessWidget {
           fontSize: 18,
         ).copyWith(color: scheme.onSurface),
       ),
-      cardTheme: CardThemeData(
+      cardTheme: const CardTheme().copyWith(
         color: scheme.surface,
         elevation: 0,
         margin: const EdgeInsets.all(8),
@@ -511,10 +507,7 @@ class MyApp extends StatelessWidget {
         filled: true,
         fillColor: const Color(0xFF1C2230),
         hintStyle: TextStyle(color: scheme.onSurfaceVariant),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 12,
-        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: scheme.outlineVariant),
@@ -581,15 +574,16 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: _light(),
       darkTheme: _dark(),
-      themeMode: themeCtrl.currentMode, // ← Auto por hora / Claro / Oscuro
+      themeMode: themeCtrl.currentMode, // auto / light / dark
       home: const SplashScreen(),
-      showPerformanceOverlay: true, // TEMP for testing
+      showPerformanceOverlay: true, // TEMP for perf debugging
     );
   }
 }
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
+
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
@@ -598,9 +592,11 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
+    // Simple splash → login
     Future.delayed(const Duration(seconds: 2), () {
+      if (!mounted) return;
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
       );
     });
   }

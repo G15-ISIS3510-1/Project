@@ -1,19 +1,19 @@
-// lib/presentation/features/booking/view/create_booking_screen.dart
 import 'package:flutter/material.dart';
-import 'package:flutter_app/app/utils/date_format.dart';
-import 'package:flutter_app/app/utils/result.dart';
-import 'package:flutter_app/data/models/availability_model.dart';
-import 'package:flutter_app/data/repositories/availability_repository.dart';
-import 'package:flutter_app/data/sources/remote/availability_remote_source.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import 'package:flutter_app/app/utils/date_format.dart';
+import 'package:flutter_app/app/utils/result.dart';
+
 import 'package:flutter_app/main.dart' show AuthProvider;
+
+import 'package:flutter_app/data/models/availability_model.dart';
 import 'package:flutter_app/data/models/booking_create_model.dart';
-import 'package:flutter_app/presentation/features/booking/viewmodel/booking_viewmodel.dart';
-import 'package:flutter_app/data/sources/remote/booking_remote_source.dart'; // BookingService
+
+import 'package:flutter_app/data/repositories/availability_repository.dart';
 import 'package:flutter_app/data/repositories/booking_repository.dart';
 import 'package:flutter_app/data/repositories/chat_repository.dart';
+
+import 'package:flutter_app/presentation/features/booking/viewmodel/booking_viewmodel.dart';
 
 class CreateBookingScreen extends StatefulWidget {
   const CreateBookingScreen({
@@ -34,10 +34,12 @@ class CreateBookingScreen extends StatefulWidget {
 class _CreateBookingScreenState extends State<CreateBookingScreen> {
   final _formKey = GlobalKey<FormState>();
 
+  // ---- availability UI state ----
   List<AvailabilityWindow> _slots = [];
   bool _loadingSlots = true;
   String? _slotsError;
 
+  // ---- booking form state ----
   DateTime? _startDateTime;
   DateTime? _endDateTime;
 
@@ -48,78 +50,76 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
   final _taxesC = TextEditingController(text: '0.0');
   final _insurancePlanIdC = TextEditingController(text: '');
 
-  late final AvailabilityRepository _availabilityRepo;
-
   @override
   void initState() {
     super.initState();
+
     _dailyPriceC = TextEditingController(
       text: (widget.initialDailyPrice ?? 50).toStringAsFixed(2),
     );
 
-    _availabilityRepo = context.read<AvailabilityRepository>();
+    // Cargamos solo si hay vehicleId
+    _loadingSlots = widget.initialVehicleId.isNotEmpty;
 
-    if (widget.initialVehicleId.isNotEmpty) {
-      _loadAvailability(widget.initialVehicleId);
-    } else {
-      _loadingSlots = false; // sin vehicle id, no bloqueamos fechas
-    }
+    // No usamos context.read<> antes de que termine initState
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (widget.initialVehicleId.isNotEmpty) {
+        final availabilityRepo = context.read<AvailabilityRepository>();
+        _loadAvailability(availabilityRepo, widget.initialVehicleId);
+      } else {
+        setState(() => _loadingSlots = false);
+      }
+    });
   }
 
-  Future<void> _loadAvailability(String vehicleId) async {
-    setState(() {
-      _loadingSlots = true;
-      _slotsError = null;
-      _slots = [];
-    });
-
-    try {
-      const int pageSize = 100;
-      int skip = 0;
-      bool hasMore = true;
-      final List<AvailabilityWindow> acc = [];
-
-      while (hasMore) {
-        final Result<AvailabilityPage> r = await _availabilityRepo
-            .listByVehicle(vehicleId, skip: skip, limit: pageSize);
-
-        if (r.isErr) {
-          if (acc.isEmpty) throw Exception(r.errOrNull);
-          break;
-        }
-
-        final page = r.okOrNull!;
-        acc.addAll(page.items);
-        hasMore = page.hasMore;
-
-        if (hasMore) skip += pageSize;
-      }
-
-      // Ajuste de zona horaria y filtro por tipo para mostrar en UI
-      final fixed = acc
-          .map(
-            (w) => AvailabilityWindow(
-              availability_id: w.availability_id,
-              vehicle_id: w.vehicle_id,
-              start: w.start.toLocal(),
-              end: w.end.toLocal(),
-              type: w.type,
-              notes: w.notes,
-            ),
-          )
-          .where((s) => s.type == 'available')
-          .toList(growable: false);
-
+  /// Cargar disponibilidad con el repo compartido (cache LRU in-memory)
+  Future<void> _loadAvailability(
+    AvailabilityRepository repo,
+    String vehicleId,
+  ) async {
+    if (mounted) {
       setState(() {
-        _slots = fixed;
-        _loadingSlots = false;
-      });
-    } catch (e) {
-      setState(() {
-        _slotsError = 'No se pudo cargar disponibilidad: $e';
-        _loadingSlots = false;
+        _loadingSlots = true;
+        _slotsError = null;
+        _slots = [];
       });
     }
+
+    final Result<List<AvailabilityWindow>> res =
+        await repo.getAllByVehicle(vehicleId, forceRefresh: false);
+
+    if (!mounted) return;
+
+    if (res.isErr) {
+      setState(() {
+        _slotsError = 'No se pudo cargar disponibilidad: ${res.errOrNull}';
+        _loadingSlots = false;
+      });
+      return;
+    }
+
+    final allWindows = res.okOrNull ?? const [];
+
+    // Ajustamos a tz local y filtramos sólo type=available
+    final fixed = allWindows
+        .map(
+          (w) => AvailabilityWindow(
+            availability_id: w.availability_id,
+            vehicle_id: w.vehicle_id,
+            start: w.start.toLocal(),
+            end: w.end.toLocal(),
+            type: w.type,
+            notes: w.notes,
+          ),
+        )
+        .where((s) => s.type == 'available')
+        .toList(growable: false);
+
+    setState(() {
+      _slots = fixed;
+      _loadingSlots = false;
+    });
   }
 
   @override
@@ -137,19 +137,21 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
     if (_startDateTime == null || _endDateTime == null) return;
     final dp = double.tryParse(_dailyPriceC.text) ?? 0.0;
 
-    // al menos 1 día, redondeo hacia arriba por horas
+    // mínimo 1 día (redondeo hacia arriba por horas)
     final hours = _endDateTime!.difference(_startDateTime!).inHours;
     final days = (hours / 24).ceil().clamp(1, 365);
+
     final subtotal = dp * days;
-    final fees = subtotal * 0.05; // tu regla
-    final taxes = subtotal * 0.10; // tu regla
+    final fees = subtotal * 0.05; // regla actual
+    final taxes = subtotal * 0.10; // regla actual
     final total = subtotal + fees + taxes;
 
     _subtotalC.text = subtotal.toStringAsFixed(2);
     _feesC.text = fees.toStringAsFixed(2);
     _taxesC.text = taxes.toStringAsFixed(2);
     _totalC.text = total.toStringAsFixed(2);
-    setState(() {});
+
+    if (mounted) setState(() {});
   }
 
   InputDecoration _dec(BuildContext context, String hint) {
@@ -181,7 +183,6 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
   }
 
   Future<void> _pickDateTime(bool isStart, StateSetter setter) async {
-    // ⚠️ Picker libre (no restringimos por disponibilidad)
     final now = DateTime.now();
 
     final pickedDate = await showDatePicker(
@@ -191,7 +192,6 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
           : (_endDateTime ?? now.add(const Duration(days: 1))),
       firstDate: now,
       lastDate: now.add(const Duration(days: 365)),
-      // sin selectableDayPredicate
     );
     if (pickedDate == null) return;
 
@@ -214,7 +214,6 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
     setter(() {
       if (isStart) {
         _startDateTime = picked;
-        // si fin ya existe y quedó antes o igual, lo invalidamos
         if (_endDateTime != null && !_endDateTime!.isAfter(_startDateTime!)) {
           _endDateTime = null;
         }
@@ -223,7 +222,6 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
       }
     });
 
-    // Validación mínima: fin > inicio
     if (!isStart &&
         _startDateTime != null &&
         !_endDateTime!.isAfter(_startDateTime!)) {
@@ -251,9 +249,11 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
       keyboardType: kt,
       decoration: _dec(context, hint).copyWith(labelText: label),
       validator: (v) {
-        if (ro) return null; // campos de solo lectura no validan
+        if (ro) return null;
         if (v == null || v.trim().isEmpty) return '$label es requerido';
-        if (kt == const TextInputType.numberWithOptions(decimal: true) &&
+        // Validación numérica básica si es number/decimal
+        if ((kt == TextInputType.number ||
+                kt == const TextInputType.numberWithOptions(decimal: true)) &&
             double.tryParse(v) == null) {
           return 'Debe ser un número válido';
         }
@@ -266,12 +266,12 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
   Future<void> _submit() async {
     final vm = context.read<BookingViewModel>();
 
+    // validación básica
     if (!_formKey.currentState!.validate()) return;
+
     if (_startDateTime == null || _endDateTime == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Selecciona fechas/horas de inicio y fin'),
-        ),
+        const SnackBar(content: Text('Selecciona fechas/horas de inicio y fin')),
       );
       return;
     }
@@ -295,6 +295,7 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
 
     final hours = _endDateTime!.difference(_startDateTime!).inHours;
     final days = (hours / 24).ceil().clamp(1, 365);
+
     final daily = double.tryParse(_dailyPriceC.text) ?? 0.0;
     final subtotal = (days * daily).toDouble();
     final fees = double.tryParse(_feesC.text) ?? 0;
@@ -303,15 +304,15 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
 
     final booking = BookingCreateModel(
       vehicleId: vehicleId,
-      renterId: renterId, // debe coincidir con el token (backend lo exige)
-      hostId: hostId, // debe coincidir con owner del vehículo
+      renterId: renterId,
+      hostId: hostId,
       insurancePlanId: _insurancePlanIdC.text.trim().isEmpty
           ? null
           : _insurancePlanIdC.text.trim(),
       startTs: _startDateTime!.toUtc().toIso8601String(),
       endTs: _endDateTime!.toUtc().toIso8601String(),
       dailyPriceSnapshot: daily,
-      insuranceDailyCostSnapshot: null, // ponlo si tienes ese costo
+      insuranceDailyCostSnapshot: null,
       subtotal: subtotal,
       fees: fees,
       taxes: taxes,
@@ -322,31 +323,31 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
     final ok = await vm.createBooking(booking);
 
     if (!mounted) return;
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(ok ? 'Reserva creada' : (vm.errorMessage ?? 'Error')),
       ),
     );
+
     if (ok) Navigator.pop(context, true);
   }
 
   @override
   Widget build(BuildContext context) {
+    // Reusamos repos compartidos (cache) de Provider
     final chatRepo = context.read<ChatRepository>();
-    final bookingRepo = context.read<BookingsRepository>();
+    final bookingsRepo = context.read<BookingsRepository>();
 
-    // Textos de disponibilidad (se muestran en "Datos de la Reserva")
+    // Línea superior con resumen de disponibilidad
     String topAvailLine1 = '';
     String topAvailLine2 = '';
     if (_slotsError != null) {
       topAvailLine1 = 'Error al cargar disponibilidad.';
-      topAvailLine2 = '';
     } else if (_loadingSlots) {
       topAvailLine1 = 'Cargando disponibilidad...';
-      topAvailLine2 = '';
     } else if (_slots.isEmpty) {
       topAvailLine1 = 'No hay disponibilidad para este vehículo.';
-      topAvailLine2 = '';
     } else {
       final first = _slots.first.start;
       final last = _slots.last.end;
@@ -355,8 +356,10 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
     }
 
     return ChangeNotifierProvider(
-      create: (_) =>
-          BookingViewModel(bookingsRepo: bookingRepo, chatRepo: chatRepo),
+      create: (_) => BookingViewModel(
+        bookingsRepo: bookingsRepo,
+        chatRepo: chatRepo,
+      ),
       child: Scaffold(
         appBar: AppBar(title: const Text('Crear Nueva Reserva')),
         body: SafeArea(
@@ -375,7 +378,7 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
                       ),
                       const SizedBox(height: 20),
 
-                      // IDs (solo lectura)
+                      // IDs (sólo lectura)
                       _InfoLine(
                         label: 'Vehicle ID',
                         value: widget.initialVehicleId,
@@ -387,7 +390,8 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
                       ),
 
                       const SizedBox(height: 12),
-                      // 🔹 Disponibilidad como dos textos dentro de "Datos de la Reserva"
+
+                      // Resumen disponibilidad
                       if (topAvailLine1.isNotEmpty) ...[
                         Text(
                           topAvailLine1,
@@ -419,7 +423,7 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
                       ),
                       const SizedBox(height: 12),
 
-                      // ⏰ Pickers libres (sin restricciones por disponibilidad)
+                      // Inicio
                       StatefulBuilder(
                         builder: (context, setSt) => InkWell(
                           onTap: () => _pickDateTime(true, setSt),
@@ -437,6 +441,8 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
                         ),
                       ),
                       const SizedBox(height: 12),
+
+                      // Fin
                       StatefulBuilder(
                         builder: (context, setSt) => InkWell(
                           onTap: () => _pickDateTime(false, setSt),
@@ -460,16 +466,16 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       const SizedBox(height: 12),
+
                       _tf(
                         _dailyPriceC,
                         'Daily Price',
                         'Precio Diario',
-                        kt: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
+                        kt: const TextInputType.numberWithOptions(decimal: true),
                         onChanged: (_) => _recalcTotals(),
                       ),
                       const SizedBox(height: 12),
+
                       _tf(
                         _subtotalC,
                         'Subtotal',
@@ -478,6 +484,7 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
                         ro: true,
                       ),
                       const SizedBox(height: 12),
+
                       _tf(
                         _feesC,
                         'Fees',
@@ -486,6 +493,7 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
                         ro: true,
                       ),
                       const SizedBox(height: 12),
+
                       _tf(
                         _taxesC,
                         'Taxes',
@@ -494,6 +502,7 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
                         ro: true,
                       ),
                       const SizedBox(height: 12),
+
                       _tf(
                         _totalC,
                         'Total',
@@ -528,6 +537,7 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
 
 class _InfoLine extends StatelessWidget {
   const _InfoLine({required this.label, required this.value});
+
   final String label;
   final String value;
 
@@ -542,7 +552,12 @@ class _InfoLine extends StatelessWidget {
             '$label: ',
             style: t.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
           ),
-          Expanded(child: Text(value, style: t.bodyMedium)),
+          Expanded(
+            child: Text(
+              value,
+              style: t.bodyMedium,
+            ),
+          ),
         ],
       ),
     );

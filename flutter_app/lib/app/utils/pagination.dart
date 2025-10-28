@@ -17,6 +17,9 @@ class Paginated<T> {
     this.limit = 0,
     this.nextCursor,
   });
+
+  /// Convenience to compute the next 'skip' value when using offset pagination.
+  int get nextSkip => skip + limit;
 }
 
 /// Extrae una página paginada desde un body JSON con múltiples formatos comunes.
