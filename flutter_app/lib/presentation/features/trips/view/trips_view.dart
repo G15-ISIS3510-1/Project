@@ -22,28 +22,6 @@ class _TripsViewState extends State<TripsView> {
   final ScrollController _scroll = ScrollController();
 
   @override
-<<<<<<< HEAD
-  void initState() {
-    super.initState();
-    _scroll.addListener(() {
-      final vm = context.read<TripsViewModel>(); // viene de main.dart
-      if (_scroll.position.pixels >= _scroll.position.maxScrollExtent - 200) {
-        vm.loadMore();
-      }
-
-      if (_scroll.position.pixels <= _scroll.position.minScrollExtent + 50 &&
-          !_scroll.position.outOfRange &&
-          !vm.isRefreshing) {
-        vm.refresh();
-      }
-    });
-
-    // No llames vm.init() aquí; ya lo hiciste en main.dart con ..init()
-  }
-
-  @override
-=======
->>>>>>> 7d9e48d (mark xii)
   void dispose() {
     _scroll.dispose();
     super.dispose();

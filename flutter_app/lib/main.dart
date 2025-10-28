@@ -1,18 +1,9 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
-import 'package:flutter_app/data/models/conversation_model.dart';
-import 'package:flutter_app/data/repositories/auth_repository.dart';
-import 'package:flutter_app/data/repositories/booking_repository.dart';
-import 'package:flutter_app/data/repositories/chat_repository.dart';
-import 'package:flutter_app/data/repositories/pricing_repository.dart';
-import 'package:flutter_app/data/repositories/vehicle_repository.dart';
-=======
 import 'package:flutter/widgets.dart'; // for WidgetsFlutterBinding (Material also exports it, but it's fine)
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 
->>>>>>> 7d9e48d (mark xii)
 import 'package:flutter_app/data/sources/remote/api_client.dart';
 import 'package:flutter_app/data/sources/remote/auth_remote_source.dart';
 import 'package:flutter_app/data/sources/remote/booking_remote_source.dart';
@@ -33,11 +24,7 @@ import 'package:flutter_app/presentation/features/app_shell/viewmodel/host_mode_
 import 'package:flutter_app/presentation/features/auth/view/login_view.dart';
 import 'package:flutter_app/presentation/features/auth/viewmodel/auth_viewmodel.dart';
 import 'package:flutter_app/presentation/features/booking/viewmodel/booking_viewmodel.dart';
-<<<<<<< HEAD
-import 'package:flutter_app/presentation/features/conversation/viewmodel/conversation_viewmodel.dart';
-=======
 import 'package:flutter_app/presentation/features/booking_reminders/viewmodel/booking_reminder_viewmodel.dart';
->>>>>>> 7d9e48d (mark xii)
 import 'package:flutter_app/presentation/features/home/viewmodel/home_viewmodel.dart';
 import 'package:flutter_app/presentation/features/host_home/viewmodel/host_home_viewmodel.dart';
 import 'package:flutter_app/presentation/features/profile/viewmodel/visited_places_viewmodel.dart';
