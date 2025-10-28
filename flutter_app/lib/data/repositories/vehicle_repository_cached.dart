@@ -1,21 +1,18 @@
-import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_app/app/utils/net.dart';
+import 'package:flutter_app/app/utils/pagination.dart';
 import 'package:flutter_app/data/database/daos/vehicles_dao.dart';
 import 'package:flutter_app/data/database/daos/infra_dao.dart';
 import 'package:flutter_app/data/mappers/vehicle_db_mapper.dart';
 import 'package:flutter_app/data/models/vehicle_model.dart';
 import 'package:flutter_app/data/repositories/vehicle_repository.dart';
-import 'package:flutter_app/data/sources/remote/vehicle_remote_source.dart';
 import 'package:image_picker/image_picker.dart';
 
-/// Decorador: mantiene la MISMA interfaz y delega en tu implementación actual,
-/// agregando cache local (Drift) sin cambiar contratos.
+/// Decorador que añade caché local (Drift) sin cambiar la interfaz.
 class VehicleRepositoryCached implements VehicleRepository {
-  final VehicleRepositoryImpl remoteRepo; // tu repo actual
-  final VehiclesDao vehiclesDao; // DAO local
-  final InfraDao infraDao; // SyncState / PendingOps (si lo usas)
+  final VehicleRepositoryImpl remoteRepo; // tu impl con LRU en memoria
+  final VehiclesDao vehiclesDao; // Drift DAO (listAll, byId, upsertAll)
+  final InfraDao infraDao; // estado (lastFetchAt, etag, pageCursor)
 
   VehicleRepositoryCached({
     required this.remoteRepo,
@@ -23,80 +20,159 @@ class VehicleRepositoryCached implements VehicleRepository {
     required this.infraDao,
   });
 
-  /// LIST: no cambiamos contrato (Future<List<Vehicle>>).
-  /// - Paso 1: intentamos precargar desde DB (opcional: puedes ignorarlo si prefieres).
-  /// - Paso 2 (siempre): llamamos a la red usando tu repo actual y ACTUALIZAMOS la DB.
+  /// Útil para logout: limpia LRU del remoto y reinicia estado en infra.
+  /// (No borra tablas porque tu DAO no expone clear; es best-effort).
+  void clearCache() {
+    try {
+      remoteRepo.clearCache();
+    } catch (_) {}
+    // “Reset” de estado; si luego agregas clearAll/clearState, cámbialo allí.
+    infraDao
+        .saveState(
+          entity: 'vehicles',
+          lastFetchAt: DateTime.fromMillisecondsSinceEpoch(0),
+          etag: null,
+          pageCursor: null,
+        )
+        .catchError((_) {});
+  }
+
+  // -------------------- LIST PAGINATED --------------------
+
   @override
-  Future<List<Vehicle>> list() async {
-    // 1) Sirve cache de una:
-    final cachedRows = await vehiclesDao.listAll();
-    if (cachedRows.isNotEmpty) {
-      // dispara refresh en background si hay red
-      // ignore: unawaited_futures
-      _refreshAllInBackground();
-      return cachedRows.map((r) => r.toModel()).toList();
+  Future<Paginated<Vehicle>> listPaginated({
+    int skip = 0,
+    int limit = 100,
+  }) async {
+    // 1) Intentar servir desde DB con paginado “pobre” (slice en memoria).
+    try {
+      final rows = await vehiclesDao
+          .listAll(); // ya viene filtrado isDeleted=false
+      if (rows.isNotEmpty) {
+        final models = rows.map((e) => e.toModel()).toList(growable: false);
+        final start = (skip < 0)
+            ? 0
+            : (skip > models.length ? models.length : skip);
+        final end = (start + limit > models.length)
+            ? models.length
+            : start + limit;
+        final slice = models.sublist(start, end);
+
+        // refresh silencioso de la primera página para mantener caliente
+        if (skip == 0) {
+          _refreshFirstPageInBackground(limit: limit);
+        }
+
+        return Paginated<Vehicle>(
+          items: slice,
+          total: models.length, // si no usas total, déjalo
+          hasMore: end < models.length,
+          limit: limit,
+          skip: skip,
+        );
+      }
+    } catch (_) {
+      // si DB falla, seguimos a red
     }
 
-    // 2) Si no hay cache, intenta red (con manejo de offline)
+    // 2) Red (usa el LRU de tu repo remoto), y luego persistimos a DB
     try {
-      final items = await remoteRepo.list();
+      final page = await remoteRepo.listPaginated(skip: skip, limit: limit);
+
+      // Persistimos SOLO lo recibido (para no duplicar innecesariamente).
       await vehiclesDao.upsertAll(
-        items.map((e) => vehicleModelToDb(e)).toList(),
+        page.items.map((v) => vehicleModelToDb(v)).toList(growable: false),
       );
       await infraDao.saveState(
         entity: 'vehicles',
         lastFetchAt: DateTime.now().toUtc(),
+        pageCursor: page.hasMore ? '${skip + limit}' : null,
       );
-      return items;
+
+      return page;
     } on SocketException catch (_) {
-      // Sin internet y sin cache -> lista vacía (o lanza)
-      return const <Vehicle>[];
+      // 3) Offline y sin cache → página vacía
+      return Paginated<Vehicle>(
+        items: const [],
+        total: 0,
+        hasMore: false,
+        limit: limit,
+        skip: skip,
+      );
     }
   }
 
-  Future<void> _refreshAllInBackground() async {
-    if (!await Net.isOnline()) return;
+  Future<void> _refreshFirstPageInBackground({required int limit}) async {
     try {
-      final items = await remoteRepo.list();
+      final page = await remoteRepo.listPaginated(skip: 0, limit: limit);
       await vehiclesDao.upsertAll(
-        items.map((e) => vehicleModelToDb(e)).toList(),
+        page.items.map((v) => vehicleModelToDb(v)).toList(growable: false),
       );
       await infraDao.saveState(
         entity: 'vehicles',
         lastFetchAt: DateTime.now().toUtc(),
+        pageCursor: page.hasMore ? '$limit' : null,
       );
     } catch (_) {
-      /* no rompas UI */
+      /* noop */
     }
   }
 
-  /// GET BY ID:
-  /// - Intento rápido: DB local (si existe) -> si necesitas puedes retornarlo
-  ///   inmediatamente, pero para no cambiar semántica, devolvemos la versión de red.
-  /// - Red: como siempre, y luego upsert a DB.
+  // -------------------- LIST (convenience) --------------------
+
+  @override
+  Future<List<Vehicle>> list() async {
+    try {
+      final rows = await vehiclesDao.listAll();
+      if (rows.isNotEmpty) {
+        // refresca en background la primera página
+        _refreshFirstPageInBackground(limit: 100);
+        return rows.map((e) => e.toModel()).toList(growable: false);
+      }
+    } catch (_) {}
+
+    final firstPage = await listPaginated(skip: 0, limit: 100);
+    return firstPage.items;
+  }
+
+  // -------------------- GET BY ID --------------------
+
   @override
   Future<Vehicle> getById(String vehicleId) async {
-    // 1) (opcional) precarga del cache a la VM si la usas
-    // ignore: unawaited_futures
-    _warmOneInBackground(vehicleId);
+    // 1) DB-first
+    try {
+      final cached = await vehiclesDao.byId(vehicleId);
+      if (cached != null) {
+        // refresco en background para no bloquear
+        _refreshOneInBackground(vehicleId);
+        return cached.toModel();
+      }
+    } catch (_) {}
 
-    // 2) red como siempre
+    // 2) Red y persistencia
     final v = await remoteRepo.getById(vehicleId);
-
-    // 3) upsert a DB
     await vehiclesDao.upsertAll([vehicleModelToDb(v)]);
     return v;
   }
 
-  /// Subida de foto: delega 1:1 (no cambiamos nada).
+  Future<void> _refreshOneInBackground(String id) async {
+    try {
+      final v = await remoteRepo.getById(id);
+      await vehiclesDao.upsertAll([vehicleModelToDb(v)]);
+    } catch (_) {
+      /* noop */
+    }
+  }
+
+  // -------------------- UPLOAD PHOTO --------------------
+
   @override
   Future<String> uploadVehiclePhoto({required XFile file}) {
     return remoteRepo.uploadVehiclePhoto(file: file);
   }
 
-  /// Create vehicle:
-  /// - Delegamos igual que antes para no cambiar contrato.
-  /// - Si quieres modo offline/outbox, lo agregamos como método NUEVO aparte para no romper.
+  // -------------------- CREATE VEHICLE --------------------
+
   @override
   Future<String> createVehicle({
     required String title,
@@ -131,31 +207,8 @@ class VehicleRepositoryCached implements VehicleRepository {
       imageUrl: imageUrl,
     );
 
-    // (Opcional) refresco/GET para asegurar cache
-    // ignore: unawaited_futures
-    _refreshOneAndCache(id);
+    // Warm-up DB para que la UI tenga el detalle enseguida
+    _refreshOneInBackground(id);
     return id;
-  }
-
-  // -------- Helpers internos (no rompen contrato) --------
-
-  Future<void> _warmCacheInBackground() async {
-    try {
-      // esto no afecta al retorno de list(), solo precalienta UI si la usas
-      await vehiclesDao.listAll();
-    } catch (_) {}
-  }
-
-  Future<void> _warmOneInBackground(String id) async {
-    try {
-      await vehiclesDao.byId(id);
-    } catch (_) {}
-  }
-
-  Future<void> _refreshOneAndCache(String id) async {
-    try {
-      final v = await remoteRepo.getById(id);
-      await vehiclesDao.upsertAll([vehicleModelToDb(v)]);
-    } catch (_) {}
   }
 }

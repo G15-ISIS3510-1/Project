@@ -15,6 +15,8 @@ class VehiclesDao extends DatabaseAccessor<AppDatabase>
   Future<List<VehiclesData>> listAll() =>
       (select(vehicles)..where((t) => t.isDeleted.equals(false))).get();
 
+  Future<List<VehicleDb>> listPage({required int skip, required int limit});
+
   Future<VehiclesData?> byId(String id) => (select(
     vehicles,
   )..where((t) => t.vehicleId.equals(id))).getSingleOrNull();

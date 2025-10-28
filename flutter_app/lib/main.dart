@@ -127,24 +127,30 @@ Future<void> main() async {
         // ─────────────────────────
         Provider<AppDatabase>(create: (_) => AppDatabase()),
         Provider<InfraDao>(create: (c) => InfraDao(c.read<AppDatabase>())),
-        Provider<VehiclesDao>(create: (c) => VehiclesDao(c.read<AppDatabase>())),
+        Provider<VehiclesDao>(
+          create: (c) => VehiclesDao(c.read<AppDatabase>()),
+        ),
         Provider<VehicleAvailabilityDao>(
-            create: (c) => VehicleAvailabilityDao(c.read<AppDatabase>())),
+          create: (c) => VehicleAvailabilityDao(c.read<AppDatabase>()),
+        ),
         Provider<PricingDao>(create: (c) => PricingDao(c.read<AppDatabase>())),
-        Provider<BookingsDao>(create: (c) => BookingsDao(c.read<AppDatabase>())),
+        Provider<BookingsDao>(
+          create: (c) => BookingsDao(c.read<AppDatabase>()),
+        ),
         Provider<ConversationsDao>(
-            create: (c) => ConversationsDao(c.read<AppDatabase>())),
-        Provider<MessagesDao>(create: (c) => MessagesDao(c.read<AppDatabase>())),
+          create: (c) => ConversationsDao(c.read<AppDatabase>()),
+        ),
+        Provider<MessagesDao>(
+          create: (c) => MessagesDao(c.read<AppDatabase>()),
+        ),
         Provider<KvDao>(create: (c) => KvDao(c.read<AppDatabase>())),
 
         // ─────────────────────────
         // Local sources / prefs / stores
         // ─────────────────────────
         Provider<VehicleLocalSource>(
-          create: (c) => VehicleLocalSource(
-            c.read<VehiclesDao>(),
-            c.read<InfraDao>(),
-          ),
+          create: (c) =>
+              VehicleLocalSource(c.read<VehiclesDao>(), c.read<InfraDao>()),
         ),
         Provider<AvailabilityLocalSource>(
           create: (c) => AvailabilityLocalSource(
@@ -153,16 +159,12 @@ Future<void> main() async {
           ),
         ),
         Provider<PricingLocalSource>(
-          create: (c) => PricingLocalSource(
-            c.read<PricingDao>(),
-            c.read<InfraDao>(),
-          ),
+          create: (c) =>
+              PricingLocalSource(c.read<PricingDao>(), c.read<InfraDao>()),
         ),
         Provider<BookingLocalSource>(
-          create: (c) => BookingLocalSource(
-            c.read<BookingsDao>(),
-            c.read<InfraDao>(),
-          ),
+          create: (c) =>
+              BookingLocalSource(c.read<BookingsDao>(), c.read<InfraDao>()),
         ),
         Provider<ConversationLocalSource>(
           create: (c) => ConversationLocalSource(
@@ -171,10 +173,8 @@ Future<void> main() async {
           ),
         ),
         Provider<MessageLocalSource>(
-          create: (c) => MessageLocalSource(
-            c.read<MessagesDao>(),
-            c.read<InfraDao>(),
-          ),
+          create: (c) =>
+              MessageLocalSource(c.read<MessagesDao>(), c.read<InfraDao>()),
         ),
         Provider<DraftsStore>(create: (c) => DraftsStore(c.read<KvDao>())),
         Provider<SuggestedPriceStore>(
@@ -197,7 +197,9 @@ Future<void> main() async {
         Provider<BookingService>(create: (_) => BookingService()),
         Provider<ChatService>(create: (_) => ChatService()),
         Provider<UserService>(create: (_) => UserService()),
-        Provider<AuthService>(create: (_) => AuthService(baseUrl: kApiBaseWithPrefix)),
+        Provider<AuthService>(
+          create: (_) => AuthService(baseUrl: kApiBaseWithPrefix),
+        ),
         Provider<AnalyticsRemoteSource>(
           create: (c) => AnalyticsRemoteSourceImpl(
             client: c.read<http.Client>(),
@@ -212,13 +214,16 @@ Future<void> main() async {
           create: (c) => UsersRepository(remote: c.read<UserService>()),
         ),
         Provider<VehicleRepositoryImpl>(
-          create: (c) => VehicleRepositoryImpl(remote: c.read<VehicleService>()),
+          create: (c) =>
+              VehicleRepositoryImpl(remote: c.read<VehicleService>()),
         ),
         Provider<AvailabilityRepositoryImpl>(
-          create: (c) => AvailabilityRepositoryImpl(remote: c.read<AvailabilityService>()),
+          create: (c) =>
+              AvailabilityRepositoryImpl(remote: c.read<AvailabilityService>()),
         ),
         Provider<PricingRepositoryImpl>(
-          create: (c) => PricingRepositoryImpl(remote: c.read<PricingService>()),
+          create: (c) =>
+              PricingRepositoryImpl(remote: c.read<PricingService>()),
         ),
         Provider<BookingsRepositoryImpl>(
           create: (c) => BookingsRepositoryImpl(c.read<BookingService>()),
@@ -247,7 +252,7 @@ Future<void> main() async {
         ),
         Provider<AvailabilityRepository>(
           create: (c) => AvailabilityRepositoryCached(
-            remoteRepo: c.read<AvailabilityRepositoryImpl>(),
+            remote: c.read<AvailabilityRepositoryImpl>(),
             local: c.read<AvailabilityLocalSource>(),
           ),
         ),
@@ -281,7 +286,8 @@ Future<void> main() async {
         // ViewModels
         // ─────────────────────────
         ChangeNotifierProvider<BookingReminderViewModel>(
-          create: (c) => BookingReminderViewModel(c.read<AnalyticsRepository>()),
+          create: (c) =>
+              BookingReminderViewModel(c.read<AnalyticsRepository>()),
         ),
         ChangeNotifierProvider<AuthViewModel>(
           create: (c) => AuthViewModel(
@@ -357,8 +363,14 @@ class MyApp extends StatelessWidget {
       titleMedium: TextStyle(fontFamily: 'Poppins', color: onBg),
       titleSmall: TextStyle(fontFamily: 'Poppins', color: onBg),
       bodyLarge: TextStyle(fontFamily: 'Poppins', color: onBg),
-      bodyMedium: TextStyle(fontFamily: 'Poppins', color: onBg.withOpacity(0.85)),
-      bodySmall: TextStyle(fontFamily: 'Poppins', color: onBg.withOpacity(0.70)),
+      bodyMedium: TextStyle(
+        fontFamily: 'Poppins',
+        color: onBg.withOpacity(0.85),
+      ),
+      bodySmall: TextStyle(
+        fontFamily: 'Poppins',
+        color: onBg.withOpacity(0.70),
+      ),
       labelLarge: TextStyle(fontFamily: 'Poppins', color: onBg),
       labelMedium: TextStyle(fontFamily: 'Poppins', color: onBg),
       labelSmall: TextStyle(fontFamily: 'Poppins', color: onBg),
@@ -390,7 +402,7 @@ class MyApp extends StatelessWidget {
           fontSize: 18,
         ).copyWith(color: scheme.onSurface),
       ),
-      cardTheme: const CardTheme().copyWith(
+      cardTheme: CardThemeData(
         color: scheme.surface,
         elevation: 0,
         margin: const EdgeInsets.all(8),
@@ -407,7 +419,10 @@ class MyApp extends StatelessWidget {
         filled: true,
         fillColor: scheme.surface,
         hintStyle: TextStyle(color: scheme.onSurfaceVariant),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: scheme.outlineVariant),
@@ -490,7 +505,7 @@ class MyApp extends StatelessWidget {
           fontSize: 18,
         ).copyWith(color: scheme.onSurface),
       ),
-      cardTheme: const CardTheme().copyWith(
+      cardTheme: CardThemeData(
         color: scheme.surface,
         elevation: 0,
         margin: const EdgeInsets.all(8),
@@ -507,7 +522,10 @@ class MyApp extends StatelessWidget {
         filled: true,
         fillColor: const Color(0xFF1C2230),
         hintStyle: TextStyle(color: scheme.onSurfaceVariant),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: scheme.outlineVariant),
@@ -595,9 +613,9 @@ class _SplashScreenState extends State<SplashScreen> {
     // Simple splash → login
     Future.delayed(const Duration(seconds: 2), () {
       if (!mounted) return;
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-      );
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const LoginScreen()));
     });
   }
 
