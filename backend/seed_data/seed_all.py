@@ -21,7 +21,7 @@ from .seed_vehicle_ratings import seed_vehicle_ratings
 # -----------------------------
 # CONFIG
 # -----------------------------
-BASE = os.getenv("SEED_BASE_URL", "https://qovo-api-gfa6drobhq-uc.a.run.app")
+BASE = os.getenv("SEED_BASE_URL", "https://qovo-api-862569067561.us-central1.run.app")
 ADMIN_EMAIL = os.getenv("SEED_EMAIL", "admin@example.com")
 ADMIN_PASSWORD = os.getenv("SEED_PASSWORD", "supersecret")
 ADMIN_ROLE = os.getenv("SEED_ROLE", "host")

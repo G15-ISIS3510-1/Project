@@ -9,7 +9,7 @@
 //   static String baseUrl =
 //       const String.fromEnvironment(
 //         'API_BASE',
-//         defaultValue: 'https://qovo-api-gfa6drobhq-uc.a.run.app',
+//         defaultValue: 'https://qovo-api-862569067561.us-central1.run.app',
 //       ) +
 //       '/api';
 //   static String? token;

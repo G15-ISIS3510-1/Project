@@ -3,7 +3,7 @@
 // import 'package:http/http.dart' as http;
 
 // class UsersApi {
-//   final String baseUrl; // ej: https://qovo-api-gfa6drobhq-uc.a.run.app/api
+//   final String baseUrl; // ej: https://qovo-api-862569067561.us-central1.run.app/api
 //   final String token;
 //   UsersApi({required this.baseUrl, required this.token});
 

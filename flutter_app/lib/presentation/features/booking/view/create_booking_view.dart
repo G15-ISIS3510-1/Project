@@ -57,9 +57,7 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
       text: (widget.initialDailyPrice ?? 50).toStringAsFixed(2),
     );
 
-    _availabilityRepo = AvailabilityRepositoryImpl(
-      remote: AvailabilityService(),
-    );
+    _availabilityRepo = context.read<AvailabilityRepository>();
 
     if (widget.initialVehicleId.isNotEmpty) {
       _loadAvailability(widget.initialVehicleId);
@@ -335,7 +333,7 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
   @override
   Widget build(BuildContext context) {
     final chatRepo = context.read<ChatRepository>();
-    final bookingRepo = BookingsRepositoryImpl(BookingService());
+    final bookingRepo = context.read<BookingsRepository>();
 
     // Textos de disponibilidad (se muestran en "Datos de la Reserva")
     String topAvailLine1 = '';

@@ -1,6 +1,10 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter_app/data/database/daos/conversations_dao.dart';
+import 'package:flutter_app/data/database/daos/infra_dao.dart';
+import 'package:flutter_app/data/models/conversation_model.dart';
 import 'package:flutter_app/data/models/message_model.dart';
 import 'package:flutter_app/data/repositories/chat_repository.dart';
+import 'package:flutter_app/data/sources/local/conversation_local_source.dart';
 
 enum ConvStatus { loading, ready, error }
 

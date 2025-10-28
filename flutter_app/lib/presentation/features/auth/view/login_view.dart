@@ -27,7 +27,7 @@ import 'package:flutter_app/main.dart' show AuthProvider;
 
 //   final String baseUrl = const String.fromEnvironment(
 //     'API_BASE',
-//     defaultValue: 'https://qovo-api-gfa6drobhq-uc.a.run.app',
+//     defaultValue: 'https://qovo-api-862569067561.us-central1.run.app',
 //   );
 
 //   bool _loading = false;

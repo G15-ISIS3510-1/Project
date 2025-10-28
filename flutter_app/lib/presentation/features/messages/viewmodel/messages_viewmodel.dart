@@ -1,14 +1,6 @@
-// lib/presentation/features/messages/viewmodel/messages_viewmodel.dart
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_app/data/repositories/chat_repository.dart';
 import 'package:flutter_app/data/repositories/users_repository.dart';
-import 'package:http/http.dart' as http;
-
-import 'package:flutter_app/data/models/conversation_model.dart';
-import 'package:flutter_app/data/models/message_model.dart';
-
-import 'package:flutter_app/data/sources/remote/chat_remote_source.dart'; // ChatService
 
 class ConversationUI {
   final String conversationId;
@@ -49,12 +41,15 @@ class ConversationUI {
 class MessagesViewModel extends ChangeNotifier {
   final ChatRepository _chat;
   final UsersRepository _users;
+  final String currentUserId;
 
-  MessagesViewModel({ChatRepository? chat, UsersRepository? users})
-    : _chat = chat ?? ChatRepositoryImpl(remote: ChatService()),
-      _users = users ?? UsersRepository();
+  MessagesViewModel({
+    required ChatRepository chat,
+    required UsersRepository users,
+    required this.currentUserId,
+  }) : _chat = chat,
+       _users = users;
 
-  String _currentUserId = '';
   bool _isHostMode = false;
 
   // state
@@ -73,20 +68,17 @@ class MessagesViewModel extends ChangeNotifier {
     if (_query.trim().isEmpty) return _items;
     final q = _query.trim().toLowerCase();
     return _items
-        .where((e) {
-          return e.title.toLowerCase().contains(q) ||
-              e.preview.toLowerCase().contains(q);
-        })
+        .where(
+          (e) =>
+              e.title.toLowerCase().contains(q) ||
+              e.preview.toLowerCase().contains(q),
+        )
         .toList(growable: false);
-  }
-
-  void setCurrentUser(String id) {
-    _currentUserId = id;
   }
 
   void setIsHostMode(bool v) {
     _isHostMode = v;
-    refresh(); // recargar filtrando según modo
+    refresh();
   }
 
   void setQuery(String q) {
@@ -95,22 +87,23 @@ class MessagesViewModel extends ChangeNotifier {
   }
 
   Future<void> refresh() async {
-    if (_currentUserId.isEmpty) return;
     _loading = true;
     _error = null;
     notifyListeners();
+
     try {
+      // 1) lista de conversaciones (cache-first en repo)
       final convs = await _chat.listConversations(skip: 0, limit: 100);
+
       final ui = <ConversationUI>[];
 
       for (final c in convs) {
-        final otherId = c.otherUserId(_currentUserId);
+        final otherId = c.otherUserId(currentUserId);
 
         // role (con cache)
         final otherRole =
             _roleCache[otherId] ??
-            await _users.getUserRole(otherId) ??
-            'renter';
+            (await _users.getUserRole(otherId) ?? 'renter');
         _roleCache[otherId] = otherRole;
 
         // filtrar por modo
@@ -123,17 +116,23 @@ class MessagesViewModel extends ChangeNotifier {
                 'User • ${otherId.substring(0, 6)}');
         _nameCache[otherId] = name;
 
-        // último mensaje del hilo (backend devuelve DESC; pedimos limit=1)
-        final lastList = await _chat.getThread(otherId, limit: 1);
-        final last = lastList.isNotEmpty ? lastList.first : null;
+        // 2) PREVIEW local-first (usa ChatRepositoryCached.getLastMessageInThread)
+        final last = await _chat.getLastMessageInThread(otherId);
 
-        // cantidad de no leídos (soloUnread)
-        final unreadList = await _chat.getThread(
-          otherId,
-          onlyUnread: true,
-          limit: 100,
-        );
-        final unread = unreadList.length;
+        // 3) UNREAD local (si el repo es Cached); si no, 0 o un fallback liviano
+        int unread = 0;
+        if (_chat is dynamic) {
+          try {
+            // try-cast seguro en runtime a ChatRepositoryCached sin importar import cycles
+            final cached = _chat as dynamic;
+            if (c.conversationId.isNotEmpty) {
+              unread = await cached.getUnreadCountLocal(c.conversationId);
+            }
+          } catch (_) {
+            // Fallback remoto (pesado): desaconsejado, pero dejar en 0 evita N llamadas
+            unread = 0;
+          }
+        }
 
         ui.add(
           ConversationUI(
@@ -141,13 +140,13 @@ class MessagesViewModel extends ChangeNotifier {
             otherUserId: otherId,
             title: name,
             preview: last?.content ?? 'Tap to open chat',
-            lastAt: last?.createdAt ?? c.lastMessageAt,
+            lastAt: last?.createdAt ?? c.lastMessageAt ?? c.createdAt,
             unread: unread,
           ),
         );
       }
 
-      // orden por recientes
+      // 4) ordenar por recientes
       ui.sort((a, b) {
         final ta = a.lastAt?.millisecondsSinceEpoch ?? 0;
         final tb = b.lastAt?.millisecondsSinceEpoch ?? 0;
@@ -157,6 +156,10 @@ class MessagesViewModel extends ChangeNotifier {
       _items = ui;
       _loading = false;
       notifyListeners();
+
+      // (Opcional) refresco silencioso de conversaciones
+      // ignore: unawaited_futures
+      _chat.listConversations(skip: 0, limit: 100);
     } catch (e) {
       _error = e.toString();
       _loading = false;
@@ -164,7 +167,7 @@ class MessagesViewModel extends ChangeNotifier {
     }
   }
 
-  // limpiar puntito localmente
+  // limpiar badge localmente (al entrar a un chat)
   void markSeenLocally(int index) {
     if (index < 0 || index >= _items.length) return;
     _items[index] = _items[index].copyWith(unread: 0);
