@@ -47,7 +47,7 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
   static const _storage = FlutterSecureStorage();
   final String baseUrl = const String.fromEnvironment(
     'API_BASE',
-    defaultValue: 'https://qovo-api-gfa6drobhq-uc.a.run.app',
+    defaultValue: 'https://qovo-api-862569067561.us-central1.run.app',
   );
 
   late Future<UserProfile> _futureProfile;

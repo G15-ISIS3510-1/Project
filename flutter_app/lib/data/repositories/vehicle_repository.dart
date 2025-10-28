@@ -9,7 +9,12 @@ import 'package:flutter_app/data/sources/remote/vehicle_remote_source.dart';
 import 'package:flutter/foundation.dart';
 
 abstract class VehicleRepository {
+  /// Returns only the first page's items (kept for backwards compat).
   Future<List<Vehicle>> list();
+
+  /// New: returns a paginated slice with metadata (skip/limit/hasMore).
+  Future<Paginated<Vehicle>> listPaginated({int skip, int limit});
+
   Future<Vehicle> getById(String vehicleId);
 
   Future<String> uploadVehiclePhoto({required XFile file});
@@ -38,8 +43,8 @@ class VehicleRepositoryImpl implements VehicleRepository {
   VehicleRepositoryImpl({required this.remote});
 
   @override
-  Future<List<Vehicle>> list() async {
-    final res = await remote.list();
+  Future<Paginated<Vehicle>> listPaginated({int skip = 0, int limit = 100}) async {
+    final res = await remote.list(skip: skip, limit: limit);
 
     if (res.statusCode == 401) {
       throw Exception('Unauthorized: missing/invalid token for GET /vehicles');
@@ -48,8 +53,13 @@ class VehicleRepositoryImpl implements VehicleRepository {
       throw Exception('Vehicles list ${res.statusCode}: ${res.body}');
     }
 
-    final page = parsePaginated<Vehicle>(res.body, (m) => Vehicle.fromJson(m));
-    return page.items; // usa page.hasMore/page.nextCursor si lo necesitas
+    return parsePaginated<Vehicle>(res.body, (m) => Vehicle.fromJson(m));
+  }
+
+  @override
+  Future<List<Vehicle>> list() async {
+    final page = await listPaginated(skip: 0, limit: 100);
+    return page.items; // keeps old behavior
   }
 
   @override

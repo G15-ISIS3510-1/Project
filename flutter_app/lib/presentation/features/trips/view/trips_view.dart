@@ -19,10 +19,10 @@ class _TripsViewState extends State<TripsView> {
   static const double kBarHeight = 76;
   static const double kBarVPad = 12;
 
-  // ¡Inicialízalo aquí para evitar LateInitializationError!
   final ScrollController _scroll = ScrollController();
 
   @override
+<<<<<<< HEAD
   void initState() {
     super.initState();
     _scroll.addListener(() {
@@ -42,6 +42,8 @@ class _TripsViewState extends State<TripsView> {
   }
 
   @override
+=======
+>>>>>>> 7d9e48d (mark xii)
   void dispose() {
     _scroll.dispose();
     super.dispose();
@@ -53,9 +55,10 @@ class _TripsViewState extends State<TripsView> {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
 
-    final vm = context.watch<TripsViewModel>(); // ✅ usa el provider global
+    final vm = context.watch<TripsViewModel>();
     final status = vm.status;
 
+    // ---------- BODY (list / empty / error / loading) ----------
     Widget sliverBody;
     if (status == TripsStatus.loading && !vm.isRefreshing) {
       sliverBody = const SliverFillRemaining(
@@ -118,21 +121,20 @@ class _TripsViewState extends State<TripsView> {
         sliverBody = SliverPadding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           sliver: SliverList.separated(
-            itemCount: items.length + (vm.hasMore ? 1 : 0),
+            itemCount: items.length,
             separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemBuilder: (_, i) {
-              if (i >= items.length) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  child: Center(child: CircularProgressIndicator()),
-                );
-              }
               return TripCard(item: items[i]);
             },
           ),
         );
       }
     }
+
+    // Show the pager pill whenever we’re not in the very first idle/loading
+    final showPager = status == TripsStatus.ready ||
+        status == TripsStatus.error ||
+        vm.isRefreshing;
 
     return Scaffold(
       extendBody: true,
@@ -144,7 +146,7 @@ class _TripsViewState extends State<TripsView> {
           child: CustomScrollView(
             controller: _scroll,
             slivers: [
-              // Header
+              // Header (logo + search)
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
@@ -171,7 +173,8 @@ class _TripsViewState extends State<TripsView> {
                   ),
                 ),
               ),
-              // Filtros
+
+              // Filtros (All / Booked / History)
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
@@ -181,9 +184,51 @@ class _TripsViewState extends State<TripsView> {
                   ),
                 ),
               ),
-              // Lista / estados
+
+              // Pager pill (centered) styled like Home vehicles
+              if (showPager)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+                    child: Center(
+                      child: _PagerPill(
+                        pageNumber: vm.pageNumber,
+                        canPrev: vm.canPrevPage,
+                        canNext: vm.canNextPage,
+                        onPrev: vm.canPrevPage
+                            ? () {
+                                vm.prevPage();
+                                // optional: jump back to top smoothly
+                                _scroll.animateTo(
+                                  0,
+                                  duration:
+                                      const Duration(milliseconds: 250),
+                                  curve: Curves.easeOut,
+                                );
+                              }
+                            : null,
+                        onNext: vm.canNextPage
+                            ? () async {
+                                await vm.nextPage();
+                                if (mounted) {
+                                  _scroll.animateTo(
+                                    0,
+                                    duration: const Duration(
+                                        milliseconds: 250),
+                                    curve: Curves.easeOut,
+                                  );
+                                }
+                              }
+                            : null,
+                      ),
+                    ),
+                  ),
+                ),
+
+              // The bookings for this page
               sliverBody,
-              // espacio final por si tienes bottom bar
+
+              // Spacer so bottom nav bar doesn't cover last card
               SliverToBoxAdapter(
                 child: SizedBox(
                   height: kBarHeight + kBarVPad + bottomInset + 8,
@@ -192,6 +237,89 @@ class _TripsViewState extends State<TripsView> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Small rounded pill with "<   N   >"
+/// Matches the style you showed on the car list.
+class _PagerPill extends StatelessWidget {
+  final int pageNumber;
+  final bool canPrev;
+  final bool canNext;
+  final VoidCallback? onPrev;
+  final VoidCallback? onNext;
+
+  const _PagerPill({
+    required this.pageNumber,
+    required this.canPrev,
+    required this.canNext,
+    required this.onPrev,
+    required this.onNext,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+
+    Color _arrowColor(bool enabled) =>
+        enabled ? scheme.onSurface : scheme.onSurface.withOpacity(0.35);
+
+    Widget _arrow({
+      required IconData icon,
+      required bool enabled,
+      required VoidCallback? onTap,
+    }) {
+      return InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: enabled ? onTap : null,
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Icon(
+            icon,
+            size: 20,
+            color: _arrowColor(enabled),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: scheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: scheme.outlineVariant,
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _arrow(
+            icon: Icons.chevron_left,
+            enabled: canPrev,
+            onTap: onPrev,
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              '$pageNumber',
+              style: text.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: scheme.onSurface,
+              ),
+            ),
+          ),
+          _arrow(
+            icon: Icons.chevron_right,
+            enabled: canNext,
+            onTap: onNext,
+          ),
+        ],
       ),
     );
   }
