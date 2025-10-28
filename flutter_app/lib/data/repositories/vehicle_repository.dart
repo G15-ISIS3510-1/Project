@@ -1,40 +1,30 @@
+// lib/data/repositories/vehicle_repository.dart
 import 'dart:convert';
 import 'package:flutter_app/app/utils/pagination.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_app/data/models/vehicle_model.dart';
 import 'package:flutter_app/data/sources/remote/vehicle_remote_source.dart';
-
-// Added to use compute for background parsing
-import 'package:flutter/foundation.dart';
-
-// NEW: LRU cache
+import 'package:flutter/foundation.dart'; // (you already had this imported)
 import 'package:flutter_app/app/utils/lru_cache.dart';
 
 abstract class VehicleRepository {
-  /// Returns only the first page's items (kept for backwards compat).
   Future<List<Vehicle>> list();
-
-  /// New: returns a paginated slice with metadata (skip/limit/hasMore).
   Future<Paginated<Vehicle>> listPaginated({int skip, int limit});
-
   Future<Vehicle> getById(String vehicleId);
-
   Future<String> uploadVehiclePhoto({required XFile file});
-
-  /// Crea vehículo y devuelve su `vehicle_id`.
   Future<String> createVehicle({
     required String title,
     required String make,
     required String model,
     required int year,
-    required String transmission, // 'AT' | 'MT'
+    required String transmission,
     required double pricePerDay,
     required String plate,
     required int seats,
-    required String fuelType, // 'gas' | 'diesel' | 'hybrid' | 'ev'
+    required String fuelType,
     required int mileage,
-    required String status, // 'active' | 'inactive' | ...
+    required String status,
     required double lat,
     required double lng,
     String? imageUrl,
@@ -44,26 +34,35 @@ abstract class VehicleRepository {
 class VehicleRepositoryImpl implements VehicleRepository {
   final VehicleService remote;
 
-  // --- NEW: repo-level LRU page cache (key = skip of 100-chunk) ---
-  // Keep the most recently used 3 chunks (≈ 300 vehicles) in memory.
-  // Each chunk is exactly what your UI already asks: limit=100.
+  // Page-cache (100-vehicle pages) keyed by "skip". Low impact but harmless.
   final LruCache<int, Paginated<Vehicle>> _pageCache =
       LruCache<int, Paginated<Vehicle>>(3);
 
+  // NEW: hot-detail cache for specific vehicles by ID.
+  // Capacity decision:
+  //   - 20 means "remember the last ~20 detail screens the user opened".
+  //   - If they open 21st unique vehicle, the least recently viewed is evicted.
+  final LruCache<String, Vehicle> _vehicleDetailCache =
+      LruCache<String, Vehicle>(20);
+
   VehicleRepositoryImpl({required this.remote});
 
-  /// Clears the in-memory cache (call on pull-to-refresh or logout).
-  void clearCache() => _pageCache.clear();
+  void clearCache() {
+    _pageCache.clear();
+    _vehicleDetailCache.clear();
+  }
 
   @override
-  Future<Paginated<Vehicle>> listPaginated({int skip = 0, int limit = 100}) async {
-    // 1) Try cache first (LRU by [skip])
+  Future<Paginated<Vehicle>> listPaginated({
+    int skip = 0,
+    int limit = 100,
+  }) async {
+    // Try LRU for this chunk first
     final cached = _pageCache.get(skip);
     if (cached != null && (cached.limit == 0 || cached.limit == limit)) {
       return cached;
     }
 
-    // 2) Otherwise hit network and cache the result
     final res = await remote.list(skip: skip, limit: limit);
 
     if (res.statusCode == 401) {
@@ -74,6 +73,7 @@ class VehicleRepositoryImpl implements VehicleRepository {
     }
 
     final page = parsePaginated<Vehicle>(res.body, (m) => Vehicle.fromJson(m));
+
     _pageCache.put(skip, page);
     return page;
   }
@@ -81,8 +81,60 @@ class VehicleRepositoryImpl implements VehicleRepository {
   @override
   Future<List<Vehicle>> list() async {
     final page = await listPaginated(skip: 0, limit: 100);
-    return page.items; // keeps old behavior
+    return page.items;
   }
+
+  @override
+  Future<Vehicle> getById(String vehicleId) async {
+    // 1. Try detail LRU first
+    final cached = _vehicleDetailCache.get(vehicleId);
+    if (cached != null) {
+      debugPrint(
+        '[VehicleRepository] getById("$vehicleId") -> LRU HIT '
+        '(cache size=${_vehicleDetailCache.length})',
+      );
+      return cached;
+    }
+
+    // 2. Cache miss, go to network
+    debugPrint(
+      '[VehicleRepository] getById("$vehicleId") -> LRU MISS, fetching remote...',
+    );
+
+    final res = await remote.getById(vehicleId);
+
+    if (res.statusCode != 200) {
+      debugPrint(
+        '[VehicleRepository] getById("$vehicleId") -> remote ERROR '
+        '${res.statusCode}: ${res.body}',
+      );
+      throw Exception('Get vehicle ${res.statusCode}: ${res.body}');
+    }
+
+    final decoded = jsonDecode(res.body);
+
+    Vehicle v;
+    if (decoded is List && decoded.isNotEmpty) {
+      v = Vehicle.fromJson(decoded.first as Map<String, dynamic>);
+    } else if (decoded is Map<String, dynamic>) {
+      v = Vehicle.fromJson(decoded);
+    } else {
+      debugPrint(
+        '[VehicleRepository] getById("$vehicleId") -> remote payload not understood',
+      );
+      throw Exception('Unexpected vehicle payload');
+    }
+
+    // 3. Store in LRU so next time we hit the fast path
+    _vehicleDetailCache.put(vehicleId, v);
+    debugPrint(
+      '[VehicleRepository] getById("$vehicleId") -> stored in LRU '
+      '(cache size=${_vehicleDetailCache.length})',
+    );
+
+    return v;
+  }
+
 
   @override
   Future<String> uploadVehiclePhoto({required XFile file}) async {
@@ -113,25 +165,6 @@ class VehicleRepositoryImpl implements VehicleRepository {
   }
 
   @override
-  Future<Vehicle> getById(String vehicleId) async {
-    final res = await remote.getById(vehicleId);
-
-    if (res.statusCode != 200) {
-      throw Exception('Get vehicle ${res.statusCode}: ${res.body}');
-    }
-
-    final decoded = jsonDecode(res.body);
-
-    if (decoded is List && decoded.isNotEmpty) {
-      return Vehicle.fromJson(decoded.first as Map<String, dynamic>);
-    }
-    if (decoded is Map<String, dynamic>) {
-      return Vehicle.fromJson(decoded);
-    }
-    throw Exception('Unexpected vehicle payload');
-  }
-
-  @override
   Future<String> createVehicle({
     required String title,
     required String make,
@@ -148,7 +181,6 @@ class VehicleRepositoryImpl implements VehicleRepository {
     required double lng,
     String? imageUrl,
   }) async {
-    // Snake_case para FastAPI/Pydantic
     final body = <String, dynamic>{
       'title': title,
       'make': make,
@@ -172,22 +204,29 @@ class VehicleRepositoryImpl implements VehicleRepository {
       throw Exception('Create vehicle ${res.statusCode}: ${res.body}');
     }
 
-    // Acepta múltiples formatos de respuesta
     final decoded = jsonDecode(res.body);
     if (decoded is Map<String, dynamic>) {
       final id1 = decoded['vehicle_id'];
-      if (id1 is String && id1.isNotEmpty) return id1;
+      if (id1 is String && id1.isNotEmpty) {
+        // you may also put this new Vehicle in _vehicleDetailCache if you built it.
+        return id1;
+      }
 
       final data = decoded['data'];
       if (data is Map<String, dynamic>) {
         final id2 = data['vehicle_id'];
-        if (id2 is String && id2.isNotEmpty) return id2;
+        if (id2 is String && id2.isNotEmpty) {
+          return id2;
+        }
       }
 
-      // objeto completo del vehículo
+      // Fallback: if backend actually returned a full vehicle
       try {
         final v = Vehicle.fromJson(decoded);
-        if (v.vehicle_id.isNotEmpty) return v.vehicle_id;
+        if (v.vehicle_id.isNotEmpty) {
+          _vehicleDetailCache.put(v.vehicle_id, v); // warm cache
+          return v.vehicle_id;
+        }
       } catch (_) {}
     }
 

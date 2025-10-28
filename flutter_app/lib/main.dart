@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart'; // for WidgetsFlutterBinding (Material also exports it, but it's fine)
+import 'package:flutter/widgets.dart'; // WidgetsFlutterBinding
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
@@ -12,6 +12,7 @@ import 'package:flutter_app/data/sources/remote/pricing_remote_source.dart';
 import 'package:flutter_app/data/sources/remote/user_remote_source.dart';
 import 'package:flutter_app/data/sources/remote/vehicle_remote_source.dart';
 import 'package:flutter_app/data/sources/remote/analytics_remote_source.dart';
+import 'package:flutter_app/data/sources/remote/availability_remote_source.dart'; // 👈 NEW
 
 import 'package:flutter_app/data/repositories/auth_repository.dart';
 import 'package:flutter_app/data/repositories/booking_repository.dart';
@@ -19,6 +20,7 @@ import 'package:flutter_app/data/repositories/chat_repository.dart';
 import 'package:flutter_app/data/repositories/pricing_repository.dart';
 import 'package:flutter_app/data/repositories/vehicle_repository.dart';
 import 'package:flutter_app/data/repositories/analytics_repository.dart';
+import 'package:flutter_app/data/repositories/availability_repository.dart'; // 👈 NEW
 
 import 'package:flutter_app/presentation/features/app_shell/viewmodel/host_mode_provider.dart';
 import 'package:flutter_app/presentation/features/auth/view/login_view.dart';
@@ -67,11 +69,11 @@ const String kApiBaseWithPrefix = kApiBase;
 /// - ensures bindings
 /// - loads intl date symbols (fixes TripsViewModel date formatting crash)
 /// - sets Api base
-/// - builds providers
+/// - builds providers (including shared repos so LRU caches persist)
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // ⬅ THIS fixes the "LocaleDataException: call initializeDateFormatting"
+  // ⬅ fixes "LocaleDataException: call initializeDateFormatting"
   await initializeDateFormatting();
 
   // init singletons / services
@@ -83,12 +85,17 @@ Future<void> main() async {
   runApp(
     MultiProvider(
       providers: [
-        // session + app mode
+        // ─────────────────────────
+        // session + app mode state
+        // ─────────────────────────
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => HostModeProvider()),
         ChangeNotifierProvider(create: (_) => ThemeController()),
 
-        // low-level services / sources
+        // ─────────────────────────
+        // low-level services / remote sources
+        // (1 instance each for the whole app)
+        // ─────────────────────────
         Provider<Api>.value(value: api),
         Provider<http.Client>.value(value: httpClient),
 
@@ -97,6 +104,8 @@ Future<void> main() async {
         Provider<ChatService>(create: (_) => ChatService()),
         Provider<UserService>(create: (_) => UserService()),
         Provider<BookingService>(create: (_) => BookingService()),
+        Provider<AvailabilityService>(create: (_) => AvailabilityService()), // 👈 NEW
+
         Provider<AuthService>(
           create: (_) => AuthService(baseUrl: kApiBaseWithPrefix),
         ),
@@ -108,7 +117,13 @@ Future<void> main() async {
           ),
         ),
 
+        // ─────────────────────────
         // repositories
+        // (CRITICAL: these are long-lived singletons in memory)
+        //
+        // This is what lets our in-memory LRU caches
+        // actually persist between screens.
+        // ─────────────────────────
         Provider<BookingsRepository>(
           create: (ctx) => BookingsRepositoryImpl(
             ctx.read<BookingService>(),
@@ -127,7 +142,6 @@ Future<void> main() async {
         Provider<AuthRepository>(
           create: (ctx) => AuthRepositoryImpl(
             remote: ctx.read<AuthService>(),
-            // if AuthRepositoryImpl also needs storage/local cache, add it here
           ),
         ),
         Provider<PricingRepository>(
@@ -140,8 +154,15 @@ Future<void> main() async {
             remoteSource: ctx.read<AnalyticsRemoteSource>(),
           ),
         ),
+        Provider<AvailabilityRepository>(
+          create: (ctx) => AvailabilityRepositoryImpl(
+            remote: ctx.read<AvailabilityService>(),
+          ),
+        ), // 👈 NEW: shared AvailabilityRepository with LRU cache inside
 
-        // viewmodels (global / long-lived tabs)
+        // ─────────────────────────
+        // viewmodels (global / tab-scoped / app-scoped)
+        // ─────────────────────────
 
         /// Reminders analytics VM
         ChangeNotifierProvider<BookingReminderViewModel>(
@@ -159,6 +180,8 @@ Future<void> main() async {
         ),
 
         /// Home tab VM (renter browse vehicles)
+        /// NOTE: it reads VehicleRepositoryImpl which is now shared above,
+        /// so VehicleRepositoryImpl keeps its LRU cache in memory.
         ChangeNotifierProvider<HomeViewModel>(
           create: (ctx) => HomeViewModel(
             vehicles: ctx.read<VehicleRepository>(),
@@ -166,7 +189,7 @@ Future<void> main() async {
           ),
         ),
 
-        /// Host home tab VM (my fleet, pricing)
+        /// Host home tab VM (my fleet, pricing, etc.)
         ChangeNotifierProvider<HostHomeViewModel>(
           create: (ctx) => HostHomeViewModel(
             vehiclesRepo: ctx.read<VehicleRepository>(),
@@ -189,16 +212,19 @@ Future<void> main() async {
         ),
 
         /// Trips tab VM (bookings list)
-        /// NOTE: .init() is called here so the first Trips screen render
-        /// can just read data instead of kicking off work every time.
+        /// We call .init() here so that the first Trips screen render
+        /// already has begun loading.
         ChangeNotifierProvider<TripsViewModel>(
-          create: (ctx) =>
-              TripsViewModel(
-                ctx.read<BookingsRepository>(),
-              )..init(),
+          create: (ctx) => TripsViewModel(
+            ctx.read<BookingsRepository>(),
+          )..init(),
         ),
 
-        /// BookingViewModel used in booking details / chat-from-booking
+        /// Global BookingViewModel
+        /// (Screens can also inject their own local BookingViewModel
+        /// if they need a fresh form lifecycle, but having this here lets
+        /// other parts of the app access the same repos without
+        /// rebuilding them.)
         ChangeNotifierProvider<BookingViewModel>(
           create: (ctx) => BookingViewModel(
             bookingsRepo: ctx.read<BookingsRepository>(),
