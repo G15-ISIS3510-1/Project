@@ -58,35 +58,26 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
       text: (widget.initialDailyPrice ?? 50).toStringAsFixed(2),
     );
 
-    // pessimistically assume we need to load
+    // Cargamos solo si hay vehicleId
     _loadingSlots = widget.initialVehicleId.isNotEmpty;
 
-    // we can't call context.read<...>() before initState finishes,
-    // so we defer availability fetch one frame:
+    // No usamos context.read<> antes de que termine initState
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       if (widget.initialVehicleId.isNotEmpty) {
         final availabilityRepo = context.read<AvailabilityRepository>();
         _loadAvailability(availabilityRepo, widget.initialVehicleId);
+      } else {
+        setState(() => _loadingSlots = false);
       }
     });
   }
 
-  /// Loads availability for this vehicle using the shared AvailabilityRepository.
-  ///
-  /// AvailabilityRepository.getAllByVehicle():
-  ///   - internally fetches all pages (100 at a time)
-  ///   - merges them
-  ///   - caches them in an in-memory LRU keyed by vehicleId
-  ///   - returns cached data instantly on repeat calls in this app session
-  ///
-  /// We also guard `mounted` before setState() to avoid the
-  /// "setState() called after dispose()" error.
+  /// Cargar disponibilidad con el repo compartido (cache LRU in-memory)
   Future<void> _loadAvailability(
     AvailabilityRepository repo,
     String vehicleId,
   ) async {
-    // show spinner UI
     if (mounted) {
       setState(() {
         _loadingSlots = true;
@@ -110,7 +101,7 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
 
     final allWindows = res.okOrNull ?? const [];
 
-    // Adjust to local tz, and show only "available" windows in UI
+    // Ajustamos a tz local y filtramos sólo type=available
     final fixed = allWindows
         .map(
           (w) => AvailabilityWindow(
@@ -146,13 +137,13 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
     if (_startDateTime == null || _endDateTime == null) return;
     final dp = double.tryParse(_dailyPriceC.text) ?? 0.0;
 
-    // at least 1 day, round up by hours
+    // mínimo 1 día (redondeo hacia arriba por horas)
     final hours = _endDateTime!.difference(_startDateTime!).inHours;
     final days = (hours / 24).ceil().clamp(1, 365);
 
     final subtotal = dp * days;
-    final fees = subtotal * 0.05; // your rule
-    final taxes = subtotal * 0.10; // your rule
+    final fees = subtotal * 0.05; // regla actual
+    final taxes = subtotal * 0.10; // regla actual
     final total = subtotal + fees + taxes;
 
     _subtotalC.text = subtotal.toStringAsFixed(2);
@@ -160,9 +151,7 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
     _taxesC.text = taxes.toStringAsFixed(2);
     _totalC.text = total.toStringAsFixed(2);
 
-    if (mounted) {
-      setState(() {});
-    }
+    if (mounted) setState(() {});
   }
 
   InputDecoration _dec(BuildContext context, String hint) {
@@ -194,7 +183,6 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
   }
 
   Future<void> _pickDateTime(bool isStart, StateSetter setter) async {
-    // ⚠️ not constraining by availability slots yet
     final now = DateTime.now();
 
     final pickedDate = await showDatePicker(
@@ -226,7 +214,6 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
     setter(() {
       if (isStart) {
         _startDateTime = picked;
-        // If end already chosen but <= start, invalidate end
         if (_endDateTime != null && !_endDateTime!.isAfter(_startDateTime!)) {
           _endDateTime = null;
         }
@@ -235,7 +222,6 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
       }
     });
 
-    // Basic validation: end must be strictly after start
     if (!isStart &&
         _startDateTime != null &&
         !_endDateTime!.isAfter(_startDateTime!)) {
@@ -263,9 +249,11 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
       keyboardType: kt,
       decoration: _dec(context, hint).copyWith(labelText: label),
       validator: (v) {
-        if (ro) return null; // read-only fields skip validation
+        if (ro) return null;
         if (v == null || v.trim().isEmpty) return '$label es requerido';
-        if (kt == const TextInputType.numberWithOptions(decimal: true) &&
+        // Validación numérica básica si es number/decimal
+        if ((kt == TextInputType.number ||
+                kt == const TextInputType.numberWithOptions(decimal: true)) &&
             double.tryParse(v) == null) {
           return 'Debe ser un número válido';
         }
@@ -278,14 +266,12 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
   Future<void> _submit() async {
     final vm = context.read<BookingViewModel>();
 
-    // basic form validation
+    // validación básica
     if (!_formKey.currentState!.validate()) return;
 
     if (_startDateTime == null || _endDateTime == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Selecciona fechas/horas de inicio y fin'),
-        ),
+        const SnackBar(content: Text('Selecciona fechas/horas de inicio y fin')),
       );
       return;
     }
@@ -318,8 +304,8 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
 
     final booking = BookingCreateModel(
       vehicleId: vehicleId,
-      renterId: renterId, // backend expects this to match auth token user
-      hostId: hostId, // backend expects this to match vehicle owner
+      renterId: renterId,
+      hostId: hostId,
       insurancePlanId: _insurancePlanIdC.text.trim().isEmpty
           ? null
           : _insurancePlanIdC.text.trim(),
@@ -349,25 +335,19 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // We still want a BookingViewModel that is "screen scoped"
-    // (fresh form state, loading state, etc.). But instead of
-    // constructing new repositories, we reuse the shared ones
-    // from Provider so the caches are still shared.
+    // Reusamos repos compartidos (cache) de Provider
     final chatRepo = context.read<ChatRepository>();
     final bookingsRepo = context.read<BookingsRepository>();
 
-    // Human-readable availability summary at the top of the form
+    // Línea superior con resumen de disponibilidad
     String topAvailLine1 = '';
     String topAvailLine2 = '';
     if (_slotsError != null) {
       topAvailLine1 = 'Error al cargar disponibilidad.';
-      topAvailLine2 = '';
     } else if (_loadingSlots) {
       topAvailLine1 = 'Cargando disponibilidad...';
-      topAvailLine2 = '';
     } else if (_slots.isEmpty) {
       topAvailLine1 = 'No hay disponibilidad para este vehículo.';
-      topAvailLine2 = '';
     } else {
       final first = _slots.first.start;
       final last = _slots.last.end;
@@ -398,7 +378,7 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
                       ),
                       const SizedBox(height: 20),
 
-                      // IDs (read-only to user)
+                      // IDs (sólo lectura)
                       _InfoLine(
                         label: 'Vehicle ID',
                         value: widget.initialVehicleId,
@@ -411,7 +391,7 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
 
                       const SizedBox(height: 12),
 
-                      // Availability summary
+                      // Resumen disponibilidad
                       if (topAvailLine1.isNotEmpty) ...[
                         Text(
                           topAvailLine1,
@@ -443,7 +423,7 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
                       ),
                       const SizedBox(height: 12),
 
-                      // Start picker
+                      // Inicio
                       StatefulBuilder(
                         builder: (context, setSt) => InkWell(
                           onTap: () => _pickDateTime(true, setSt),
@@ -462,7 +442,7 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
                       ),
                       const SizedBox(height: 12),
 
-                      // End picker
+                      // Fin
                       StatefulBuilder(
                         builder: (context, setSt) => InkWell(
                           onTap: () => _pickDateTime(false, setSt),
@@ -491,9 +471,7 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
                         _dailyPriceC,
                         'Daily Price',
                         'Precio Diario',
-                        kt: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
+                        kt: const TextInputType.numberWithOptions(decimal: true),
                         onChanged: (_) => _recalcTotals(),
                       ),
                       const SizedBox(height: 12),

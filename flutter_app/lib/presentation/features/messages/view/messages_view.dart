@@ -1,4 +1,6 @@
 // lib/presentation/features/messages/view/messages_view.dart
+import 'dart:math' as MainSize;
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -33,13 +35,16 @@ class _MessagesViewState extends State<MessagesView>
   @override
   void initState() {
     super.initState();
-    // cargar conversaciones la primera vez
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final vm = context.read<MessagesViewModel>();
-      vm.setCurrentUser(widget.currentUserId);
+
+      // ✅ establecer modo actual en el VM y cargar
+      vm.setIsHostMode(context.read<HostModeProvider>().isHostMode);
       vm.refresh();
-      // escuchar cambio de modo host/renter y refrescar lista
+
+      // ✅ escuchar cambios de modo
       context.read<HostModeProvider>().addListener(_onModeChanged);
     });
 
@@ -117,7 +122,7 @@ class _MessagesViewState extends State<MessagesView>
                       const SizedBox(height: 16),
                       qovo.SearchBar(
                         onChanged:
-                            vm.setQuery, // búsqueda local por nombre/preview
+                            vm.setQuery, // filtro local por nombre/preview
                       ),
                     ],
                   ),
@@ -165,7 +170,7 @@ class _MessagesViewState extends State<MessagesView>
                           time: _formatTime(it.lastAt),
                           unreadDot: it.unread > 0,
                           onTap: () async {
-                            // optimista: limpia dot
+                            // Optimista: quita el puntito
                             vm.markSeenLocally(i);
 
                             final didChange =
@@ -193,7 +198,6 @@ class _MessagesViewState extends State<MessagesView>
                               ),
                             );
 
-                            // si hubo cambios (p.e. se enviaron/leyeron), refrescar
                             if (!mounted) return;
                             if (didChange == true) vm.refresh();
                           },
@@ -204,7 +208,7 @@ class _MessagesViewState extends State<MessagesView>
                 ),
               ),
 
-              // spacer para bottom bar
+              // Spacer para bottom bar
               SliverToBoxAdapter(
                 child: SizedBox(height: 76 + 12 + bottomInset + 8),
               ),

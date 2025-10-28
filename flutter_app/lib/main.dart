@@ -1,27 +1,63 @@
+// lib/main.dart
+
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:flutter/widgets.dart'; // WidgetsFlutterBinding
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:http/http.dart' as http;
-import 'package:provider/provider.dart';
 
+// ===== Local DB / DAOs / Local Sources / Stores =====
+import 'package:flutter_app/data/database/app_database.dart';
+import 'package:flutter_app/data/database/daos/bookings_dao.dart';
+import 'package:flutter_app/data/database/daos/conversations_dao.dart';
+import 'package:flutter_app/data/database/daos/infra_dao.dart';
+import 'package:flutter_app/data/database/daos/kv_dao.dart';
+import 'package:flutter_app/data/database/daos/messages_dao.dart';
+import 'package:flutter_app/data/database/daos/pricing_dao.dart';
+import 'package:flutter_app/data/database/daos/vehicle_availability_dao.dart';
+import 'package:flutter_app/data/database/daos/vehicles_dao.dart';
+
+import 'package:flutter_app/data/prefs/last_read_prefs.dart';
+
+import 'package:flutter_app/data/sources/local/availability_local_source.dart';
+import 'package:flutter_app/data/sources/local/booking_local_source.dart';
+import 'package:flutter_app/data/sources/local/conversation_local_source.dart';
+import 'package:flutter_app/data/sources/local/message_local_source.dart';
+import 'package:flutter_app/data/sources/local/pricing_local_source.dart';
+import 'package:flutter_app/data/sources/local/vehicle_local_source.dart';
+
+import 'package:flutter_app/data/stores/booking_reminders_store.dart';
+import 'package:flutter_app/data/stores/drafts_store.dart';
+import 'package:flutter_app/data/stores/suggested_price_store.dart';
+
+// ===== Remote / API =====
 import 'package:flutter_app/data/sources/remote/api_client.dart';
 import 'package:flutter_app/data/sources/remote/auth_remote_source.dart';
+import 'package:flutter_app/data/sources/remote/availability_remote_source.dart';
 import 'package:flutter_app/data/sources/remote/booking_remote_source.dart';
 import 'package:flutter_app/data/sources/remote/chat_remote_source.dart';
 import 'package:flutter_app/data/sources/remote/pricing_remote_source.dart';
 import 'package:flutter_app/data/sources/remote/user_remote_source.dart';
 import 'package:flutter_app/data/sources/remote/vehicle_remote_source.dart';
 import 'package:flutter_app/data/sources/remote/analytics_remote_source.dart';
-import 'package:flutter_app/data/sources/remote/availability_remote_source.dart'; // 👈 NEW
 
+// ===== Repositories (impl + cached) =====
 import 'package:flutter_app/data/repositories/auth_repository.dart';
 import 'package:flutter_app/data/repositories/booking_repository.dart';
-import 'package:flutter_app/data/repositories/chat_repository.dart';
-import 'package:flutter_app/data/repositories/pricing_repository.dart';
 import 'package:flutter_app/data/repositories/vehicle_repository.dart';
+import 'package:flutter_app/data/repositories/availability_repository.dart';
+import 'package:flutter_app/data/repositories/pricing_repository.dart';
+import 'package:flutter_app/data/repositories/chat_repository.dart';
+import 'package:flutter_app/data/repositories/users_repository.dart';
 import 'package:flutter_app/data/repositories/analytics_repository.dart';
-import 'package:flutter_app/data/repositories/availability_repository.dart'; // 👈 NEW
 
+import 'package:flutter_app/data/repositories/vehicle_repository_cached.dart';
+import 'package:flutter_app/data/repositories/availability_repository_cached.dart';
+import 'package:flutter_app/data/repositories/booking_repository_cached.dart';
+import 'package:flutter_app/data/repositories/pricing_repository_cached.dart';
+import 'package:flutter_app/data/repositories/chat_repository_cached.dart';
+
+// ===== UI / ViewModels =====
 import 'package:flutter_app/presentation/features/app_shell/viewmodel/host_mode_provider.dart';
 import 'package:flutter_app/presentation/features/auth/view/login_view.dart';
 import 'package:flutter_app/presentation/features/auth/viewmodel/auth_viewmodel.dart';
@@ -29,6 +65,7 @@ import 'package:flutter_app/presentation/features/booking/viewmodel/booking_view
 import 'package:flutter_app/presentation/features/booking_reminders/viewmodel/booking_reminder_viewmodel.dart';
 import 'package:flutter_app/presentation/features/home/viewmodel/home_viewmodel.dart';
 import 'package:flutter_app/presentation/features/host_home/viewmodel/host_home_viewmodel.dart';
+import 'package:flutter_app/presentation/features/messages/viewmodel/messages_viewmodel.dart';
 import 'package:flutter_app/presentation/features/profile/viewmodel/visited_places_viewmodel.dart';
 import 'package:flutter_app/presentation/features/trips/viewmodel/trips_viewmodel.dart';
 import 'package:flutter_app/presentation/features/vehicle/viewmodel/add_vehicle_viewmodel.dart';
@@ -61,174 +98,239 @@ const String kApiBase = String.fromEnvironment(
   'API_BASE',
   defaultValue: 'https://qovo-api-862569067561.us-central1.run.app',
 );
-
-// If your AuthService expects just the base, keep it the same
 const String kApiBaseWithPrefix = kApiBase;
 
-/// MAIN 🌟
-/// - ensures bindings
-/// - loads intl date symbols (fixes TripsViewModel date formatting crash)
-/// - sets Api base
-/// - builds providers (including shared repos so LRU caches persist)
+/// MAIN
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // ⬅ fixes "LocaleDataException: call initializeDateFormatting"
+  // Fixes TripsViewModel date formatting (and any intl usage)
   await initializeDateFormatting();
 
-  // init singletons / services
+  // Init singletons / services
   final api = Api.I();
   api.setBase(kApiBase);
-
   final httpClient = http.Client();
 
   runApp(
     MultiProvider(
       providers: [
         // ─────────────────────────
-        // session + app mode state
+        // session + app mode + theme
         // ─────────────────────────
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => HostModeProvider()),
         ChangeNotifierProvider(create: (_) => ThemeController()),
 
         // ─────────────────────────
-        // low-level services / remote sources
-        // (1 instance each for the whole app)
+        // Database & DAOs
+        // ─────────────────────────
+        Provider<AppDatabase>(create: (_) => AppDatabase()),
+        Provider<InfraDao>(create: (c) => InfraDao(c.read<AppDatabase>())),
+        Provider<VehiclesDao>(
+          create: (c) => VehiclesDao(c.read<AppDatabase>()),
+        ),
+        Provider<VehicleAvailabilityDao>(
+          create: (c) => VehicleAvailabilityDao(c.read<AppDatabase>()),
+        ),
+        Provider<PricingDao>(create: (c) => PricingDao(c.read<AppDatabase>())),
+        Provider<BookingsDao>(
+          create: (c) => BookingsDao(c.read<AppDatabase>()),
+        ),
+        Provider<ConversationsDao>(
+          create: (c) => ConversationsDao(c.read<AppDatabase>()),
+        ),
+        Provider<MessagesDao>(
+          create: (c) => MessagesDao(c.read<AppDatabase>()),
+        ),
+        Provider<KvDao>(create: (c) => KvDao(c.read<AppDatabase>())),
+
+        // ─────────────────────────
+        // Local sources / prefs / stores
+        // ─────────────────────────
+        Provider<VehicleLocalSource>(
+          create: (c) =>
+              VehicleLocalSource(c.read<VehiclesDao>(), c.read<InfraDao>()),
+        ),
+        Provider<AvailabilityLocalSource>(
+          create: (c) => AvailabilityLocalSource(
+            c.read<VehicleAvailabilityDao>(),
+            c.read<InfraDao>(),
+          ),
+        ),
+        Provider<PricingLocalSource>(
+          create: (c) =>
+              PricingLocalSource(c.read<PricingDao>(), c.read<InfraDao>()),
+        ),
+        Provider<BookingLocalSource>(
+          create: (c) =>
+              BookingLocalSource(c.read<BookingsDao>(), c.read<InfraDao>()),
+        ),
+        Provider<ConversationLocalSource>(
+          create: (c) => ConversationLocalSource(
+            c.read<ConversationsDao>(),
+            c.read<InfraDao>(),
+          ),
+        ),
+        Provider<MessageLocalSource>(
+          create: (c) =>
+              MessageLocalSource(c.read<MessagesDao>(), c.read<InfraDao>()),
+        ),
+        Provider<DraftsStore>(create: (c) => DraftsStore(c.read<KvDao>())),
+        Provider<SuggestedPriceStore>(
+          create: (c) => SuggestedPriceStore(c.read<KvDao>()),
+        ),
+        Provider<BookingRemindersStore>(
+          create: (c) => BookingRemindersStore(c.read<KvDao>()),
+        ),
+        Provider<LastReadPrefs>(create: (_) => LastReadPrefs()),
+
+        // ─────────────────────────
+        // Low-level remote services (1 instance app-wide)
         // ─────────────────────────
         Provider<Api>.value(value: api),
         Provider<http.Client>.value(value: httpClient),
 
         Provider<VehicleService>(create: (_) => VehicleService()),
+        Provider<AvailabilityService>(create: (_) => AvailabilityService()),
         Provider<PricingService>(create: (_) => PricingService()),
+        Provider<BookingService>(create: (_) => BookingService()),
         Provider<ChatService>(create: (_) => ChatService()),
         Provider<UserService>(create: (_) => UserService()),
-        Provider<BookingService>(create: (_) => BookingService()),
-        Provider<AvailabilityService>(create: (_) => AvailabilityService()), // 👈 NEW
-
         Provider<AuthService>(
           create: (_) => AuthService(baseUrl: kApiBaseWithPrefix),
         ),
-
         Provider<AnalyticsRemoteSource>(
-          create: (ctx) => AnalyticsRemoteSourceImpl(
-            client: ctx.read<http.Client>(),
+          create: (c) => AnalyticsRemoteSourceImpl(
+            client: c.read<http.Client>(),
             baseUrl: kApiBase,
           ),
         ),
 
         // ─────────────────────────
-        // repositories
-        // (CRITICAL: these are long-lived singletons in memory)
-        //
-        // This is what lets our in-memory LRU caches
-        // actually persist between screens.
+        // Remote repositories (Impl)
         // ─────────────────────────
-        Provider<BookingsRepository>(
-          create: (ctx) => BookingsRepositoryImpl(
-            ctx.read<BookingService>(),
-          ),
+        Provider<UsersRepository>(
+          create: (c) => UsersRepository(remote: c.read<UserService>()),
         ),
-        Provider<VehicleRepository>(
-          create: (ctx) => VehicleRepositoryImpl(
-            remote: ctx.read<VehicleService>(),
-          ),
+        Provider<VehicleRepositoryImpl>(
+          create: (c) =>
+              VehicleRepositoryImpl(remote: c.read<VehicleService>()),
         ),
-        Provider<ChatRepository>(
-          create: (ctx) => ChatRepositoryImpl(
-            remote: ctx.read<ChatService>(),
-          ),
+        Provider<AvailabilityRepositoryImpl>(
+          create: (c) =>
+              AvailabilityRepositoryImpl(remote: c.read<AvailabilityService>()),
+        ),
+        Provider<PricingRepositoryImpl>(
+          create: (c) =>
+              PricingRepositoryImpl(remote: c.read<PricingService>()),
+        ),
+        Provider<BookingsRepositoryImpl>(
+          create: (c) => BookingsRepositoryImpl(c.read<BookingService>()),
+        ),
+        Provider<ChatRepositoryImpl>(
+          create: (c) => ChatRepositoryImpl(remote: c.read<ChatService>()),
         ),
         Provider<AuthRepository>(
-          create: (ctx) => AuthRepositoryImpl(
-            remote: ctx.read<AuthService>(),
-          ),
-        ),
-        Provider<PricingRepository>(
-          create: (ctx) => PricingRepositoryImpl(
-            remote: ctx.read<PricingService>(),
-          ),
+          create: (c) => AuthRepositoryImpl(remote: c.read<AuthService>()),
         ),
         Provider<AnalyticsRepository>(
-          create: (ctx) => AnalyticsRepositoryImpl(
-            remoteSource: ctx.read<AnalyticsRemoteSource>(),
+          create: (c) => AnalyticsRepositoryImpl(
+            remoteSource: c.read<AnalyticsRemoteSource>(),
+          ),
+        ),
+
+        // ─────────────────────────
+        // Cached repositories (wrap Impl + local)
+        // ─────────────────────────
+        Provider<VehicleRepository>(
+          create: (c) => VehicleRepositoryCached(
+            remoteRepo: c.read<VehicleRepositoryImpl>(),
+            vehiclesDao: c.read<VehiclesDao>(),
+            infraDao: c.read<InfraDao>(),
           ),
         ),
         Provider<AvailabilityRepository>(
-          create: (ctx) => AvailabilityRepositoryImpl(
-            remote: ctx.read<AvailabilityService>(),
+          create: (c) => AvailabilityRepositoryCached(
+            remote: c.read<AvailabilityRepositoryImpl>(),
+            local: c.read<AvailabilityLocalSource>(),
           ),
-        ), // 👈 NEW: shared AvailabilityRepository with LRU cache inside
+        ),
+        Provider<PricingRepository>(
+          create: (c) => PricingRepositoryCached(
+            remote: c.read<PricingRepositoryImpl>(),
+            local: c.read<PricingLocalSource>(),
+            suggestStore: c.read<SuggestedPriceStore>(),
+            priceGetter: (sp) => sp.value,
+          ),
+        ),
+        Provider<BookingsRepository>(
+          create: (c) => BookingsRepositoryCached(
+            remote: c.read<BookingsRepositoryImpl>(),
+            local: c.read<BookingLocalSource>(),
+          ),
+        ),
+        Provider<ChatRepository>(
+          create: (c) => ChatRepositoryCached(
+            remote: c.read<ChatRepositoryImpl>(),
+            convLocal: c.read<ConversationLocalSource>(),
+            msgLocal: c.read<MessageLocalSource>(),
+            convDao: c.read<ConversationsDao>(),
+            msgDao: c.read<MessagesDao>(),
+            lastReadPrefs: c.read<LastReadPrefs>(),
+            currentUserId: () => c.read<AuthProvider>().userId ?? '',
+          ),
+        ),
 
         // ─────────────────────────
-        // viewmodels (global / tab-scoped / app-scoped)
+        // ViewModels
         // ─────────────────────────
-
-        /// Reminders analytics VM
         ChangeNotifierProvider<BookingReminderViewModel>(
-          create: (ctx) => BookingReminderViewModel(
-            ctx.read<AnalyticsRepository>(),
-          ),
+          create: (c) =>
+              BookingReminderViewModel(c.read<AnalyticsRepository>()),
         ),
-
-        /// Auth flow VM
         ChangeNotifierProvider<AuthViewModel>(
-          create: (ctx) => AuthViewModel(
-            ctx.read<AuthRepository>(),
-            baseUrl: ctx.read<Api>().baseUrl + '/api',
+          create: (c) => AuthViewModel(
+            c.read<AuthRepository>(),
+            baseUrl: c.read<Api>().baseUrl + '/api',
           ),
         ),
-
-        /// Home tab VM (renter browse vehicles)
-        /// NOTE: it reads VehicleRepositoryImpl which is now shared above,
-        /// so VehicleRepositoryImpl keeps its LRU cache in memory.
         ChangeNotifierProvider<HomeViewModel>(
-          create: (ctx) => HomeViewModel(
-            vehicles: ctx.read<VehicleRepository>(),
-            pricing: ctx.read<PricingService>(),
+          create: (c) => HomeViewModel(
+            vehicles: c.read<VehicleRepository>(),
+            pricing: c.read<PricingService>(), // HomeVM usa service
           ),
         ),
-
-        /// Host home tab VM (my fleet, pricing, etc.)
         ChangeNotifierProvider<HostHomeViewModel>(
-          create: (ctx) => HostHomeViewModel(
-            vehiclesRepo: ctx.read<VehicleRepository>(),
-            pricing: ctx.read<PricingService>(),
-            currentUserId: ctx.read<AuthProvider>().userId ?? '',
+          create: (c) => HostHomeViewModel(
+            vehiclesRepo: c.read<VehicleRepository>(),
+            pricing: c.read<PricingService>(),
+            currentUserId: c.read<AuthProvider>().userId ?? '',
           ),
         ),
-
-        /// Add-vehicle flow VM (host creates listing)
-        ChangeNotifierProvider<AddVehicleViewModel>(
-          create: (ctx) => AddVehicleViewModel(
-            vehicles: ctx.read<VehicleRepository>(),
-            pricing: ctx.read<PricingRepository>(),
+        ChangeNotifierProvider<TripsViewModel>(
+          create: (c) => TripsViewModel(c.read<BookingsRepository>())..init(),
+        ),
+        ChangeNotifierProvider<BookingViewModel>(
+          create: (c) => BookingViewModel(
+            bookingsRepo: c.read<BookingsRepository>(),
+            chatRepo: c.read<ChatRepository>(),
           ),
         ),
-
-        /// Places visited VM (profile -> visited places)
+        ChangeNotifierProvider(
+          create: (c) => AddVehicleViewModel(
+            vehicles: c.read<VehicleRepository>(),
+            pricing: c.read<PricingRepository>(),
+          ),
+        ),
         ChangeNotifierProvider<VisitedPlacesViewModel>(
           create: (_) => VisitedPlacesViewModel(),
         ),
-
-        /// Trips tab VM (bookings list)
-        /// We call .init() here so that the first Trips screen render
-        /// already has begun loading.
-        ChangeNotifierProvider<TripsViewModel>(
-          create: (ctx) => TripsViewModel(
-            ctx.read<BookingsRepository>(),
-          )..init(),
-        ),
-
-        /// Global BookingViewModel
-        /// (Screens can also inject their own local BookingViewModel
-        /// if they need a fresh form lifecycle, but having this here lets
-        /// other parts of the app access the same repos without
-        /// rebuilding them.)
-        ChangeNotifierProvider<BookingViewModel>(
-          create: (ctx) => BookingViewModel(
-            bookingsRepo: ctx.read<BookingsRepository>(),
-            chatRepo: ctx.read<ChatRepository>(),
+        ChangeNotifierProvider<MessagesViewModel>(
+          create: (c) => MessagesViewModel(
+            chat: c.read<ChatRepository>(),
+            users: c.read<UsersRepository>(),
+            currentUserId: c.read<AuthProvider>().userId ?? '',
           ),
         ),
       ],
@@ -304,9 +406,7 @@ class MyApp extends StatelessWidget {
         color: scheme.surface,
         elevation: 0,
         margin: const EdgeInsets.all(8),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: scheme.surface,
@@ -341,16 +441,12 @@ class MyApp extends StatelessWidget {
         selectedColor: scheme.primaryContainer,
         labelStyle: TextStyle(color: scheme.onSurface),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       ),
       segmentedButtonTheme: SegmentedButtonThemeData(
         style: ButtonStyle(
           shape: WidgetStateProperty.all(
-            RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           ),
         ),
       ),
@@ -365,9 +461,7 @@ class MyApp extends StatelessWidget {
         style: ButtonStyle(
           minimumSize: const MaterialStatePropertyAll(Size.fromHeight(48)),
           shape: MaterialStatePropertyAll(
-            RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
           backgroundColor: MaterialStatePropertyAll(scheme.primary),
           foregroundColor: MaterialStatePropertyAll(scheme.onPrimary),
@@ -377,9 +471,7 @@ class MyApp extends StatelessWidget {
         style: ButtonStyle(
           minimumSize: const MaterialStatePropertyAll(Size.fromHeight(48)),
           shape: MaterialStatePropertyAll(
-            RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
           backgroundColor: MaterialStatePropertyAll(scheme.primary),
           foregroundColor: MaterialStatePropertyAll(scheme.onPrimary),
@@ -417,9 +509,7 @@ class MyApp extends StatelessWidget {
         color: scheme.surface,
         elevation: 0,
         margin: const EdgeInsets.all(8),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: scheme.surface,
@@ -454,16 +544,12 @@ class MyApp extends StatelessWidget {
         selectedColor: scheme.primaryContainer,
         labelStyle: TextStyle(color: scheme.onSurface),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       ),
       segmentedButtonTheme: SegmentedButtonThemeData(
         style: ButtonStyle(
           shape: WidgetStateProperty.all(
-            RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           ),
         ),
       ),
@@ -478,9 +564,7 @@ class MyApp extends StatelessWidget {
         style: ButtonStyle(
           minimumSize: const MaterialStatePropertyAll(Size.fromHeight(48)),
           shape: MaterialStatePropertyAll(
-            RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
           backgroundColor: MaterialStatePropertyAll(scheme.primary),
           foregroundColor: MaterialStatePropertyAll(scheme.onPrimary),
@@ -490,9 +574,7 @@ class MyApp extends StatelessWidget {
         style: ButtonStyle(
           minimumSize: const MaterialStatePropertyAll(Size.fromHeight(48)),
           shape: MaterialStatePropertyAll(
-            RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
           backgroundColor: MaterialStatePropertyAll(scheme.primary),
           foregroundColor: MaterialStatePropertyAll(scheme.onPrimary),
@@ -528,15 +610,12 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-
-    // dumb splash → login
+    // Simple splash → login
     Future.delayed(const Duration(seconds: 2), () {
       if (!mounted) return;
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => const LoginScreen(),
-        ),
-      );
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const LoginScreen()));
     });
   }
 
