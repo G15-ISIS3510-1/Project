@@ -1,6 +1,7 @@
 // lib/data/repositories/vehicle_repository.dart
 import 'dart:convert';
 import 'package:flutter_app/app/utils/pagination.dart';
+import 'package:flutter_app/data/sources/remote/api_client.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_app/data/models/vehicle_model.dart';
@@ -14,7 +15,10 @@ abstract class VehicleRepository {
   Future<Vehicle> getById(String vehicleId);
 
   /// — Implemented with Future handlers (.then) —
-  Future<String> uploadVehiclePhoto({required XFile file});
+  Future<String> uploadVehiclePhoto({
+    required String vehicleId, // ← NEW
+    required XFile file,
+  });
 
   /// — Implemented with Future handler + async/await inside the handler —
   Future<String> createVehicle({
@@ -152,35 +156,57 @@ class VehicleRepositoryImpl implements VehicleRepository {
   // Future with handler (.then chain) — no async/await
   // ---------------------------------------------------------------------------
   @override
-  Future<String> uploadVehiclePhoto({required XFile file}) {
-    // NOTE: Replace with your real upload endpoint if different.
-    final url = Uri.parse('TU_BASE_URL/upload-photo');
+  Future<String> uploadVehiclePhoto({
+    required String vehicleId,
+    required XFile file,
+  }) {
+    // Base tomada del Api client
+    final base = Api.I().baseUrl; // e.g. https://qovo-api-…run.app
+    final url = Uri.parse('$base/api/vehicles/$vehicleId/upload-photo');
 
-    // Chain the async steps instead of awaiting them.
+    final token = Api.I().token; // puede ser null
+    final headers = <String, String>{
+      if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
+    };
+
     return http.MultipartFile.fromPath('file', file.path)
         .then((multipart) {
-          final request = http.MultipartRequest('POST', url)..files.add(multipart);
-          return request.send();
+          final req = http.MultipartRequest('POST', url)
+            ..headers.addAll(headers)
+            ..files.add(multipart);
+          return req.send();
         })
-        .then((streamedResponse) => http.Response.fromStream(streamedResponse))
-        .then((response) {
-          if (response.statusCode != 200) {
+        .then((streamed) => http.Response.fromStream(streamed))
+        .then((res) {
+          if (res.statusCode != 200 && res.statusCode != 201) {
+            throw Exception('Upload failed ${res.statusCode}: ${res.body}');
+          }
+
+          final body = json.decode(res.body);
+          String? photoUrl;
+
+          if (body is Map<String, dynamic>) {
+            // formatos tolerantes
+            photoUrl =
+                (body['photo_url'] ??
+                        body['url'] ??
+                        (body['data'] is Map<String, dynamic>
+                            ? (body['data']['photo_url'] ?? body['data']['url'])
+                            : null))
+                    ?.toString();
+          }
+
+          if (photoUrl == null || photoUrl.isEmpty) {
             throw Exception(
-              'Failed to upload image ${response.statusCode}: ${response.body}',
+              'Upload OK pero no llegó photo_url/url en la respuesta.',
             );
           }
 
-          final jsonResponse = json.decode(response.body);
-          final photoUrl = jsonResponse['photo_url'];
+          // Invalidar cache del detalle para forzar refresh con la nueva foto
+          _vehicleDetailCache.remove(vehicleId);
 
-          if (photoUrl is! String || photoUrl.isEmpty) {
-            throw Exception(
-              'Upload successful but photo_url is missing in response.',
-            );
-          }
           return photoUrl;
         });
-    // Any error will propagate through the chain as a failed Future.
   }
 
   // ---------------------------------------------------------------------------
@@ -251,7 +277,9 @@ class VehicleRepositoryImpl implements VehicleRepository {
             _vehicleDetailCache.put(v.vehicle_id, v); // warm LRU
             return v.vehicle_id;
           }
-        } catch (_) {/* ignore */}
+        } catch (_) {
+          /* ignore */
+        }
       }
 
       throw Exception(
@@ -281,7 +309,10 @@ Map<String, dynamic> _decodeVehiclePageOnIsolate(String body) {
 
   if (raw is List) {
     // Plain array payload
-    items = raw.cast<Map>().map((e) => (e as Map).cast<String, dynamic>()).toList();
+    items = raw
+        .cast<Map>()
+        .map((e) => (e as Map).cast<String, dynamic>())
+        .toList();
     total = items.length;
     hasMore = false;
     limit = 0;
@@ -315,9 +346,7 @@ Map<String, dynamic> _decodeVehiclePageOnIsolate(String body) {
       }
     }
 
-    total = (source['total'] is int)
-        ? source['total'] as int
-        : items.length;
+    total = (source['total'] is int) ? source['total'] as int : items.length;
 
     // Allow both snake_case and camelCase
     final hm = source['has_more'];
@@ -325,8 +354,8 @@ Map<String, dynamic> _decodeVehiclePageOnIsolate(String body) {
     hasMore = (hm is bool)
         ? hm
         : (hM is bool)
-            ? hM
-            : false;
+        ? hM
+        : false;
 
     limit = (source['limit'] is int) ? source['limit'] as int : 0;
     skip = (source['skip'] is int) ? source['skip'] as int : 0;

@@ -1,10 +1,12 @@
 // lib/presentation/features/home/view/home_view.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_app/data/models/vehicle_model.dart';
 import 'package:flutter_app/presentation/features/booking/view/create_booking_view.dart';
 import 'package:provider/provider.dart';
 
 import 'package:flutter_app/presentation/common_widgets/car_card.dart';
-import 'package:flutter_app/presentation/common_widgets/search_bar.dart' as qovo;
+import 'package:flutter_app/presentation/common_widgets/search_bar.dart'
+    as qovo;
 
 import 'package:flutter_app/data/models/pricing_model.dart';
 import 'package:flutter_app/presentation/features/home/viewmodel/home_viewmodel.dart';
@@ -22,6 +24,13 @@ class _HomeViewState extends State<HomeView>
 
   static const double _p24 = 24;
   bool _showDevHud = false; // optional debug HUD
+
+  String? _bestPhotoUrl(Vehicle v) {
+    // ajusta a tu modelo real
+    if (v.photo_url.isNotEmpty) return v.photo_url;
+
+    return null;
+  }
 
   @override
   void initState() {
@@ -84,16 +93,20 @@ class _HomeViewState extends State<HomeView>
                         final transLabel = (v.transmission == 'AT')
                             ? 'Automatic'
                             : (v.transmission == 'MT'
-                                ? 'Manual'
-                                : (v.transmission));
+                                  ? 'Manual'
+                                  : (v.transmission));
+
+                        final photo = _bestPhotoUrl(v);
 
                         return FutureBuilder<Pricing?>(
                           future: vm.priceFutureFor(v.vehicle_id),
                           builder: (context, pSnap) {
-                            final price = (pSnap.data?.dailyPrice ??
+                            final price =
+                                (pSnap.data?.dailyPrice ??
                                 v.pricePerDay ??
                                 80.0);
                             return CarCard(
+                              imageUrl: photo,
                               title: v.title,
                               rating: v.rating ?? 4.7,
                               transmission: transLabel ?? '—',
@@ -157,7 +170,9 @@ class _HomeViewState extends State<HomeView>
                             setState(() => _showDevHud = !_showDevHud), // HUD
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
                             color: scheme.surface,
                             borderRadius: BorderRadius.circular(14),

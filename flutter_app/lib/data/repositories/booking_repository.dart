@@ -1,15 +1,15 @@
 // lib/domain/trips/bookings_repository.dart
 
 import 'dart:convert';
-import 'package:flutter_app/app/utils/pagination.dart';
+import 'package:flutter/foundation.dart';
+
 import 'package:flutter_app/app/utils/result.dart';
+import 'package:flutter_app/app/utils/lru_cache.dart';
 import 'package:flutter_app/data/models/booking_model.dart';
 import 'package:flutter_app/data/models/booking_status.dart';
 import 'package:flutter_app/data/models/booking_create_model.dart';
-import 'package:flutter_app/data/sources/remote/booking_remote_source.dart'; // BookingService
-
-// NEW: LRU cache
-import 'package:flutter_app/app/utils/lru_cache.dart';
+import 'package:flutter_app/data/sources/remote/api_client.dart';
+import 'package:flutter_app/data/sources/remote/booking_remote_source.dart';
 
 class BookingsPage {
   final List<Booking> items;
@@ -22,65 +22,96 @@ abstract class BookingsRepository {
     int skip,
     int limit,
     BookingStatus? statusFilter,
+    bool asHost, // <- importante
   });
 
   Future<Result<Booking>> createBooking(BookingCreateModel data);
+
+  void clearCache();
 }
 
 class BookingsRepositoryImpl implements BookingsRepository {
   final BookingService remote;
 
-  // NEW: Keep the N most-recent 100-booking chunks (LRU by (skip,limit,status))
-  // TripsViewModel calls with limit=100; capacity 3 ~= 300 bookings in memory.
-  final LruCache<String, BookingsPage> _cache =
-      LruCache<String, BookingsPage>(3);
+  // LRU: guardamos páginas (skip,limit,status,rol) por identidad (token)
+  // Capacidad 6 => hasta ~600 bookings en RAM si usas limit=100
+  final LruCache<String, BookingsPage> _cache = LruCache<String, BookingsPage>(
+    6,
+  );
 
   BookingsRepositoryImpl(this.remote);
 
-  void clearCache() => _cache.clear();
+  @override
+  void clearCache() {
+    _cache.clear();
+    if (kDebugMode) debugPrint('[BookingsRepoImpl] LRU cleared');
+  }
 
-  String _key(int skip, int limit, String? statusParam) =>
-      '$skip|$limit|${statusParam ?? ''}';
+  String _key({
+    required String token,
+    required bool asHost,
+    required int skip,
+    required int limit,
+    String? status,
+  }) {
+    final th = token.isEmpty ? 'none' : token.hashCode.toString();
+    return 'tok:$th|host:${asHost ? 1 : 0}|skip:$skip|lim:$limit|st:${status ?? ""}';
+  }
 
   @override
   Future<Result<BookingsPage>> listMyBookings({
     int skip = 0,
     int limit = 20,
     BookingStatus? statusFilter,
+    bool asHost = false,
   }) async {
-    final statusParam = statusFilter?.asParam;
-    final key = _key(skip, limit, statusParam);
+    final token = Api.I().token ?? '';
+    final key = _key(
+      token: token,
+      asHost: asHost,
+      skip: skip,
+      limit: limit,
+      status: statusFilter?.asParam,
+    );
 
-    // 1) Try cache (LRU hit)
-    final cached = _cache.get(key);
-    if (cached != null) {
-      return Result.ok(cached);
-    }
-
-    // 2) Fetch network and cache
-    try {
-      final res = await remote.listMyBookings(
-        skip: skip,
-        limit: limit,
-        statusFilter: statusParam,
-      );
-      if (res.statusCode != 200) {
-        return Result.err('Bookings ${res.statusCode}: ${res.body}');
+    // 1) LRU hit
+    final hit = _cache.get(key);
+    if (hit != null) {
+      if (kDebugMode) {
+        debugPrint(
+          '[BookingsRepoImpl] LRU HIT key=$key items=${hit.items.length}',
+        );
       }
-
-      final page = parsePaginated<Map<String, dynamic>>(
-        res.body,
-        (m) => m, // primero en bruto, luego mapeamos a Booking
-      );
-
-      final items = page.items.map(_mapBooking).toList(growable: false);
-      final resultPage = BookingsPage(items: items, hasMore: page.hasMore);
-
-      _cache.put(key, resultPage);
-      return Result.ok(resultPage);
-    } catch (e) {
-      return Result.err('No se pudieron cargar las reservas: $e');
+      return Result.ok(hit);
     }
+
+    // 2) Remote
+    final resp = await remote.listMyBookings(
+      skip: skip,
+      limit: limit,
+      statusFilter: statusFilter?.asParam,
+      asHost: asHost,
+    );
+
+    if (resp.statusCode != 200) {
+      return Result.err('HTTP ${resp.statusCode}');
+    }
+
+    final body = jsonDecode(resp.body) as Map<String, dynamic>;
+    final items = (body['items'] as List)
+        .map((m) => Booking.fromJson(m as Map<String, dynamic>))
+        .toList();
+    final hasMore = body['has_more'] == true || items.length == limit;
+
+    final page = BookingsPage(items: items, hasMore: hasMore);
+
+    _cache.put(key, page);
+    if (kDebugMode) {
+      debugPrint(
+        '[BookingsRepoImpl] NET OK key=$key items=${items.length} hasMore=$hasMore (cached)',
+      );
+    }
+    return Result.ok(page);
   }
 
   @override
@@ -88,54 +119,26 @@ class BookingsRepositoryImpl implements BookingsRepository {
     try {
       final res = await remote.create(data.toJson());
       if (res.statusCode != 201 && res.statusCode != 200) {
-        // intenta sacar "detail" del body
         String detail = 'Error al crear la reserva';
         try {
-          final body = jsonDecode(res.body);
-          detail = (body['detail'] ?? body['message'] ?? res.body).toString();
+          final b = jsonDecode(res.body);
+          detail = (b['detail'] ?? b['message'] ?? res.body).toString();
         } catch (_) {
           if (res.body.isNotEmpty) detail = res.body;
         }
         return Result.err('Error ${res.statusCode}: $detail');
       }
-      // On successful creation we should invalidate cache so lists refresh
-      _cache.clear();
+
+      // Invalida LRU para forzar recarga en próximos listados
+      clearCache();
 
       final decoded = jsonDecode(res.body);
       if (decoded is! Map<String, dynamic>) {
         return Result.err('Respuesta inesperada al crear la reserva.');
       }
-      final booking = _mapBooking(decoded);
-      return Result.ok(booking);
+      return Result.ok(Booking.fromJson(decoded));
     } catch (e) {
       return Result.err('Error de red/conexión: $e');
     }
-  }
-
-  // ---------- mapping ----------
-  Booking _mapBooking(Map<String, dynamic> j) {
-    DateTime _parse(Object? v) => DateTime.parse(v.toString()).toLocal();
-    return Booking(
-      bookingId: j['booking_id']?.toString() ?? j['id']?.toString() ?? '',
-      vehicleId: j['vehicle_id']?.toString() ?? '',
-      renterId: j['renter_id']?.toString() ?? '',
-      hostId: j['host_id']?.toString() ?? '',
-      startTs: _parse(j['start_ts'] ?? j['start_date'] ?? j['start']),
-      endTs: _parse(j['end_ts'] ?? j['end_date'] ?? j['end']),
-      status: BookingStatus.fromString(j['status']?.toString()),
-      dailyPriceSnapshot: (j['daily_price_snapshot'] as num).toDouble(),
-      insuranceDailyCostSnapshot: (j['insurance_daily_cost_snapshot'] as num?)
-          ?.toDouble(),
-      subtotal: (j['subtotal'] as num).toDouble(),
-      fees: (j['fees'] as num?)?.toDouble() ?? 0,
-      taxes: (j['taxes'] as num?)?.toDouble() ?? 0,
-      total: (j['total'] as num).toDouble(),
-      currency: j['currency']?.toString() ?? 'USD',
-      odoStart: (j['odo_start'] as num?)?.toInt(),
-      odoEnd: (j['odo_end'] as num?)?.toInt(),
-      fuelStart: (j['fuel_start'] as num?)?.toInt(),
-      fuelEnd: (j['fuel_end'] as num?)?.toInt(),
-      createdAt: _parse(j['created_at']),
-    );
   }
 }

@@ -38,6 +38,8 @@ import 'package:flutter_app/data/sources/remote/booking_remote_source.dart';
 import 'package:flutter_app/data/sources/remote/chat_remote_source.dart';
 import 'package:flutter_app/data/sources/remote/pricing_remote_source.dart';
 import 'package:flutter_app/data/sources/remote/user_remote_source.dart';
+import 'package:flutter_app/presentation/features/app_shell/view/app_shell.dart';
+import 'package:flutter_app/presentation/features/auth/view/login_view.dart';
 import 'package:flutter_app/data/sources/remote/vehicle_remote_source.dart';
 import 'package:flutter_app/data/sources/remote/analytics_remote_source.dart';
 
@@ -59,7 +61,6 @@ import 'package:flutter_app/data/repositories/chat_repository_cached.dart';
 
 // ===== UI / ViewModels =====
 import 'package:flutter_app/presentation/features/app_shell/viewmodel/host_mode_provider.dart';
-import 'package:flutter_app/presentation/features/auth/view/login_view.dart';
 import 'package:flutter_app/presentation/features/auth/viewmodel/auth_viewmodel.dart';
 import 'package:flutter_app/presentation/features/booking/viewmodel/booking_viewmodel.dart';
 import 'package:flutter_app/presentation/features/booking_reminders/viewmodel/booking_reminder_viewmodel.dart';
@@ -74,11 +75,14 @@ import 'package:flutter_app/presentation/features/analytics/view/analytics_view.
 
 import 'app/theme/theme_controller.dart';
 
-
-/// Lightweight auth/session holder the UI can read.
+/// Auth/session holder leído por la UI (ligero y notifica cambios).
 class AuthProvider with ChangeNotifier {
   String? _userId;
   String? _token;
+  final Future<void> Function(String oldUid)? _onSignOut;
+
+  AuthProvider({Future<void> Function(String oldUid)? onSignOut})
+      : _onSignOut = onSignOut;
 
   String? get userId => _userId;
   String? get token => _token;
@@ -86,31 +90,37 @@ class AuthProvider with ChangeNotifier {
   void signIn({required String userId, required String token}) {
     _userId = userId;
     _token = token;
+
+    // 🔐 importante: setear token en el Api client para siguientes requests
+    try {
+      Api.I().setToken(token);
+    } catch (_) {}
+
     notifyListeners();
   }
 
-  void signOut() {
+  Future<void> signOut() async {
+    final oldUid = _userId ?? 'anon';
+    if (_onSignOut != null) {
+      await _onSignOut!(oldUid);
+    }
     _userId = null;
     _token = null;
     notifyListeners();
   }
 }
 
-/// Base URL the app talks to (points to your deployed FastAPI)
+/// Base URL
 const String kApiBase = String.fromEnvironment(
   'API_BASE',
   defaultValue: 'https://qovo-api-862569067561.us-central1.run.app',
 );
 const String kApiBaseWithPrefix = kApiBase;
 
-/// MAIN
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Fixes TripsViewModel date formatting (and any intl usage)
   await initializeDateFormatting();
 
-  // Init singletons / services
   final api = Api.I();
   api.setBase(kApiBase);
   final httpClient = http.Client();
@@ -118,82 +128,84 @@ Future<void> main() async {
   runApp(
     MultiProvider(
       providers: [
-        // ─────────────────────────
-        // session + app mode + theme
-        // ─────────────────────────
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        // ───────── session + mode + theme
+        ChangeNotifierProvider(
+          create: (c) =>
+              AuthProvider(onSignOut: (oldUid) => _clearAppData(c, oldUid)),
+        ),
         ChangeNotifierProvider(create: (_) => HostModeProvider()),
         ChangeNotifierProvider(create: (_) => ThemeController()),
 
-        // ─────────────────────────
-        // Database & DAOs
-        // ─────────────────────────
-        Provider<AppDatabase>(create: (_) => AppDatabase()),
-        Provider<InfraDao>(create: (c) => InfraDao(c.read<AppDatabase>())),
-        Provider<VehiclesDao>(
-          create: (c) => VehiclesDao(c.read<AppDatabase>()),
+        // ───────── DB & DAOs (por usuario)
+        ProxyProvider<AuthProvider, AppDatabase>(
+          update: (c, auth, previous) {
+            final uid = auth.userId ?? 'anon';
+            if (previous != null &&
+                previous.ownerUid == uid &&
+                !previous.isClosed) {
+              return previous;
+            }
+            return AppDatabase.forUser(uid);
+          },
+          dispose: (_, db) => db.close(),
         ),
-        Provider<VehicleAvailabilityDao>(
-          create: (c) => VehicleAvailabilityDao(c.read<AppDatabase>()),
+        ProxyProvider<AppDatabase, InfraDao>(
+          update: (c, db, _) => InfraDao(db),
         ),
-        Provider<PricingDao>(create: (c) => PricingDao(c.read<AppDatabase>())),
-        Provider<BookingsDao>(
-          create: (c) => BookingsDao(c.read<AppDatabase>()),
+        ProxyProvider<AppDatabase, VehiclesDao>(
+          update: (c, db, _) => VehiclesDao(db),
         ),
-        Provider<ConversationsDao>(
-          create: (c) => ConversationsDao(c.read<AppDatabase>()),
+        ProxyProvider<AppDatabase, VehicleAvailabilityDao>(
+          update: (c, db, _) => VehicleAvailabilityDao(db),
         ),
-        Provider<MessagesDao>(
-          create: (c) => MessagesDao(c.read<AppDatabase>()),
+        ProxyProvider<AppDatabase, PricingDao>(
+          update: (c, db, _) => PricingDao(db),
         ),
-        Provider<KvDao>(create: (c) => KvDao(c.read<AppDatabase>())),
+        ProxyProvider<AppDatabase, BookingsDao>(
+          update: (c, db, _) => BookingsDao(db),
+        ),
+        ProxyProvider<AppDatabase, ConversationsDao>(
+          update: (c, db, _) => ConversationsDao(db),
+        ),
+        ProxyProvider<AppDatabase, MessagesDao>(
+          update: (c, db, _) => MessagesDao(db),
+        ),
+        ProxyProvider<AppDatabase, KvDao>(update: (c, db, _) => KvDao(db)),
 
-        // ─────────────────────────
-        // Local sources / prefs / stores
-        // ─────────────────────────
-        Provider<VehicleLocalSource>(
-          create: (c) =>
-              VehicleLocalSource(c.read<VehiclesDao>(), c.read<InfraDao>()),
+        // ───────── locals / prefs / stores
+        ProxyProvider2<VehiclesDao, InfraDao, VehicleLocalSource>(
+          update: (c, vDao, infra, _) => VehicleLocalSource(vDao, infra),
         ),
-        Provider<AvailabilityLocalSource>(
-          create: (c) => AvailabilityLocalSource(
-            c.read<VehicleAvailabilityDao>(),
-            c.read<InfraDao>(),
-          ),
+        ProxyProvider2<VehicleAvailabilityDao, InfraDao, AvailabilityLocalSource>(
+          update: (c, aDao, infra, _) => AvailabilityLocalSource(aDao, infra),
         ),
-        Provider<PricingLocalSource>(
-          create: (c) =>
-              PricingLocalSource(c.read<PricingDao>(), c.read<InfraDao>()),
+        ProxyProvider2<PricingDao, InfraDao, PricingLocalSource>(
+          update: (c, pDao, infra, _) => PricingLocalSource(pDao, infra),
         ),
-        Provider<BookingLocalSource>(
-          create: (c) =>
-              BookingLocalSource(c.read<BookingsDao>(), c.read<InfraDao>()),
+        ProxyProvider2<BookingsDao, InfraDao, BookingLocalSource>(
+          update: (c, bDao, infra, _) => BookingLocalSource(bDao, infra),
         ),
-        Provider<ConversationLocalSource>(
-          create: (c) => ConversationLocalSource(
-            c.read<ConversationsDao>(),
-            c.read<InfraDao>(),
-          ),
+        ProxyProvider2<ConversationsDao, InfraDao, ConversationLocalSource>(
+          update: (c, convDao, infra, _) =>
+              ConversationLocalSource(convDao, infra),
         ),
-        Provider<MessageLocalSource>(
-          create: (c) =>
-              MessageLocalSource(c.read<MessagesDao>(), c.read<InfraDao>()),
+        ProxyProvider2<MessagesDao, InfraDao, MessageLocalSource>(
+          update: (c, msgDao, infra, _) => MessageLocalSource(msgDao, infra),
         ),
-        Provider<DraftsStore>(create: (c) => DraftsStore(c.read<KvDao>())),
-        Provider<SuggestedPriceStore>(
-          create: (c) => SuggestedPriceStore(c.read<KvDao>()),
+        ProxyProvider<KvDao, DraftsStore>(
+          update: (c, kv, _) => DraftsStore(kv),
         ),
-        Provider<BookingRemindersStore>(
-          create: (c) => BookingRemindersStore(c.read<KvDao>()),
+        ProxyProvider<KvDao, SuggestedPriceStore>(
+          update: (c, kv, _) => SuggestedPriceStore(kv),
+        ),
+        ProxyProvider<KvDao, BookingRemindersStore>(
+          update: (c, kv, _) => BookingRemindersStore(kv),
         ),
         Provider<LastReadPrefs>(create: (_) => LastReadPrefs()),
 
-        // ─────────────────────────
-        // Low-level remote services (1 instance app-wide)
-        // ─────────────────────────
+        // ───────── low-level remote services
         Provider<Api>.value(value: api),
         Provider<http.Client>.value(value: httpClient),
-
         Provider<VehicleService>(create: (_) => VehicleService()),
         Provider<AvailabilityService>(create: (_) => AvailabilityService()),
         Provider<PricingService>(create: (_) => PricingService()),
@@ -210,23 +222,19 @@ Future<void> main() async {
           ),
         ),
 
-        // ─────────────────────────
-        // Remote repositories (Impl)
-        // ─────────────────────────
+        // ───────── remote repositories (impl)
         Provider<UsersRepository>(
           create: (c) => UsersRepository(remote: c.read<UserService>()),
         ),
         Provider<VehicleRepositoryImpl>(
-          create: (c) =>
-              VehicleRepositoryImpl(remote: c.read<VehicleService>()),
+          create: (c) => VehicleRepositoryImpl(remote: c.read<VehicleService>()),
         ),
         Provider<AvailabilityRepositoryImpl>(
           create: (c) =>
               AvailabilityRepositoryImpl(remote: c.read<AvailabilityService>()),
         ),
         Provider<PricingRepositoryImpl>(
-          create: (c) =>
-              PricingRepositoryImpl(remote: c.read<PricingService>()),
+          create: (c) => PricingRepositoryImpl(remote: c.read<PricingService>()),
         ),
         Provider<BookingsRepositoryImpl>(
           create: (c) => BookingsRepositoryImpl(c.read<BookingService>()),
@@ -243,38 +251,47 @@ Future<void> main() async {
           ),
         ),
 
-        // ─────────────────────────
-        // Cached repositories (wrap Impl + local)
-        // ─────────────────────────
-        Provider<VehicleRepository>(
-          create: (c) => VehicleRepositoryCached(
-            remoteRepo: c.read<VehicleRepositoryImpl>(),
-            vehiclesDao: c.read<VehiclesDao>(),
-            infraDao: c.read<InfraDao>(),
+        // ───────── cached repositories (atados a usuario/rol)
+        ProxyProvider3<VehicleRepositoryImpl, VehiclesDao, InfraDao,
+            VehicleRepository>(
+          update: (c, remote, vDao, infra, _) => VehicleRepositoryCached(
+            remoteRepo: remote,
+            vehiclesDao: vDao,
+            infraDao: infra,
           ),
         ),
-        Provider<AvailabilityRepository>(
-          create: (c) => AvailabilityRepositoryCached(
-            remote: c.read<AvailabilityRepositoryImpl>(),
-            local: c.read<AvailabilityLocalSource>(),
-          ),
+
+        // Availability / Pricing con cache local
+        ProxyProvider2<AvailabilityRepositoryImpl, AvailabilityLocalSource,
+            AvailabilityRepository>(
+          update: (c, remote, local, _) =>
+              AvailabilityRepositoryCached(remote: remote, local: local),
         ),
-        Provider<PricingRepository>(
-          create: (c) => PricingRepositoryCached(
-            remote: c.read<PricingRepositoryImpl>(),
-            local: c.read<PricingLocalSource>(),
-            suggestStore: c.read<SuggestedPriceStore>(),
+        ProxyProvider3<PricingRepositoryImpl, PricingLocalSource,
+            SuggestedPriceStore, PricingRepository>(
+          update: (c, remote, local, suggest, _) => PricingRepositoryCached(
+            remote: remote,
+            local: local,
+            suggestStore: suggest,
             priceGetter: (sp) => sp.value,
           ),
         ),
-        Provider<BookingsRepository>(
-          create: (c) => BookingsRepositoryCached(
-            remote: c.read<BookingsRepositoryImpl>(),
-            local: c.read<BookingLocalSource>(),
-          ),
+
+        // BookingsRepository: depende de usuario actual + host mode
+        ProxyProvider4<BookingsRepositoryImpl, BookingLocalSource, AuthProvider,
+            HostModeProvider, BookingsRepository>(
+          update: (c, remote, local, auth, hostMode, _) =>
+              BookingsRepositoryCached(
+                remote: remote,
+                local: local,
+                currentUserId: () => auth.userId ?? '',
+                isHost: () => hostMode.isHostMode,
+              ),
         ),
-        Provider<ChatRepository>(
-          create: (c) => ChatRepositoryCached(
+
+        // ChatRepository ligado a DB por usuario y conoce currentUserId
+        ProxyProvider<AppDatabase, ChatRepository>(
+          update: (c, db, _) => ChatRepositoryCached(
             remote: c.read<ChatRepositoryImpl>(),
             convLocal: c.read<ConversationLocalSource>(),
             msgLocal: c.read<MessageLocalSource>(),
@@ -285,9 +302,7 @@ Future<void> main() async {
           ),
         ),
 
-        // ─────────────────────────
-        // ViewModels
-        // ─────────────────────────
+        // ───────── ViewModels
         ChangeNotifierProvider<BookingReminderViewModel>(
           create: (c) =>
               BookingReminderViewModel(c.read<AnalyticsRepository>()),
@@ -298,22 +313,45 @@ Future<void> main() async {
             baseUrl: c.read<Api>().baseUrl + '/api',
           ),
         ),
-        ChangeNotifierProvider<HomeViewModel>(
+
+        ChangeNotifierProxyProvider<AuthProvider, HomeViewModel>(
           create: (c) => HomeViewModel(
             vehicles: c.read<VehicleRepository>(),
-            pricing: c.read<PricingService>(), // HomeVM usa service
+            pricing: c.read<PricingService>(),
+          ),
+          update: (c, auth, prev) => HomeViewModel(
+            vehicles: c.read<VehicleRepository>(),
+            pricing: c.read<PricingService>(),
           ),
         ),
-        ChangeNotifierProvider<HostHomeViewModel>(
+
+        ChangeNotifierProxyProvider<AuthProvider, HostHomeViewModel>(
           create: (c) => HostHomeViewModel(
             vehiclesRepo: c.read<VehicleRepository>(),
             pricing: c.read<PricingService>(),
             currentUserId: c.read<AuthProvider>().userId ?? '',
           ),
+          update: (c, auth, prev) => HostHomeViewModel(
+            vehiclesRepo: c.read<VehicleRepository>(),
+            pricing: c.read<PricingService>(),
+            currentUserId: auth.userId ?? '',
+          ),
         ),
-        ChangeNotifierProvider<TripsViewModel>(
-          create: (c) => TripsViewModel(c.read<BookingsRepository>())..init(),
+
+        // Trips: instancia NUEVA por usuario para limpiar estado
+        ChangeNotifierProxyProvider<AuthProvider, TripsViewModel>(
+          create: (c) {
+            final vm = TripsViewModel(c.read<BookingsRepository>());
+            vm.init();
+            return vm;
+          },
+          update: (c, auth, prev) {
+            final vm = TripsViewModel(c.read<BookingsRepository>());
+            vm.init(); // reinicia chunk/paginación
+            return vm;
+          },
         ),
+
         ChangeNotifierProvider<BookingViewModel>(
           create: (c) => BookingViewModel(
             bookingsRepo: c.read<BookingsRepository>(),
@@ -329,12 +367,24 @@ Future<void> main() async {
         ChangeNotifierProvider<VisitedPlacesViewModel>(
           create: (_) => VisitedPlacesViewModel(),
         ),
-        ChangeNotifierProvider<MessagesViewModel>(
+
+        ChangeNotifierProxyProvider<AuthProvider, MessagesViewModel>(
           create: (c) => MessagesViewModel(
             chat: c.read<ChatRepository>(),
             users: c.read<UsersRepository>(),
             currentUserId: c.read<AuthProvider>().userId ?? '',
           ),
+          update: (c, auth, previous) {
+            final uid = auth.userId ?? '';
+            if (previous == null || previous.currentUserId != uid) {
+              return MessagesViewModel(
+                chat: c.read<ChatRepository>(),
+                users: c.read<UsersRepository>(),
+                currentUserId: uid,
+              );
+            }
+            return previous;
+          },
         ),
       ],
       child: const MyApp(),
@@ -342,13 +392,11 @@ Future<void> main() async {
   );
 }
 
-/// Root widget, wires theme + splash routing
+/// Root widget, theme + splash
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // ===== Brand palette / typography helpers =====
-
-  static const seed = Color(0xFF4F46E5); // Indigo-ish brand color
+  static const seed = Color(0xFF4F46E5);
   static const lightBg = Color(0xFFF7F7F7);
   static const darkBg = Color(0xFF0F1115);
 
@@ -387,7 +435,6 @@ class MyApp extends StatelessWidget {
       background: lightBg,
       surface: Colors.white,
     );
-
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
@@ -490,7 +537,6 @@ class MyApp extends StatelessWidget {
       background: darkBg,
       surface: const Color(0xFF151922),
     );
-
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
@@ -521,25 +567,12 @@ class MyApp extends StatelessWidget {
         type: BottomNavigationBarType.fixed,
         elevation: 8,
       ),
-      inputDecorationTheme: InputDecorationTheme(
+      inputDecorationTheme: const InputDecorationTheme(
         filled: true,
-        fillColor: const Color(0xFF1C2230),
-        hintStyle: TextStyle(color: scheme.onSurfaceVariant),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 12,
-        ),
+        fillColor: Color(0xFF1C2230),
+        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: scheme.outlineVariant),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: scheme.outlineVariant),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: scheme.primary, width: 1.4),
+          borderRadius: BorderRadius.all(Radius.circular(16)),
         ),
       ),
       chipTheme: ChipThemeData(
@@ -589,22 +622,21 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeCtrl = context.watch<ThemeController>();
-
     return MaterialApp(
+      key: ValueKey('user:' + (context.watch<AuthProvider>().userId ?? 'anon')),
       title: 'QOVO',
       debugShowCheckedModeBanner: false,
       theme: _light(),
       darkTheme: _dark(),
-      themeMode: themeCtrl.currentMode, // auto / light / dark
+      themeMode: themeCtrl.currentMode,
       home: const SplashScreen(),
-      showPerformanceOverlay: true, // TEMP for perf debugging
+      showPerformanceOverlay: true, // TEMP
     );
   }
 }
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
-
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
@@ -613,12 +645,20 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    // Simple splash → login
-    Future.delayed(const Duration(seconds: 2), () {
+    Future.delayed(const Duration(milliseconds: 500), () {
       if (!mounted) return;
-      Navigator.of(
-        context,
-      ).pushReplacement(MaterialPageRoute(builder: (_) => const LoginScreen()));
+      final uid = context.read<AuthProvider>().userId;
+      if (uid == null || uid.isEmpty) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+        );
+      } else {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => AppShell(currentUserId: uid, initialIndex: 0),
+          ),
+        );
+      }
     });
   }
 
@@ -637,4 +677,59 @@ class _SplashScreenState extends State<SplashScreen> {
       ),
     );
   }
+}
+
+Future<void> _clearAppData(BuildContext c, String oldUid) async {
+  // corta token
+  try {
+    Api.I().setToken(null);
+    Api.I().close();
+  } catch (_) {}
+
+  // caches en memoria
+  try {
+    final vRepo = c.read<VehicleRepository>();
+    if (vRepo is VehicleRepositoryCached) vRepo.clearCache();
+  } catch (_) {}
+  try {
+    final bRepo = c.read<BookingsRepository>();
+    if (bRepo is BookingsRepositoryCached) bRepo.clearCache();
+  } catch (_) {}
+  try {
+    final chRepo = c.read<ChatRepository>();
+    if (chRepo is ChatRepositoryCached) chRepo.clearOnLogout();
+  } catch (_) {}
+
+  // limpia tablas del usuario saliente
+  try {
+    await c.read<VehiclesDao>().clearAll();
+  } catch (_) {}
+  try {
+    await c.read<VehicleAvailabilityDao>().clearAll();
+  } catch (_) {}
+  try {
+    await c.read<PricingDao>().clearAll();
+  } catch (_) {}
+  try {
+    await c.read<BookingsDao>().clearAll();
+  } catch (_) {}
+  try {
+    await c.read<ConversationsDao>().clearAll();
+  } catch (_) {}
+  try {
+    await c.read<MessagesDao>().clearAll();
+  } catch (_) {}
+  try {
+    await c.read<InfraDao>().clearAll();
+  } catch (_) {}
+
+  try {
+    await c.read<AuthRepository>().clearToken();
+  } catch (_) {}
+
+  try {
+    c.read<HostModeProvider>().setHostMode(false); // reset al salir
+  } catch (_) {}
+
+  // Nota: no cerramos aquí la conexión de Drift manualmente (lo hace Provider.dispose)
 }

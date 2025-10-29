@@ -59,9 +59,8 @@ class AvailabilityRepositoryImpl implements AvailabilityRepository {
   final LruCache<String, List<AvailabilityWindow>> _availCache =
       LruCache<String, List<AvailabilityWindow>>(20);
 
-  AvailabilityRepositoryImpl({
-    required AvailabilityService remote,
-  }) : _remote = remote;
+  AvailabilityRepositoryImpl({required AvailabilityService remote})
+    : _remote = remote;
 
   /// Low-level: fetch ONE page (skip/limit) for a vehicle.
   /// This is basically your old `listByVehicle`, refactored.
@@ -80,9 +79,7 @@ class AvailabilityRepositoryImpl implements AvailabilityRepository {
 
       if (res.statusCode == 404) {
         // Vehicle has no availability
-        return Result.ok(
-          AvailabilityPage(items: const [], hasMore: false),
-        );
+        return Result.ok(AvailabilityPage(items: const [], hasMore: false));
       }
 
       if (res.statusCode != 200) {
@@ -116,8 +113,10 @@ class AvailabilityRepositoryImpl implements AvailabilityRepository {
       final cached = _availCache.get(vehicleId);
       if (cached != null) {
         assert(() {
-          print('[AvailabilityRepo] cache HIT for $vehicleId '
-              '(windows=${cached.length})');
+          print(
+            '[AvailabilityRepo] cache HIT for $vehicleId '
+            '(windows=${cached.length})',
+          );
           return true;
         }());
         return Result.ok(cached);
@@ -125,7 +124,9 @@ class AvailabilityRepositoryImpl implements AvailabilityRepository {
     }
 
     assert(() {
-      print('[AvailabilityRepo] cache MISS for $vehicleId — fetching all pages');
+      print(
+        '[AvailabilityRepo] cache MISS for $vehicleId — fetching all pages',
+      );
       return true;
     }());
 
@@ -179,9 +180,7 @@ class AvailabilityRepositoryImpl implements AvailabilityRepository {
     );
 
     final items = raw.items
-        .map<AvailabilityWindow>(
-          AvailabilityWindow.fromJson,
-        )
+        .map<AvailabilityWindow>(AvailabilityWindow.fromJson)
         .toList(growable: false);
 
     return AvailabilityPage(items: items, hasMore: raw.hasMore);

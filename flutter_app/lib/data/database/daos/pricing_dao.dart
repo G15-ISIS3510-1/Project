@@ -12,6 +12,8 @@ class PricingDao extends DatabaseAccessor<AppDatabase> with _$PricingDaoMixin {
     await batch((b) => b.insertAllOnConflictUpdate(pricings, rows));
   }
 
+  Future<int> clearAll() => delete(pricings).go();
+
   Future<List<PricingData>> listByVehicle({
     required String vehicleId,
     int limit = 50,

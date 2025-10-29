@@ -12,6 +12,8 @@ class VehiclesDao extends DatabaseAccessor<AppDatabase>
     await batch((b) => b.insertAllOnConflictUpdate(vehicles, rows));
   }
 
+  Future<int> clearAll() => delete(vehicles).go();
+
   Future<List<VehiclesData>> listAll() =>
       (select(vehicles)..where((t) => t.isDeleted.equals(false))).get();
 

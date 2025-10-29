@@ -13,6 +13,8 @@ class BookingsDao extends DatabaseAccessor<AppDatabase>
     await batch((b) => b.insertAllOnConflictUpdate(bookings, rows));
   }
 
+  Future<int> clearAll() => delete(bookings).go();
+
   Future<BookingsData?> byId(String id) => (select(
     bookings,
   )..where((t) => t.bookingId.equals(id))).getSingleOrNull();

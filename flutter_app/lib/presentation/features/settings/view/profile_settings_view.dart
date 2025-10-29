@@ -1,22 +1,21 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter_app/data/repositories/analytics_repository.dart';
-import 'package:flutter_app/data/sources/remote/analytics_remote_source.dart';
-import 'package:flutter_app/main.dart';
-import 'package:flutter_app/presentation/features/analytics/view/analytics_view.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
+
+import 'package:flutter_app/main.dart'; // AuthProvider, kApiBase
+import 'package:flutter_app/data/repositories/analytics_repository.dart';
+import 'package:flutter_app/data/sources/remote/analytics_remote_source.dart';
+import 'package:flutter_app/presentation/features/analytics/view/analytics_view.dart';
 
 import 'package:flutter_app/data/repositories/vehicle_repository.dart';
 import 'package:flutter_app/data/repositories/pricing_repository.dart';
 import 'package:flutter_app/presentation/features/vehicle/viewmodel/add_vehicle_viewmodel.dart';
 import 'package:flutter_app/presentation/features/booking_reminders/view/booking_reminders_view.dart';
-import '../../profile/view/visited_places_view.dart';
-import '../../auth/view/login_view.dart';
-import '../../app_shell/viewmodel/host_mode_provider.dart';
+import 'package:flutter_app/presentation/features/profile/view/visited_places_view.dart';
+import 'package:flutter_app/presentation/features/auth/view/login_view.dart';
 import 'package:flutter_app/presentation/features/vehicle/view/add_vehicle_view.dart';
-import 'package:flutter_app/presentation/features/analytics/view/analytics_view.dart';
 
 class UserProfile {
   final String id;
@@ -87,26 +86,22 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
   }
 
   Future<void> _signOut({bool showMessage = true}) async {
-    await _storage.delete(key: 'access_token');
-    await _storage.delete(key: 'refresh_token');
-
     if (!mounted) return;
 
-    try {
-      context.read<HostModeProvider>().setHostMode(false);
-    } catch (_) {}
+    // 1) Sign out centralizado (esto dispara _clearAppData del main.dart)
+    await context.read<AuthProvider>().signOut();
 
-    if (mounted) {
-      if (showMessage) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Sesión cerrada')));
-      }
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-        (route) => false,
-      );
+    // 2) Feedback y navegación
+    if (!mounted) return;
+    if (showMessage) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Sesión cerrada')));
     }
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (route) => false,
+    );
   }
 
   @override

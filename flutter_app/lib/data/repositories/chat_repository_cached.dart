@@ -1,4 +1,4 @@
-import 'dart:async'; // NEW: for Stream
+import 'dart:async'; // for Stream
 import 'dart:convert';
 import 'package:drift/drift.dart';
 import 'package:flutter_app/app/utils/net.dart';
@@ -39,6 +39,17 @@ class ChatRepositoryCached implements ChatRepository {
     this.lastReadPrefs,
     required this.currentUserId,
   });
+
+  /// Limpia cache local al cerrar sesión (lo llama `_clearAppData`).
+  Future<void> clearOnLogout() async {
+    try {
+      await convDao.clearAll();
+    } catch (_) {}
+    try {
+      await msgDao.clearAll();
+    } catch (_) {}
+    // Si mantienes caches en memoria, vacíalos aquí también.
+  }
 
   // ----------------------------------------------------------------------
   // Conversations
@@ -120,18 +131,18 @@ class ChatRepositoryCached implements ChatRepository {
   // Messages (thread per otherUserId)
   // ----------------------------------------------------------------------
 
+  /// Stream remoto *con persistencia local* sin bloquear el stream.
   @override
   Stream<List<MessageModel>> watchThread(String otherUserId) {
-    // Delegate to remote stream and persist side-effects into Drift.
     return remote.watchThread(otherUserId).map((list) {
-      // Persist asynchronously; do not block the stream.
+      // Persist side-effect async
       // ignore: unawaited_futures
       msgDao.upsertAll(list.map(_messageToDb).toList(growable: false));
       return list;
     });
   }
 
-  /// LOCAL-FIRST: read last message from local DB.
+  /// LOCAL-FIRST: último mensaje del hilo desde Drift.
   @override
   Future<MessageModel?> getLastMessageInThread(
     String otherUserId, {
@@ -158,6 +169,7 @@ class ChatRepositoryCached implements ChatRepository {
       }
     }
 
+    // fallback remoto
     final remoteLast = await remote.getLastMessageInThread(
       otherUserId,
       onlyReceivedBy: onlyReceivedBy,
@@ -216,7 +228,7 @@ class ChatRepositoryCached implements ChatRepository {
   @override
   Future<void> markThreadAsRead(String otherUserId) async {
     await remote.markThreadAsRead(otherUserId);
-    // Optionally mirror locally (if you add support).
+    // Opcional: espejo local si lo soportas
     try {
       final conv = await remote.ensureDirectConversation(otherUserId);
       final convId = conv.conversationId;

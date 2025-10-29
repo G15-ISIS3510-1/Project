@@ -13,6 +13,9 @@ class VehicleAvailabilityDao extends DatabaseAccessor<AppDatabase>
     await batch((b) => b.insertAllOnConflictUpdate(vehicleAvailability, rows));
   }
 
+  Future<int> clearAll() =>
+      delete(vehicleAvailability).go(); // ajusta el nombre si es otro
+
   Future<List<VehicleAvailabilityData>> byVehicleAndRange(
     String vehicleId,
     DateTime from,

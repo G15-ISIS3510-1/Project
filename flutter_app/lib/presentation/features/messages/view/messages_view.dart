@@ -1,12 +1,10 @@
 import 'dart:async';
-import 'dart:math' as MainSize;
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:flutter_app/presentation/common_widgets/search_bar.dart' as qovo;
+import 'package:flutter_app/presentation/common_widgets/search_bar.dart'
+    as qovo;
 import 'package:flutter_app/presentation/features/app_shell/viewmodel/host_mode_provider.dart';
-
 import 'package:flutter_app/presentation/features/messages/viewmodel/messages_viewmodel.dart';
 
 // For navigating into the chat detail screen
@@ -25,12 +23,16 @@ class MessagesView extends StatefulWidget {
 
 class _MessagesViewState extends State<MessagesView>
     with AutomaticKeepAliveClientMixin<MessagesView> {
-  final ScrollController _scroll = ScrollController();
+  DateTime _lastRefresh = DateTime.fromMillisecondsSinceEpoch(0);
+  bool _canRefresh() =>
+      DateTime.now().difference(_lastRefresh) > const Duration(seconds: 1);
 
   @override
   bool get wantKeepAlive => true;
 
   static const double _p24 = 24;
+
+  final ScrollController _scroll = ScrollController();
 
   @override
   void initState() {
@@ -44,15 +46,6 @@ class _MessagesViewState extends State<MessagesView>
       vm.refresh();
 
       context.read<HostModeProvider>().addListener(_onModeChanged);
-    });
-
-    _scroll.addListener(() {
-      final vm = context.read<MessagesViewModel>();
-      if (_scroll.position.pixels <= _scroll.position.minScrollExtent + 50 &&
-          !_scroll.position.outOfRange &&
-          !vm.loading) {
-        vm.refresh();
-      }
     });
   }
 
@@ -86,127 +79,154 @@ class _MessagesViewState extends State<MessagesView>
   Widget build(BuildContext context) {
     super.build(context);
     final bottomInset = MediaQuery.of(context).padding.bottom;
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final text = theme.textTheme;
 
     return SafeArea(
       top: true,
       bottom: false,
       child: Consumer<MessagesViewModel>(
         builder: (_, vm, __) {
-          return CustomScrollView(
-            controller: _scroll,
-            slivers: [
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(_p24, _p24, _p24, 12),
-                  child: Column(
-                    children: [
-                      Center(
-                        child: Transform.scale(
-                          scaleY: 0.82,
-                          child: Text(
-                            'QOVO',
-                            style: text.displaySmall?.copyWith(
-                              fontSize: 48,
-                              fontWeight: FontWeight.w400,
-                              color: scheme.onBackground.withOpacity(0.95),
-                              letterSpacing: -7.0,
+          return NotificationListener<ScrollNotification>(
+            onNotification: (n) {
+              // Pull-to-refresh con overscroll real y umbral
+              if (n is OverscrollNotification &&
+                  n.dragDetails != null &&
+                  n.overscroll < -120 &&
+                  n.metrics.pixels <= n.metrics.minScrollExtent &&
+                  !vm.loading &&
+                  _canRefresh()) {
+                _lastRefresh = DateTime.now();
+                vm.refresh();
+                return true;
+              }
+              return false;
+            },
+            child: CustomScrollView(
+              controller: _scroll,
+              physics: const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics(),
+              ),
+              slivers: [
+                // Header
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(_p24, _p24, _p24, 12),
+                    child: Column(
+                      children: [
+                        Center(
+                          child: Transform.scale(
+                            scaleY: 0.82,
+                            child: Text(
+                              'QOVO',
+                              style: text.displaySmall?.copyWith(
+                                fontSize: 48,
+                                fontWeight: FontWeight.w400,
+                                color: scheme.onBackground.withOpacity(0.95),
+                                letterSpacing: -7.0,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      qovo.SearchBar(
-                        onChanged: vm.setQuery,
-                      ),
-                    ],
+                        const SizedBox(height: 16),
+                        qovo.SearchBar(
+                          onChanged: vm.setQuery, // filtro local
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              SliverToBoxAdapter(
-                child: Builder(
-                  builder: (_) {
-                    if (vm.loading) {
-                      return const Padding(
-                        padding: EdgeInsets.only(top: 48),
-                        child: Center(child: CircularProgressIndicator()),
-                      );
-                    }
-                    if (vm.error != null) {
-                      return Padding(
-                        padding: const EdgeInsets.all(24.0),
-                        child: Text('Error loading conversations: ${vm.error}'),
-                      );
-                    }
-                    final items = vm.items;
-                    if (items.isEmpty) {
-                      return const Padding(
-                        padding: EdgeInsets.all(24.0),
-                        child: Text('No conversations yet'),
-                      );
-                    }
 
-                    return ListView.separated(
-                      physics: const NeverScrollableScrollPhysics(),
-                      shrinkWrap: true,
-                      itemCount: items.length,
-                      separatorBuilder: (_, __) => const Divider(
-                        height: 0.8,
-                        thickness: 0.8,
-                        color: Color(0xFFFAFAFA),
-                      ),
-                      itemBuilder: (_, i) {
-                        final it = items[i];
-                        return _ConversationTile(
-                          title: it.title,
-                          subtitle: it.preview,
-                          time: _formatTime(it.lastAt),
-                          unreadDot: it.unread > 0,
-                          onTap: () async {
-                            // Optimistic: clear the unread dot
-                            vm.markSeenLocally(i);
+                // Lista / estados
+                SliverToBoxAdapter(
+                  child: Builder(
+                    builder: (_) {
+                      if (vm.loading) {
+                        return const Padding(
+                          padding: EdgeInsets.only(top: 48),
+                          child: Center(child: CircularProgressIndicator()),
+                        );
+                      }
+                      if (vm.error != null) {
+                        return Padding(
+                          padding: const EdgeInsets.all(24.0),
+                          child: Text(
+                            'Error loading conversations: ${vm.error}',
+                          ),
+                        );
+                      }
+                      final items = vm.items;
+                      if (items.isEmpty) {
+                        return const Padding(
+                          padding: EdgeInsets.all(24.0),
+                          child: Text('No conversations yet'),
+                        );
+                      }
 
-                            // Subscribe to live preview for this thread
-                            vm.subscribeToThread(it.otherUserId);
+                      return ListView.separated(
+                        physics: const NeverScrollableScrollPhysics(),
+                        shrinkWrap: true,
+                        itemCount: items.length,
+                        separatorBuilder: (_, __) => const Divider(
+                          height: 0.8,
+                          thickness: 0.8,
+                          color: Color(0xFFFAFAFA),
+                        ),
+                        itemBuilder: (_, i) {
+                          final it = items[i];
+                          return _ConversationTile(
+                            title: it.title,
+                            subtitle: it.preview,
+                            time: _formatTime(it.lastAt),
+                            unreadDot: it.unread > 0,
+                            onTap: () async {
+                              // Optimista: limpia el dot local
+                              vm.markSeenLocally(i);
 
-                            final didChange =
-                                await Navigator.of(context).push<bool>(
-                              MaterialPageRoute(
-                                builder: (_) {
-                                  final parentCtx = context;
+                              // Threading/live preview: suscripción al hilo
+                              vm.subscribeToThread(it.otherUserId);
 
-                                  return ChangeNotifierProvider<
-                                      ConversationViewModel>(
-                                    create: (_) => ConversationViewModel(
-                                      repo: parentCtx.read<ChatRepository>(),
-                                      currentUserId: widget.currentUserId,
-                                      otherUserId: it.otherUserId,
-                                      conversationId: it.conversationId,
-                                    )..init(),
-                                    child: ConversationPage(
-                                      currentUserId: widget.currentUserId,
-                                      otherUserId: it.otherUserId,
-                                      conversationId: it.conversationId,
+                              final didChange = await Navigator.of(context)
+                                  .push<bool>(
+                                    MaterialPageRoute(
+                                      builder: (_) {
+                                        final parentCtx = context;
+                                        return ChangeNotifierProvider<
+                                          ConversationViewModel
+                                        >(
+                                          create: (_) => ConversationViewModel(
+                                            repo: parentCtx
+                                                .read<ChatRepository>(),
+                                            currentUserId: widget.currentUserId,
+                                            otherUserId: it.otherUserId,
+                                            conversationId: it.conversationId,
+                                          )..init(),
+                                          child: ConversationPage(
+                                            currentUserId: widget.currentUserId,
+                                            otherUserId: it.otherUserId,
+                                            conversationId: it.conversationId,
+                                          ),
+                                        );
+                                      },
                                     ),
                                   );
-                                },
-                              ),
-                            );
-
-                            if (!mounted) return;
-                            if (didChange == true) vm.refresh();
-                          },
-                        );
-                      },
-                    );
-                  },
+                              if (!mounted) return;
+                              if (didChange == true) vm.refresh();
+                            },
+                          );
+                        },
+                      );
+                    },
+                  ),
                 ),
-              ),
-              SliverToBoxAdapter(
-                child: SizedBox(height: 76 + 12 + bottomInset + 8),
-              ),
-            ],
+
+                // Spacer para bottom bar
+                SliverToBoxAdapter(
+                  child: SizedBox(height: 76 + 12 + bottomInset + 8),
+                ),
+              ],
+            ),
           );
         },
       ),
@@ -246,10 +266,7 @@ class _ConversationTile extends StatelessWidget {
                 color: Color(0xFFF3F4F6),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.person_outline,
-                color: Color(0xFFB8BDC7),
-              ),
+              child: const Icon(Icons.person_outline, color: Color(0xFFB8BDC7)),
             ),
             const SizedBox(width: 14),
             Expanded(

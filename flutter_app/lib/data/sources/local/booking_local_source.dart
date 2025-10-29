@@ -43,5 +43,22 @@ class BookingLocalSource {
     );
   }
 
+  Future<List<vm.Booking>> getPageMine({
+    required String userId,
+    required bool asHost,
+    int skip = 0,
+    int limit = 20,
+    String? status,
+  }) async {
+    final rows = await dao.listMine(
+      userId: userId,
+      asHost: asHost,
+      status: status,
+      limit: limit,
+      offset: skip,
+    );
+    return rows.map((e) => e.toModel()).toList(growable: false);
+  }
+
   Future<void> softDelete(String bookingId) => dao.softDelete(bookingId);
 }
