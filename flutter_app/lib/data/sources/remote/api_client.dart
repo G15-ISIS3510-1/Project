@@ -24,6 +24,8 @@ class Api {
   String _base; // e.g. https://... (sin trailing slash)
   String? _token;
 
+  String? get token => _token;
+
   // HTTP client w/ keep-alive control
   IOClient? _client;
 

@@ -72,7 +72,6 @@ import 'package:flutter_app/presentation/features/trips/viewmodel/trips_viewmode
 import 'package:flutter_app/presentation/features/vehicle/viewmodel/add_vehicle_viewmodel.dart';
 
 import 'app/theme/theme_controller.dart';
-// import 'package:flutter_app/data/sources/local/local_isolation.dart'; // ← NO usar en logout
 
 /// Auth/session holder leído por la UI.
 class AuthProvider with ChangeNotifier {
@@ -89,6 +88,12 @@ class AuthProvider with ChangeNotifier {
   void signIn({required String userId, required String token}) {
     _userId = userId;
     _token = token;
+
+    // 🔐 importantísimo: volver a setear token para próximas llamadas
+    try {
+      Api.I().setToken(token);
+    } catch (_) {}
+
     notifyListeners();
   }
 
@@ -110,7 +115,6 @@ const String kApiBase = String.fromEnvironment(
 );
 const String kApiBaseWithPrefix = kApiBase;
 
-/// MAIN
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting();
@@ -249,7 +253,7 @@ Future<void> main() async {
           ),
         ),
 
-        // ───────── cached repositories (recrean con DAOs/locals nuevos)
+        // ───────── cached repositories (atados a usuario/rol)
         ProxyProvider3<
           VehicleRepositoryImpl,
           VehiclesDao,
@@ -262,6 +266,8 @@ Future<void> main() async {
             infraDao: infra,
           ),
         ),
+
+        // Availability / Pricing sin cambios de identidad por usuario
         ProxyProvider2<
           AvailabilityRepositoryImpl,
           AvailabilityLocalSource,
@@ -283,16 +289,25 @@ Future<void> main() async {
             priceGetter: (sp) => sp.value,
           ),
         ),
-        ProxyProvider2<
-          BookingsRepositoryImpl,
-          BookingLocalSource,
+
+        // ⚠️ BookingsRepository: dependemos de Auth + HostMode para filtrar por usuario/rol
+        ProxyProvider4<
+          BookingsRepositoryImpl, // remote impl
+          BookingLocalSource, // local
+          AuthProvider, // usuario actual
+          HostModeProvider, // rol actual
           BookingsRepository
         >(
-          update: (c, remote, local, _) =>
-              BookingsRepositoryCached(remote: remote, local: local),
+          update: (c, remote, local, auth, hostMode, _) =>
+              BookingsRepositoryCached(
+                remote: remote,
+                local: local,
+                currentUserId: () => auth.userId ?? '',
+                isHost: () => hostMode.isHostMode,
+              ),
         ),
 
-        // ChatRepository cambia con la DB
+        // ChatRepository cambia con la DB (y conoce currentUserId)
         ProxyProvider<AppDatabase, ChatRepository>(
           update: (c, db, _) => ChatRepositoryCached(
             remote: c.read<ChatRepositoryImpl>(),
@@ -317,7 +332,7 @@ Future<void> main() async {
           ),
         ),
 
-        // HomeViewModel: recrear al cambiar de usuario (sin dispose manual)
+        // HomeViewModel: recreamos simple (si te vuelve a dar dispose, te paso patrón “update in-place”)
         ChangeNotifierProxyProvider<AuthProvider, HomeViewModel>(
           create: (c) => HomeViewModel(
             vehicles: c.read<VehicleRepository>(),
@@ -342,6 +357,7 @@ Future<void> main() async {
           ),
         ),
 
+        // Trips: instancia NUEVA por usuario para limpiar estado
         ChangeNotifierProxyProvider<AuthProvider, TripsViewModel>(
           create: (c) {
             final vm = TripsViewModel(c.read<BookingsRepository>());
@@ -350,7 +366,7 @@ Future<void> main() async {
           },
           update: (c, auth, prev) {
             final vm = TripsViewModel(c.read<BookingsRepository>());
-            vm.init();
+            vm.init(); // reinicia chunk/paginación
             return vm;
           },
         ),
@@ -730,6 +746,9 @@ Future<void> _clearAppData(BuildContext c, String oldUid) async {
     await c.read<AuthRepository>().clearToken();
   } catch (_) {}
 
-  // Evitar cerrar isolates durante sesión:
-  // try { await LocalIsolation.hardReset(); } catch (_) {}
+  try {
+    c.read<HostModeProvider>().setHostMode(false); // ← reset al salir
+  } catch (_) {}
+
+  // No matar isolates de Drift aquí (evita “connection was closed”)
 }

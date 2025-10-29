@@ -1,11 +1,13 @@
 // lib/domain/trips/bookings_repository.dart
 
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_app/app/utils/pagination.dart';
 import 'package:flutter_app/app/utils/result.dart';
 import 'package:flutter_app/data/models/booking_model.dart';
 import 'package:flutter_app/data/models/booking_status.dart';
 import 'package:flutter_app/data/models/booking_create_model.dart';
+import 'package:flutter_app/data/sources/remote/api_client.dart';
 import 'package:flutter_app/data/sources/remote/booking_remote_source.dart'; // BookingService
 
 // NEW: LRU cache
@@ -22,6 +24,7 @@ abstract class BookingsRepository {
     int skip,
     int limit,
     BookingStatus? statusFilter,
+    bool asHost,
   });
 
   Future<Result<Booking>> createBooking(BookingCreateModel data);
@@ -32,55 +35,79 @@ class BookingsRepositoryImpl implements BookingsRepository {
 
   // NEW: Keep the N most-recent 100-booking chunks (LRU by (skip,limit,status))
   // TripsViewModel calls with limit=100; capacity 3 ~= 300 bookings in memory.
-  final LruCache<String, BookingsPage> _cache =
-      LruCache<String, BookingsPage>(3);
+  final LruCache<String, BookingsPage> _cache = LruCache<String, BookingsPage>(
+    3,
+  );
 
   BookingsRepositoryImpl(this.remote);
 
-  void clearCache() => _cache.clear();
+  final Map<String, BookingsPage> _mem = {};
+  void clearCache() {
+    _mem.clear();
+    if (kDebugMode) debugPrint('[BookingsRepoImpl] clearCache()');
+  }
 
-  String _key(int skip, int limit, String? statusParam) =>
-      '$skip|$limit|${statusParam ?? ''}';
+  String _key({
+    required String token,
+    required bool asHost,
+    required int skip,
+    required int limit,
+    String? status,
+  }) =>
+      't:${token.isEmpty ? "none" : token.hashCode}'
+      '|h:${asHost ? 1 : 0}'
+      '|s:$skip|l:$limit|st:${status ?? ""}';
 
   @override
   Future<Result<BookingsPage>> listMyBookings({
     int skip = 0,
     int limit = 20,
     BookingStatus? statusFilter,
+    bool asHost = false, // ← importante que exista y se propague
   }) async {
-    final statusParam = statusFilter?.asParam;
-    final key = _key(skip, limit, statusParam);
+    final token = Api.I().token ?? '';
+    final k = _key(
+      token: token,
+      asHost: asHost,
+      skip: skip,
+      limit: limit,
+      status: statusFilter?.asParam,
+    );
 
-    // 1) Try cache (LRU hit)
-    final cached = _cache.get(key);
+    // (Opcional) lee cache mem per-key
+    final cached = _mem[k];
     if (cached != null) {
+      if (kDebugMode)
+        debugPrint(
+          '[BookingsRepoImpl] mem-hit $k items=${cached.items.length}',
+        );
       return Result.ok(cached);
     }
 
-    // 2) Fetch network and cache
-    try {
-      final res = await remote.listMyBookings(
-        skip: skip,
-        limit: limit,
-        statusFilter: statusParam,
-      );
-      if (res.statusCode != 200) {
-        return Result.err('Bookings ${res.statusCode}: ${res.body}');
-      }
+    final resp = await remote.listMyBookings(
+      skip: skip,
+      limit: limit,
+      statusFilter: statusFilter?.asParam,
+      asHost: asHost,
+    );
 
-      final page = parsePaginated<Map<String, dynamic>>(
-        res.body,
-        (m) => m, // primero en bruto, luego mapeamos a Booking
-      );
-
-      final items = page.items.map(_mapBooking).toList(growable: false);
-      final resultPage = BookingsPage(items: items, hasMore: page.hasMore);
-
-      _cache.put(key, resultPage);
-      return Result.ok(resultPage);
-    } catch (e) {
-      return Result.err('No se pudieron cargar las reservas: $e');
+    if (resp.statusCode != 200) {
+      return Result.err('HTTP ${resp.statusCode}');
     }
+
+    final json = jsonDecode(resp.body) as Map<String, dynamic>;
+    final items = (json['items'] as List)
+        .map((m) => Booking.fromJson(m as Map<String, dynamic>))
+        .toList();
+    final hasMore = json['has_more'] == true || items.length == limit;
+
+    final page = BookingsPage(items: items, hasMore: hasMore);
+    _mem[k] = page;
+    if (kDebugMode)
+      debugPrint(
+        '[BookingsRepoImpl] net-ok $k items=${items.length} hasMore=$hasMore',
+      );
+    return Result.ok(page);
   }
 
   @override

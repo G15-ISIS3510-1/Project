@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_app/data/database/daos/infra_dao.dart';
 import 'package:flutter_app/data/database/daos/vehicles_dao.dart';
 import 'package:flutter_app/data/database/tables/bookings_table.dart';
@@ -13,6 +15,7 @@ import 'package:flutter_app/data/database/tables/vehicle_availability_table.dart
 import 'package:flutter_app/data/database/tables/vehicles_table.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
+import 'package:crypto/crypto.dart';
 
 part 'app_database.g.dart';
 
@@ -64,11 +67,18 @@ LazyDatabase _open() {
   });
 }
 
-/// ⭐ un archivo por usuario: aísla datos entre sesiones
+String _safeUid(String raw) {
+  // hash corto y estable para nombre de archivo
+  final d = sha1.convert(utf8.encode(raw));
+  return d.toString(); // 40 hex chars
+}
+
 LazyDatabase _openFor(String uid) {
   return LazyDatabase(() async {
     final dir = await getApplicationDocumentsDirectory();
-    final file = File(p.join(dir.path, 'qovo_$uid.db'));
+    final safe = _safeUid(uid); // ← usa el hashed
+    final file = File(p.join(dir.path, 'qovo_$safe.db'));
+    debugPrint('[DB] open for uid=$uid path=${file.path}');
     return NativeDatabase.createInBackground(file);
   });
 }

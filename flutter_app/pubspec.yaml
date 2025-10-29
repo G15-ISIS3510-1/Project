@@ -5,8 +5,8 @@ publish_to: "none"
 version: 1.0.0+1
 
 environment:
-  sdk: ">=3.8.1 <4.0.0"   # Dart SDK
-  flutter: ">=3.29.0"     # Alineado con el lock; podemos subir luego si ya estás en 3.35.x
+  sdk: ">=3.8.1 <4.0.0" # Dart SDK
+  flutter: ">=3.29.0" # Alineado con el lock; podemos subir luego si ya estás en 3.35.x
 
 dependencies:
   flutter:
@@ -24,6 +24,7 @@ dependencies:
   flutter_secure_storage: ^9.2.4
   path_provider: ^2.1.5
   path: ^1.9.1
+  crypto: ^3.0.6
 
   # Red / utilidades
   dio: ^5.9.0
