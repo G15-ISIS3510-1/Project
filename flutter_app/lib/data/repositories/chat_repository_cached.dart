@@ -39,6 +39,16 @@ class ChatRepositoryCached implements ChatRepository {
     required this.currentUserId,
   });
 
+  Future<void> clearOnLogout() async {
+    try {
+      await convDao.clearAll();
+    } catch (_) {}
+    try {
+      await msgDao.clearAll();
+    } catch (_) {}
+    // y si mantienes caches en memoria, vacíalos aquí
+  }
+
   // --------------------------
   // Conversations
   // --------------------------

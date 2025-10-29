@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_app/main.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
@@ -82,26 +83,22 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
   }
 
   Future<void> _signOut({bool showMessage = true}) async {
-    await _storage.delete(key: 'access_token');
-    await _storage.delete(key: 'refresh_token');
-
     if (!mounted) return;
 
-    try {
-      context.read<HostModeProvider>().setHostMode(false);
-    } catch (_) {}
+    // 1) Sign out centralizado (esto dispara _clearAppData del main.dart)
+    await context.read<AuthProvider>().signOut();
 
-    if (mounted) {
-      if (showMessage) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Sesión cerrada')));
-      }
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-        (route) => false,
-      );
+    // 2) Feedback y navegación
+    if (!mounted) return;
+    if (showMessage) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Sesión cerrada')));
     }
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (route) => false,
+    );
   }
 
   @override

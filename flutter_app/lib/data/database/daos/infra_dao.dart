@@ -13,6 +13,12 @@ class InfraDao extends DatabaseAccessor<AppDatabase> with _$InfraDaoMixin {
     return await q.getSingleOrNull();
   }
 
+  Future<int> clearAll() async {
+    final a = await (delete(syncState)).go();
+    final b = await (delete(pendingOps)).go();
+    return a + b;
+  }
+
   Future<void> saveState({
     required String entity,
     DateTime? lastFetchAt,

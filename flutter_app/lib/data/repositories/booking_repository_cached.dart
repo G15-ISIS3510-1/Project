@@ -12,6 +12,11 @@ class BookingsRepositoryCached implements BookingsRepository {
   final BookingLocalSource local;
 
   BookingsRepositoryCached({required this.remote, required this.local});
+  void clearCache() {
+    try {
+      remote.clearCache();
+    } catch (_) {}
+  }
 
   @override
   Future<Result<BookingsPage>> listMyBookings({

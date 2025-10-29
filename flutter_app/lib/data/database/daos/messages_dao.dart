@@ -13,6 +13,8 @@ class MessagesDao extends DatabaseAccessor<AppDatabase>
     await batch((b) => b.insertAllOnConflictUpdate(messages, rows));
   }
 
+  Future<int> clearAll() => delete(messages).go();
+
   Future<List<MessagesData>> byConversationPaged({
     required String conversationId,
     int limit = 50,

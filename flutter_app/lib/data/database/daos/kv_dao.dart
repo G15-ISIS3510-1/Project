@@ -25,4 +25,6 @@ class KvDao extends DatabaseAccessor<AppDatabase> with _$KvDaoMixin {
   Future<void> remove(String key) async {
     await (delete(kvs)..where((t) => t.k.equals(key))).go();
   }
+
+  Future<int> clearAll() => delete(kvs).go();
 }
