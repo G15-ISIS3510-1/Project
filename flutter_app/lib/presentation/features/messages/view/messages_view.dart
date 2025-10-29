@@ -1,4 +1,4 @@
-// lib/presentation/features/messages/view/messages_view.dart
+import 'dart:async';
 import 'dart:math' as MainSize;
 
 import 'package:flutter/material.dart';
@@ -9,7 +9,7 @@ import 'package:flutter_app/presentation/features/app_shell/viewmodel/host_mode_
 
 import 'package:flutter_app/presentation/features/messages/viewmodel/messages_viewmodel.dart';
 
-// 👇 we need these two imports for the chat detail screen
+// For navigating into the chat detail screen
 import 'package:flutter_app/presentation/features/conversation/view/conversation_view.dart';
 import 'package:flutter_app/presentation/features/conversation/viewmodel/conversation_viewmodel.dart';
 import 'package:flutter_app/data/repositories/chat_repository.dart';
@@ -40,11 +40,9 @@ class _MessagesViewState extends State<MessagesView>
       if (!mounted) return;
       final vm = context.read<MessagesViewModel>();
 
-      // ✅ establecer modo actual en el VM y cargar
       vm.setIsHostMode(context.read<HostModeProvider>().isHostMode);
       vm.refresh();
 
-      // ✅ escuchar cambios de modo
       context.read<HostModeProvider>().addListener(_onModeChanged);
     });
 
@@ -99,7 +97,6 @@ class _MessagesViewState extends State<MessagesView>
           return CustomScrollView(
             controller: _scroll,
             slivers: [
-              // Header
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(_p24, _p24, _p24, 12),
@@ -121,15 +118,12 @@ class _MessagesViewState extends State<MessagesView>
                       ),
                       const SizedBox(height: 16),
                       qovo.SearchBar(
-                        onChanged:
-                            vm.setQuery, // filtro local por nombre/preview
+                        onChanged: vm.setQuery,
                       ),
                     ],
                   ),
                 ),
               ),
-
-              // Lista / estados
               SliverToBoxAdapter(
                 child: Builder(
                   builder: (_) {
@@ -170,14 +164,16 @@ class _MessagesViewState extends State<MessagesView>
                           time: _formatTime(it.lastAt),
                           unreadDot: it.unread > 0,
                           onTap: () async {
-                            // Optimista: quita el puntito
+                            // Optimistic: clear the unread dot
                             vm.markSeenLocally(i);
+
+                            // Subscribe to live preview for this thread
+                            vm.subscribeToThread(it.otherUserId);
 
                             final didChange =
                                 await Navigator.of(context).push<bool>(
                               MaterialPageRoute(
                                 builder: (_) {
-                                  // we grab the outer context so we can read ChatRepository
                                   final parentCtx = context;
 
                                   return ChangeNotifierProvider<
@@ -207,8 +203,6 @@ class _MessagesViewState extends State<MessagesView>
                   },
                 ),
               ),
-
-              // Spacer para bottom bar
               SliverToBoxAdapter(
                 child: SizedBox(height: 76 + 12 + bottomInset + 8),
               ),
