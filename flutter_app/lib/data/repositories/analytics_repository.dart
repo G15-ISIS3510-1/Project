@@ -7,6 +7,7 @@ abstract class AnalyticsRepository {
       String userId, {
         int hoursAhead = 24,
       });
+  Future<List<dynamic>> getDemandPeaks();
 }
 
 class AnalyticsRepositoryImpl implements AnalyticsRepository {
@@ -36,6 +37,15 @@ class AnalyticsRepositoryImpl implements AnalyticsRepository {
       );
     } catch (e) {
       // 🔥 SOLUCIÓN: Usamos 'rethrow' para mantener la excepción limpia.
+      rethrow;
+    }
+  }
+
+  @override
+  Future<List<dynamic>> getDemandPeaks() async {
+    try {
+      return await remoteSource.getDemandPeaks();
+    } catch (e) {
       rethrow;
     }
   }

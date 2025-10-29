@@ -5,6 +5,9 @@ from typing import List, Dict, Any
 from fastapi import HTTPException
 from app.db.models import Booking, BookingStatus, User 
 
+from sqlalchemy.orm import Session
+from sqlalchemy import func
+from app.db import models
 
 class BookingReminderAnalytics:
     
@@ -159,3 +162,16 @@ class BookingReminderAnalytics:
             return f"{hours}h {minutes}m"
         else:
             return f"{minutes}m"
+        
+    async def compute_demand_peaks(db: Session):
+        stmt = (
+            select(
+                func.round(models.Booking.pickup_latitude, 1).label("lat_zone"),
+                func.round(models.Booking.pickup_longitude, 1).label("lon_zone"),
+                func.count(models.Booking.id).label("rentals"),
+            )
+            .group_by("lat_zone", "lon_zone")
+            .order_by(func.count(models.Booking.id).desc())
+        )
+        result = await db.execute(stmt)
+        return result.all()

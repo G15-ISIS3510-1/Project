@@ -70,17 +70,19 @@ import 'package:flutter_app/presentation/features/messages/viewmodel/messages_vi
 import 'package:flutter_app/presentation/features/profile/viewmodel/visited_places_viewmodel.dart';
 import 'package:flutter_app/presentation/features/trips/viewmodel/trips_viewmodel.dart';
 import 'package:flutter_app/presentation/features/vehicle/viewmodel/add_vehicle_viewmodel.dart';
+import 'package:flutter_app/presentation/features/analytics/viewmodel/analytics_viewmodel.dart';
+import 'package:flutter_app/presentation/features/analytics/view/analytics_view.dart';
 
 import 'app/theme/theme_controller.dart';
 
-/// Auth/session holder leído por la UI.
+/// Auth/session holder leído por la UI (ligero y notifica cambios).
 class AuthProvider with ChangeNotifier {
   String? _userId;
   String? _token;
   final Future<void> Function(String oldUid)? _onSignOut;
 
   AuthProvider({Future<void> Function(String oldUid)? onSignOut})
-    : _onSignOut = onSignOut;
+      : _onSignOut = onSignOut;
 
   String? get userId => _userId;
   String? get token => _token;
@@ -89,7 +91,7 @@ class AuthProvider with ChangeNotifier {
     _userId = userId;
     _token = token;
 
-    // 🔐 importantísimo: volver a setear token para próximas llamadas
+    // 🔐 importante: setear token en el Api client para siguientes requests
     try {
       Api.I().setToken(token);
     } catch (_) {}
@@ -174,11 +176,9 @@ Future<void> main() async {
         ProxyProvider2<VehiclesDao, InfraDao, VehicleLocalSource>(
           update: (c, vDao, infra, _) => VehicleLocalSource(vDao, infra),
         ),
-        ProxyProvider2<
-          VehicleAvailabilityDao,
-          InfraDao,
-          AvailabilityLocalSource
-        >(update: (c, aDao, infra, _) => AvailabilityLocalSource(aDao, infra)),
+        ProxyProvider2<VehicleAvailabilityDao, InfraDao, AvailabilityLocalSource>(
+          update: (c, aDao, infra, _) => AvailabilityLocalSource(aDao, infra),
+        ),
         ProxyProvider2<PricingDao, InfraDao, PricingLocalSource>(
           update: (c, pDao, infra, _) => PricingLocalSource(pDao, infra),
         ),
@@ -227,16 +227,14 @@ Future<void> main() async {
           create: (c) => UsersRepository(remote: c.read<UserService>()),
         ),
         Provider<VehicleRepositoryImpl>(
-          create: (c) =>
-              VehicleRepositoryImpl(remote: c.read<VehicleService>()),
+          create: (c) => VehicleRepositoryImpl(remote: c.read<VehicleService>()),
         ),
         Provider<AvailabilityRepositoryImpl>(
           create: (c) =>
               AvailabilityRepositoryImpl(remote: c.read<AvailabilityService>()),
         ),
         Provider<PricingRepositoryImpl>(
-          create: (c) =>
-              PricingRepositoryImpl(remote: c.read<PricingService>()),
+          create: (c) => PricingRepositoryImpl(remote: c.read<PricingService>()),
         ),
         Provider<BookingsRepositoryImpl>(
           create: (c) => BookingsRepositoryImpl(c.read<BookingService>()),
@@ -254,12 +252,8 @@ Future<void> main() async {
         ),
 
         // ───────── cached repositories (atados a usuario/rol)
-        ProxyProvider3<
-          VehicleRepositoryImpl,
-          VehiclesDao,
-          InfraDao,
-          VehicleRepository
-        >(
+        ProxyProvider3<VehicleRepositoryImpl, VehiclesDao, InfraDao,
+            VehicleRepository>(
           update: (c, remote, vDao, infra, _) => VehicleRepositoryCached(
             remoteRepo: remote,
             vehiclesDao: vDao,
@@ -267,21 +261,14 @@ Future<void> main() async {
           ),
         ),
 
-        // Availability / Pricing sin cambios de identidad por usuario
-        ProxyProvider2<
-          AvailabilityRepositoryImpl,
-          AvailabilityLocalSource,
-          AvailabilityRepository
-        >(
+        // Availability / Pricing con cache local
+        ProxyProvider2<AvailabilityRepositoryImpl, AvailabilityLocalSource,
+            AvailabilityRepository>(
           update: (c, remote, local, _) =>
               AvailabilityRepositoryCached(remote: remote, local: local),
         ),
-        ProxyProvider3<
-          PricingRepositoryImpl,
-          PricingLocalSource,
-          SuggestedPriceStore,
-          PricingRepository
-        >(
+        ProxyProvider3<PricingRepositoryImpl, PricingLocalSource,
+            SuggestedPriceStore, PricingRepository>(
           update: (c, remote, local, suggest, _) => PricingRepositoryCached(
             remote: remote,
             local: local,
@@ -290,14 +277,9 @@ Future<void> main() async {
           ),
         ),
 
-        // ⚠️ BookingsRepository: dependemos de Auth + HostMode para filtrar por usuario/rol
-        ProxyProvider4<
-          BookingsRepositoryImpl, // remote impl
-          BookingLocalSource, // local
-          AuthProvider, // usuario actual
-          HostModeProvider, // rol actual
-          BookingsRepository
-        >(
+        // BookingsRepository: depende de usuario actual + host mode
+        ProxyProvider4<BookingsRepositoryImpl, BookingLocalSource, AuthProvider,
+            HostModeProvider, BookingsRepository>(
           update: (c, remote, local, auth, hostMode, _) =>
               BookingsRepositoryCached(
                 remote: remote,
@@ -307,7 +289,7 @@ Future<void> main() async {
               ),
         ),
 
-        // ChatRepository cambia con la DB (y conoce currentUserId)
+        // ChatRepository ligado a DB por usuario y conoce currentUserId
         ProxyProvider<AppDatabase, ChatRepository>(
           update: (c, db, _) => ChatRepositoryCached(
             remote: c.read<ChatRepositoryImpl>(),
@@ -332,7 +314,6 @@ Future<void> main() async {
           ),
         ),
 
-        // HomeViewModel: recreamos simple (si te vuelve a dar dispose, te paso patrón “update in-place”)
         ChangeNotifierProxyProvider<AuthProvider, HomeViewModel>(
           create: (c) => HomeViewModel(
             vehicles: c.read<VehicleRepository>(),
@@ -747,8 +728,8 @@ Future<void> _clearAppData(BuildContext c, String oldUid) async {
   } catch (_) {}
 
   try {
-    c.read<HostModeProvider>().setHostMode(false); // ← reset al salir
+    c.read<HostModeProvider>().setHostMode(false); // reset al salir
   } catch (_) {}
 
-  // No matar isolates de Drift aquí (evita “connection was closed”)
+  // Nota: no cerramos aquí la conexión de Drift manualmente (lo hace Provider.dispose)
 }

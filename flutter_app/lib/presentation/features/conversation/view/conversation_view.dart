@@ -24,19 +24,49 @@ class _ConversationPageState extends State<ConversationPage> {
   final _controller = TextEditingController();
   final _scrollCtrl = ScrollController();
 
+  /// When true we auto-stick to bottom (new messages push the view).
+  bool _stickToBottom = true;
+
+  /// To detect new messages and decide autoscroll.
+  int _lastRenderedCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollCtrl.addListener(_onScroll);
+  }
+
   @override
   void dispose() {
     _controller.dispose();
+    _scrollCtrl.removeListener(_onScroll);
     _scrollCtrl.dispose();
     super.dispose();
   }
 
-  void _jumpToBottom() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollCtrl.hasClients) {
-        _scrollCtrl.jumpTo(_scrollCtrl.position.maxScrollExtent);
-      }
-    });
+  void _onScroll() {
+    // If you're within 80 px of the bottom, consider "at bottom".
+    if (!_scrollCtrl.hasClients) return;
+    final distanceFromBottom =
+        _scrollCtrl.position.maxScrollExtent - _scrollCtrl.position.pixels;
+    final atBottom = distanceFromBottom <= 80.0;
+    if (atBottom != _stickToBottom) {
+      setState(() => _stickToBottom = atBottom);
+    }
+  }
+
+  void _scrollToBottom({bool animated = true}) {
+    if (!_scrollCtrl.hasClients) return;
+    final target = _scrollCtrl.position.maxScrollExtent;
+    if (animated) {
+      _scrollCtrl.animateTo(
+        target,
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOut,
+      );
+    } else {
+      _scrollCtrl.jumpTo(target);
+    }
   }
 
   @override
@@ -45,16 +75,14 @@ class _ConversationPageState extends State<ConversationPage> {
 
     return ChangeNotifierProvider(
       create: (ctx) => ConversationViewModel(
-        repo: ctx.read<ChatRepository>(), // ✅ instancia real del repositorio
-        currentUserId: widget.currentUserId, // ✅ IDs desde los argumentos
+        repo: ctx.read<ChatRepository>(),
+        currentUserId: widget.currentUserId,
         otherUserId: widget.otherUserId,
         conversationId: widget.conversationId,
-      )..init(), // 👈 inicializa la conversación al crear el VM
+      )..init(),
       builder: (context, _) {
         return Consumer<ConversationViewModel>(
           builder: (_, vm, __) {
-            _jumpToBottom();
-
             return PopScope(
               canPop: false,
               onPopInvokedWithResult: (didPop, result) {
@@ -78,19 +106,7 @@ class _ConversationPageState extends State<ConversationPage> {
                         ConvStatus.error => Center(
                           child: Text(vm.error ?? 'Error'),
                         ),
-                        ConvStatus.ready => ListView.builder(
-                          controller: _scrollCtrl,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 16,
-                          ),
-                          itemCount: vm.messages.length,
-                          itemBuilder: (_, i) {
-                            final m = vm.messages[i];
-                            final isMe = m.senderId == widget.currentUserId;
-                            return _Bubble(m: m, isMe: isMe);
-                          },
-                        ),
+                        ConvStatus.ready => _buildMessages(vm),
                       },
                     ),
                     SafeArea(
@@ -105,9 +121,8 @@ class _ConversationPageState extends State<ConversationPage> {
                                 decoration: const InputDecoration(
                                   hintText: 'Escribe un mensaje…',
                                   border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.all(
-                                      Radius.circular(14),
-                                    ),
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(14)),
                                   ),
                                   isDense: true,
                                   contentPadding: EdgeInsets.symmetric(
@@ -115,15 +130,12 @@ class _ConversationPageState extends State<ConversationPage> {
                                     vertical: 10,
                                   ),
                                 ),
+                                onSubmitted: (_) => _handleSend(),
                               ),
                             ),
                             const SizedBox(width: 8),
                             IconButton(
-                              onPressed: () {
-                                final t = _controller.text;
-                                _controller.clear();
-                                vm.send(t);
-                              },
+                              onPressed: _handleSend,
                               icon: const Icon(Icons.send),
                               color: const Color(0xFF007AFF),
                             ),
@@ -139,6 +151,46 @@ class _ConversationPageState extends State<ConversationPage> {
         );
       },
     );
+  }
+
+  Widget _buildMessages(ConversationViewModel vm) {
+    // Oldest -> Newest (so newest is at the bottom)
+    final msgs = [...vm.messages]
+      ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+
+    // If message count grew and we are near bottom, auto-scroll.
+    final newCount = msgs.length;
+    if (newCount != _lastRenderedCount) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (_stickToBottom) _scrollToBottom(animated: true);
+      });
+      _lastRenderedCount = newCount;
+    }
+
+    return ListView.builder(
+      controller: _scrollCtrl,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+      itemCount: msgs.length,
+      itemBuilder: (_, i) {
+        final m = msgs[i];
+        final isMe = m.senderId == widget.currentUserId;
+        return _Bubble(m: m, isMe: isMe);
+      },
+    );
+  }
+
+  void _handleSend() {
+    final t = _controller.text.trim();
+    if (t.isEmpty) return;
+    _controller.clear();
+
+    // We consider the user "at bottom" after sending.
+    _stickToBottom = true;
+    _scrollToBottom(animated: true);
+
+    // Send
+    context.read<ConversationViewModel>().send(t);
   }
 }
 

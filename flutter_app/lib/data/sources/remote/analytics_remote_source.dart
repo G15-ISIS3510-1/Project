@@ -9,6 +9,7 @@ abstract class AnalyticsRemoteSource {
       String userId, {
         int hoursAhead = 24,
       });
+  Future<List<dynamic>> getDemandPeaks();
 }
 
 class AnalyticsRemoteSourceImpl implements AnalyticsRemoteSource {
@@ -50,6 +51,23 @@ class AnalyticsRemoteSourceImpl implements AnalyticsRemoteSource {
       return UpcomingBookingsListModel.fromJson(json.decode(response.body));
     } else {
       throw _handleError(response);
+    }
+  }
+
+  @override
+  Future<List<dynamic>> getDemandPeaks() async {
+    try{
+      final response = await client.get(Uri.parse('$baseUrl/api/analytics/demand-peaks'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body) as List<dynamic>;
+      } else {
+        throw ApiException('Failed to fetch demand peaks');
+      }
+    } catch (e) {
+      throw ApiException(e.toString());
     }
   }
 

@@ -1,3 +1,4 @@
+import 'dart:async'; // for Stream
 import 'dart:convert';
 import 'package:drift/drift.dart';
 import 'package:flutter_app/app/utils/net.dart';
@@ -15,9 +16,9 @@ import 'package:flutter_app/data/sources/local/conversation_local_source.dart';
 import 'package:flutter_app/data/sources/local/message_local_source.dart';
 import 'package:flutter_app/data/prefs/last_read_prefs.dart';
 
-/// Decorador con cache local (Drift) para ChatRepository.
+/// Decorator with local cache (Drift) for ChatRepository.
 class ChatRepositoryCached implements ChatRepository {
-  final ChatRepositoryImpl remote;
+  final ChatRepositoryImpl remote; // keeps REST + watchThread() impl
   final ConversationLocalSource convLocal;
   final MessageLocalSource msgLocal;
 
@@ -26,7 +27,7 @@ class ChatRepositoryCached implements ChatRepository {
 
   final LastReadPrefs? lastReadPrefs;
 
-  /// Debe retornar SIEMPRE el id del usuario actual
+  /// Must always return the current user id.
   final String Function() currentUserId;
 
   ChatRepositoryCached({
@@ -39,6 +40,7 @@ class ChatRepositoryCached implements ChatRepository {
     required this.currentUserId,
   });
 
+  /// Limpia cache local al cerrar sesión (lo llama `_clearAppData`).
   Future<void> clearOnLogout() async {
     try {
       await convDao.clearAll();
@@ -46,18 +48,17 @@ class ChatRepositoryCached implements ChatRepository {
     try {
       await msgDao.clearAll();
     } catch (_) {}
-    // y si mantienes caches en memoria, vacíalos aquí
+    // Si mantienes caches en memoria, vacíalos aquí también.
   }
 
-  // --------------------------
+  // ----------------------------------------------------------------------
   // Conversations
-  // --------------------------
+  // ----------------------------------------------------------------------
   @override
   Future<List<Conversation>> listConversations({
     int skip = 0,
     int limit = 100,
   }) async {
-    // 1) cache primero
     final cached = await convLocal.getPage(
       page: (skip ~/ limit) + 1,
       limit: limit,
@@ -65,13 +66,12 @@ class ChatRepositoryCached implements ChatRepository {
     final hasCached = cached.isNotEmpty;
 
     if (hasCached && skip == 0) {
-      // refresh silencioso
+      // background refresh
       // ignore: unawaited_futures
       _refreshConversationsInBackground(limit: limit);
       return cached;
     }
 
-    // 2) remoto -> cache -> return
     try {
       final remoteList = await remote.listConversations(
         skip: skip,
@@ -80,7 +80,6 @@ class ChatRepositoryCached implements ChatRepository {
       await convDao.upsertAll(
         remoteList.map(_conversationToDb).toList(growable: false),
       );
-      // checkpoint opcional
       // ignore: unawaited_futures
       convLocal.checkpoint(
         page: (skip ~/ (limit == 0 ? 1 : limit)) + 1,
@@ -128,11 +127,22 @@ class ChatRepositoryCached implements ChatRepository {
     return id;
   }
 
-  // --------------------------
-  // Messages (thread por otherUserId)
-  // --------------------------
+  // ----------------------------------------------------------------------
+  // Messages (thread per otherUserId)
+  // ----------------------------------------------------------------------
 
-  /// LOCAL-FIRST: usa Drift para obtener el último mensaje del hilo.
+  /// Stream remoto *con persistencia local* sin bloquear el stream.
+  @override
+  Stream<List<MessageModel>> watchThread(String otherUserId) {
+    return remote.watchThread(otherUserId).map((list) {
+      // Persist side-effect async
+      // ignore: unawaited_futures
+      msgDao.upsertAll(list.map(_messageToDb).toList(growable: false));
+      return list;
+    });
+  }
+
+  /// LOCAL-FIRST: último mensaje del hilo desde Drift.
   @override
   Future<MessageModel?> getLastMessageInThread(
     String otherUserId, {
@@ -140,7 +150,6 @@ class ChatRepositoryCached implements ChatRepository {
   }) async {
     final me = currentUserId();
 
-    // 1) intenta mapear a conversationId localmente
     final c = await convDao.findDirect(me, otherUserId);
     if (c != null) {
       final last = await msgDao.lastInConversation(c.conversationId);
@@ -149,7 +158,6 @@ class ChatRepositoryCached implements ChatRepository {
         if (onlyReceivedBy == null || m.receiverId == onlyReceivedBy) {
           return m;
         }
-        // Si el último no cumple, busca dentro de los últimos 50
         final page = await msgDao.byConversationPaged(
           conversationId: c.conversationId,
           limit: 50,
@@ -161,7 +169,7 @@ class ChatRepositoryCached implements ChatRepository {
       }
     }
 
-    // 2) fallback a remoto; cachea lo que venga
+    // fallback remoto
     final remoteLast = await remote.getLastMessageInThread(
       otherUserId,
       onlyReceivedBy: onlyReceivedBy,
@@ -172,7 +180,6 @@ class ChatRepositoryCached implements ChatRepository {
     return remoteLast;
   }
 
-  /// Cuenta no leídos usando solo la DB local.
   Future<int> getUnreadCountLocal(String conversationId) {
     return msgDao.unreadCount(
       conversationId: conversationId,
@@ -193,7 +200,6 @@ class ChatRepositoryCached implements ChatRepository {
       limit: limit,
       onlyUnread: onlyUnread,
     );
-    // Cachea TODO lo que baja
     await msgDao.upsertAll(list.map(_messageToDb).toList(growable: false));
     return list;
   }
@@ -222,13 +228,11 @@ class ChatRepositoryCached implements ChatRepository {
   @override
   Future<void> markThreadAsRead(String otherUserId) async {
     await remote.markThreadAsRead(otherUserId);
-
-    // (Opcional) reflejar localmente si tienes soporte:
+    // Opcional: espejo local si lo soportas
     try {
       final conv = await remote.ensureDirectConversation(otherUserId);
       final convId = conv.conversationId;
       if (convId != null && convId.isNotEmpty) {
-        // Si implementas en msgLocal/dao:
         // await msgLocal.markThreadRead(convId, readAt: DateTime.now().toUtc());
       }
     } catch (_) {}
@@ -251,10 +255,7 @@ class ChatRepositoryCached implements ChatRepository {
     return msg;
   }
 
-  // --------------------------
-  // Helpers: Model -> Drift Companion
-  // --------------------------
-
+  // -------------------------- Helpers --------------------------
   ConversationsCompanion _conversationToDb(Conversation c) {
     return ConversationsCompanion(
       conversationId: Value(c.conversationId),

@@ -1,325 +1,304 @@
-// lib/presentation/features/messages/view/messages_view.dart
-import 'dart:math' as MainSize;
+import 'dart:async'; // for Stream
+import 'dart:convert';
+import 'package:drift/drift.dart';
+import 'package:flutter_app/app/utils/net.dart';
 
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_app/data/database/app_database.dart';
+import 'package:flutter_app/data/database/daos/conversations_dao.dart';
+import 'package:flutter_app/data/database/daos/messages_dao.dart';
+import 'package:flutter_app/data/mappers/message_db_mapper.dart';
 
-import 'package:flutter_app/presentation/common_widgets/search_bar.dart'
-    as qovo;
-import 'package:flutter_app/presentation/features/app_shell/viewmodel/host_mode_provider.dart';
-
-import 'package:flutter_app/presentation/features/messages/viewmodel/messages_viewmodel.dart';
-
-// 👇 we need these two imports for the chat detail screen
-import 'package:flutter_app/presentation/features/conversation/view/conversation_view.dart';
-import 'package:flutter_app/presentation/features/conversation/viewmodel/conversation_viewmodel.dart';
+import 'package:flutter_app/data/models/conversation_model.dart';
+import 'package:flutter_app/data/models/message_model.dart';
 import 'package:flutter_app/data/repositories/chat_repository.dart';
 
-class MessagesView extends StatefulWidget {
-  final String currentUserId;
+import 'package:flutter_app/data/sources/local/conversation_local_source.dart';
+import 'package:flutter_app/data/sources/local/message_local_source.dart';
+import 'package:flutter_app/data/prefs/last_read_prefs.dart';
 
-  const MessagesView({super.key, required this.currentUserId});
+/// Decorator with local cache (Drift) for ChatRepository.
+class ChatRepositoryCached implements ChatRepository {
+  final ChatRepositoryImpl remote; // keeps REST + watchThread() impl
+  final ConversationLocalSource convLocal;
+  final MessageLocalSource msgLocal;
+
+  final ConversationsDao convDao;
+  final MessagesDao msgDao;
+
+  final LastReadPrefs? lastReadPrefs;
+
+  /// Must always return the current user id.
+  final String Function() currentUserId;
+
+  ChatRepositoryCached({
+    required this.remote,
+    required this.convLocal,
+    required this.msgLocal,
+    required this.convDao,
+    required this.msgDao,
+    this.lastReadPrefs,
+    required this.currentUserId,
+  });
+
+  /// Limpia cache local al cerrar sesión (lo llama `_clearAppData`).
+  Future<void> clearOnLogout() async {
+    try {
+      await convDao.clearAll();
+    } catch (_) {}
+    try {
+      await msgDao.clearAll();
+    } catch (_) {}
+    // Si mantienes caches en memoria, vacíalos aquí también.
+  }
+
+  // ----------------------------------------------------------------------
+  // Conversations
+  // ----------------------------------------------------------------------
+  @override
+  Future<List<Conversation>> listConversations({
+    int skip = 0,
+    int limit = 100,
+  }) async {
+    final cached = await convLocal.getPage(
+      page: (skip ~/ limit) + 1,
+      limit: limit,
+    );
+    final hasCached = cached.isNotEmpty;
+
+    if (hasCached && skip == 0) {
+      // background refresh
+      // ignore: unawaited_futures
+      _refreshConversationsInBackground(limit: limit);
+      return cached;
+    }
+
+    try {
+      final remoteList = await remote.listConversations(
+        skip: skip,
+        limit: limit,
+      );
+      await convDao.upsertAll(
+        remoteList.map(_conversationToDb).toList(growable: false),
+      );
+      // ignore: unawaited_futures
+      convLocal.checkpoint(
+        page: (skip ~/ (limit == 0 ? 1 : limit)) + 1,
+        limit: limit,
+      );
+      return remoteList;
+    } catch (_) {
+      return hasCached ? cached : <Conversation>[];
+    }
+  }
+
+  Future<void> _refreshConversationsInBackground({required int limit}) async {
+    if (!await Net.isOnline()) return;
+    try {
+      final remoteList = await remote.listConversations(skip: 0, limit: limit);
+      await convDao.upsertAll(
+        remoteList.map(_conversationToDb).toList(growable: false),
+      );
+      await convLocal.checkpoint(page: 1, limit: limit);
+    } catch (_) {}
+  }
 
   @override
-  State<MessagesView> createState() => _MessagesViewState();
-}
-
-class _MessagesViewState extends State<MessagesView>
-    with AutomaticKeepAliveClientMixin<MessagesView> {
-  DateTime _lastRefresh = DateTime.fromMillisecondsSinceEpoch(0);
-  bool _canRefresh() =>
-      DateTime.now().difference(_lastRefresh) > const Duration(seconds: 1);
+  Future<Conversation> ensureDirectConversation(String otherUserId) async {
+    final c = await remote.ensureDirectConversation(otherUserId);
+    await convDao.upsertAll([_conversationToDb(c)]);
+    return c;
+  }
 
   @override
-  bool get wantKeepAlive => true;
+  Future<String> createThread({
+    required String renterId,
+    required String hostId,
+    required String vehicleId,
+    required String bookingId,
+    String? initialMessage,
+  }) async {
+    final id = await remote.createThread(
+      renterId: renterId,
+      hostId: hostId,
+      vehicleId: vehicleId,
+      bookingId: bookingId,
+      initialMessage: initialMessage,
+    );
+    return id;
+  }
 
-  static const double _p24 = 24;
+  // ----------------------------------------------------------------------
+  // Messages (thread per otherUserId)
+  // ----------------------------------------------------------------------
 
+  /// Stream remoto *con persistencia local* sin bloquear el stream.
   @override
-  void initState() {
-    super.initState();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      final vm = context.read<MessagesViewModel>();
-
-      // ✅ establecer modo actual en el VM y cargar
-      vm.setIsHostMode(context.read<HostModeProvider>().isHostMode);
-      vm.refresh();
-
-      // ✅ escuchar cambios de modo
-      context.read<HostModeProvider>().addListener(_onModeChanged);
+  Stream<List<MessageModel>> watchThread(String otherUserId) {
+    return remote.watchThread(otherUserId).map((list) {
+      // Persist side-effect async
+      // ignore: unawaited_futures
+      msgDao.upsertAll(list.map(_messageToDb).toList(growable: false));
+      return list;
     });
   }
 
-  void _onModeChanged() {
-    if (!mounted) return;
-    final isHost = context.read<HostModeProvider>().isHostMode;
-    context.read<MessagesViewModel>().setIsHostMode(isHost);
-  }
-
+  /// LOCAL-FIRST: último mensaje del hilo desde Drift.
   @override
-  void dispose() {
-    try {
-      context.read<HostModeProvider>().removeListener(_onModeChanged);
-    } catch (_) {}
-    super.dispose();
-  }
+  Future<MessageModel?> getLastMessageInThread(
+    String otherUserId, {
+    String? onlyReceivedBy,
+  }) async {
+    final me = currentUserId();
 
-  String _formatTime(DateTime? dt) {
-    if (dt == null) return '';
-    final now = DateTime.now();
-    if (dt.year == now.year && dt.month == now.month && dt.day == now.day) {
-      final hh = dt.hour.toString().padLeft(2, '0');
-      final mm = dt.minute.toString().padLeft(2, '0');
-      return '$hh:$mm';
+    final c = await convDao.findDirect(me, otherUserId);
+    if (c != null) {
+      final last = await msgDao.lastInConversation(c.conversationId);
+      if (last != null) {
+        final m = last.toModel();
+        if (onlyReceivedBy == null || m.receiverId == onlyReceivedBy) {
+          return m;
+        }
+        final page = await msgDao.byConversationPaged(
+          conversationId: c.conversationId,
+          limit: 50,
+          offset: 0,
+        );
+        for (final row in page) {
+          if (row.receiverId == onlyReceivedBy) return row.toModel();
+        }
+      }
     }
-    return '${dt.month}/${dt.day}';
+
+    // fallback remoto
+    final remoteLast = await remote.getLastMessageInThread(
+      otherUserId,
+      onlyReceivedBy: onlyReceivedBy,
+    );
+    if (remoteLast != null) {
+      await msgDao.upsertAll([_messageToDb(remoteLast)]);
+    }
+    return remoteLast;
+  }
+
+  Future<int> getUnreadCountLocal(String conversationId) {
+    return msgDao.unreadCount(
+      conversationId: conversationId,
+      currentUserId: currentUserId(),
+    );
   }
 
   @override
-  Widget build(BuildContext context) {
-    super.build(context);
-    final bottomInset = MediaQuery.of(context).padding.bottom;
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-
-    return SafeArea(
-      top: true,
-      bottom: false,
-      child: Consumer<MessagesViewModel>(
-        builder: (_, vm, __) {
-          return NotificationListener<ScrollNotification>(
-            onNotification: (n) {
-              // Refrescar solo con overscroll real, arrastre del usuario y umbral suficiente
-              if (n is OverscrollNotification &&
-                  n.dragDetails != null && // ignora frames balísticos / rebotes
-                  n.overscroll < -120 && // pull-down >= 80 px (ajusta a gusto)
-                  n.metrics.pixels <= n.metrics.minScrollExtent &&
-                  !vm.loading &&
-                  _canRefresh()) {
-                _lastRefresh = DateTime.now();
-                vm.refresh();
-                return true; // consumir para evitar doble trigger
-              }
-              return false;
-            },
-            child: CustomScrollView(
-              physics: const BouncingScrollPhysics(
-                parent: AlwaysScrollableScrollPhysics(),
-              ),
-              slivers: [
-                // Header
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(_p24, _p24, _p24, 12),
-                    child: Column(
-                      children: [
-                        Center(
-                          child: Transform.scale(
-                            scaleY: 0.82,
-                            child: Text(
-                              'QOVO',
-                              style: text.displaySmall?.copyWith(
-                                fontSize: 48,
-                                fontWeight: FontWeight.w400,
-                                color: scheme.onBackground.withOpacity(0.95),
-                                letterSpacing: -7.0,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        qovo.SearchBar(
-                          onChanged:
-                              vm.setQuery, // filtro local por nombre/preview
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                // Lista / estados
-                SliverToBoxAdapter(
-                  child: Builder(
-                    builder: (_) {
-                      if (vm.loading) {
-                        return const Padding(
-                          padding: EdgeInsets.only(top: 48),
-                          child: Center(child: CircularProgressIndicator()),
-                        );
-                      }
-                      if (vm.error != null) {
-                        return Padding(
-                          padding: const EdgeInsets.all(24.0),
-                          child: Text(
-                            'Error loading conversations: ${vm.error}',
-                          ),
-                        );
-                      }
-                      final items = vm.items;
-                      if (items.isEmpty) {
-                        return const Padding(
-                          padding: EdgeInsets.all(24.0),
-                          child: Text('No conversations yet'),
-                        );
-                      }
-
-                      return ListView.separated(
-                        physics: const NeverScrollableScrollPhysics(),
-                        shrinkWrap: true,
-                        itemCount: items.length,
-                        separatorBuilder: (_, __) => const Divider(
-                          height: 0.8,
-                          thickness: 0.8,
-                          color: Color(0xFFFAFAFA),
-                        ),
-                        itemBuilder: (_, i) {
-                          final it = items[i];
-                          return _ConversationTile(
-                            title: it.title,
-                            subtitle: it.preview,
-                            time: _formatTime(it.lastAt),
-                            unreadDot: it.unread > 0,
-                            onTap: () async {
-                              vm.markSeenLocally(i);
-                              final didChange = await Navigator.of(context)
-                                  .push<bool>(
-                                    MaterialPageRoute(
-                                      builder: (_) {
-                                        final parentCtx = context;
-                                        return ChangeNotifierProvider<
-                                          ConversationViewModel
-                                        >(
-                                          create: (_) => ConversationViewModel(
-                                            repo: parentCtx
-                                                .read<ChatRepository>(),
-                                            currentUserId: widget.currentUserId,
-                                            otherUserId: it.otherUserId,
-                                            conversationId: it.conversationId,
-                                          )..init(),
-                                          child: ConversationPage(
-                                            currentUserId: widget.currentUserId,
-                                            otherUserId: it.otherUserId,
-                                            conversationId: it.conversationId,
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  );
-                              if (!mounted) return;
-                              if (didChange == true) vm.refresh();
-                            },
-                          );
-                        },
-                      );
-                    },
-                  ),
-                ),
-
-                // Spacer para bottom bar
-                SliverToBoxAdapter(
-                  child: SizedBox(height: 76 + 12 + bottomInset + 8),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
+  Future<List<MessageModel>> getThread(
+    String otherUserId, {
+    int skip = 0,
+    int limit = 100,
+    bool onlyUnread = false,
+  }) async {
+    final list = await remote.getThread(
+      otherUserId,
+      skip: skip,
+      limit: limit,
+      onlyUnread: onlyUnread,
     );
+    await msgDao.upsertAll(list.map(_messageToDb).toList(growable: false));
+    return list;
   }
-}
 
-class _ConversationTile extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final String time;
-  final bool unreadDot;
-  final VoidCallback onTap;
-
-  const _ConversationTile({
-    required this.title,
-    required this.subtitle,
-    required this.time,
-    required this.unreadDot,
-    required this.onTap,
-  });
+  Future<void> _refreshThreadInBackground({
+    required String otherUserId,
+    required int limit,
+    required bool onlyUnread,
+  }) async {
+    if (!await Net.isOnline()) return;
+    try {
+      final list = await remote.getThread(
+        otherUserId,
+        skip: 0,
+        limit: limit,
+        onlyUnread: onlyUnread,
+      );
+      await msgDao.upsertAll(list.map(_messageToDb).toList(growable: false));
+      final convId = _firstConversationId(list);
+      if (convId != null) {
+        await msgLocal.checkpoint(convId, page: 1, limit: limit);
+      }
+    } catch (_) {}
+  }
 
   @override
-  Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              width: 52,
-              height: 52,
-              decoration: const BoxDecoration(
-                color: Color(0xFFF3F4F6),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.person_outline, color: Color(0xFFB8BDC7)),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: text.titleMedium?.copyWith(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    subtitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: text.bodyMedium?.copyWith(
-                      fontSize: 15,
-                      color: Colors.black54,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 12),
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  time,
-                  style: text.bodySmall?.copyWith(
-                    fontSize: 13,
-                    color: Colors.black45,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                if (unreadDot)
-                  Container(
-                    width: 10,
-                    height: 10,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF007AFF),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-              ],
-            ),
-          ],
-        ),
-      ),
+  Future<void> markThreadAsRead(String otherUserId) async {
+    await remote.markThreadAsRead(otherUserId);
+    // Opcional: espejo local si lo soportas
+    try {
+      final conv = await remote.ensureDirectConversation(otherUserId);
+      final convId = conv.conversationId;
+      if (convId != null && convId.isNotEmpty) {
+        // await msgLocal.markThreadRead(convId, readAt: DateTime.now().toUtc());
+      }
+    } catch (_) {}
+  }
+
+  @override
+  Future<MessageModel> sendMessage({
+    required String receiverId,
+    required String content,
+    String? conversationId,
+    Map<String, dynamic>? meta,
+  }) async {
+    final msg = await remote.sendMessage(
+      receiverId: receiverId,
+      content: content,
+      conversationId: conversationId,
+      meta: meta,
     );
+    await msgDao.upsertAll([_messageToDb(msg)]);
+    return msg;
+  }
+
+  // -------------------------- Helpers --------------------------
+  ConversationsCompanion _conversationToDb(Conversation c) {
+    return ConversationsCompanion(
+      conversationId: Value(c.conversationId),
+      userLowId: Value(c.userLowId),
+      userHighId: Value(c.userHighId),
+      createdAt: Value(_asDateTime(c.createdAt)),
+      lastMessageAt: Value(_asDateTimeOrNull(c.lastMessageAt)),
+    );
+  }
+
+  MessagesCompanion _messageToDb(MessageModel m) {
+    return MessagesCompanion(
+      messageId: Value(m.messageId),
+      conversationId: Value(m.conversationId),
+      senderId: Value(m.senderId),
+      receiverId: Value(m.receiverId),
+      content: Value(m.content),
+      meta: Value(m.meta == null ? null : jsonEncode(m.meta)),
+      createdAt: Value(_asDateTime(m.createdAt)),
+      readAt: Value(_asDateTimeOrNull(m.readAt)),
+      isDeleted: const Value(false),
+    );
+  }
+
+  String? _firstConversationId(List<MessageModel> list) {
+    for (final m in list) {
+      if (m.conversationId != null && m.conversationId!.isNotEmpty) {
+        return m.conversationId;
+      }
+    }
+    return null;
+  }
+
+  DateTime _asDateTime(Object? v) {
+    if (v is DateTime) return v.toUtc();
+    if (v is String) return DateTime.parse(v).toUtc();
+    throw ArgumentError('Invalid DateTime value: $v');
+  }
+
+  DateTime? _asDateTimeOrNull(Object? v) {
+    if (v == null) return null;
+    if (v is DateTime) return v.toUtc();
+    if (v is String) return DateTime.parse(v).toUtc();
+    throw ArgumentError('Invalid DateTime? value: $v');
   }
 }
