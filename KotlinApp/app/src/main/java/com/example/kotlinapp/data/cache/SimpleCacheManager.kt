@@ -26,11 +26,11 @@ import java.util.concurrent.TimeUnit
 class SimpleCacheManager(context: Context) {
     
     private val prefs: SharedPreferences = context.getSharedPreferences(
-        "simple_cache",
+        "simple_cache", // Crea este archivo en sharedPreferences en el almacenamiento interno del dispositivo
         Context.MODE_PRIVATE
     )
     
-    private val gson = Gson()
+    private val gson = Gson() // Para serializar y deserializar es decir objetos y demas a json y al reves 
     
     // Cache en memoria (L1)
     private val memoryCache: MutableMap<String, CacheEntry<Any>> = mutableMapOf()
@@ -41,7 +41,7 @@ class SimpleCacheManager(context: Context) {
     private data class CacheEntry<T>(
         val data: T,
         val timestamp: Long = System.currentTimeMillis(),
-        val ttlMillis: Long = 15 * 60 * 1000 // 15 minutos por defecto
+        val ttlMillis: Long = 15 * 60 * 1000 // 15 minutos pde vida
     ) {
         fun isExpired(): Boolean = System.currentTimeMillis() - timestamp > ttlMillis
     }
@@ -49,7 +49,7 @@ class SimpleCacheManager(context: Context) {
     private data class DiskCacheEntry(
         val json: String,
         val timestamp: Long = System.currentTimeMillis(),
-        val ttlMillis: Long = 15 * 60 * 1000
+        val ttlMillis: Long = 15 * 60 * 1000 // 15 Mins de vida
     ) {
         fun isExpired(): Boolean = System.currentTimeMillis() - timestamp > ttlMillis
     }
