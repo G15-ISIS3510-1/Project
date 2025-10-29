@@ -1,6 +1,10 @@
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
 
+from sqlalchemy import func, select
+
+from app.db import models
+
 from app.db import get_db
 from app.services.analytics_service import BookingReminderAnalytics 
 from app.schemas.analytics_schemas import (
@@ -107,3 +111,30 @@ async def get_reminders_summary(
             "time_remaining": closest_booking['time_remaining_formatted']
         }
     }
+
+@router.get("/demand-peaks")
+async def get_demand_peaks(db: Session = Depends(get_db)):
+    stmt = (
+        select(
+            models.Vehicle.vehicle_id,
+            models.Vehicle.lat,
+            models.Vehicle.lng,
+            func.count(models.Booking.booking_id).label("total_rentals"),
+        )
+        .join(models.Booking, models.Vehicle.vehicle_id == models.Booking.vehicle_id)
+        .group_by(models.Vehicle.vehicle_id)
+        .order_by(func.count(models.Booking.booking_id).desc())
+    )
+
+    result = await db.execute(stmt)
+    results = result.all()
+
+    return [
+        {
+            "vehicle_id": r.vehicle_id,
+            "lat": r.lat,
+            "lng": r.lng,
+            "total_rentals": r.total_rentals
+        }
+        for r in results
+    ]

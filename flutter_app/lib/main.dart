@@ -69,8 +69,11 @@ import 'package:flutter_app/presentation/features/messages/viewmodel/messages_vi
 import 'package:flutter_app/presentation/features/profile/viewmodel/visited_places_viewmodel.dart';
 import 'package:flutter_app/presentation/features/trips/viewmodel/trips_viewmodel.dart';
 import 'package:flutter_app/presentation/features/vehicle/viewmodel/add_vehicle_viewmodel.dart';
+import 'package:flutter_app/presentation/features/analytics/viewmodel/analytics_viewmodel.dart';
+import 'package:flutter_app/presentation/features/analytics/view/analytics_view.dart';
 
 import 'app/theme/theme_controller.dart';
+
 
 /// Lightweight auth/session holder the UI can read.
 class AuthProvider with ChangeNotifier {
