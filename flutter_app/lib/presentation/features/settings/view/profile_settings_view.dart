@@ -8,6 +8,10 @@ import 'package:flutter_app/main.dart'; // AuthProvider, kApiBase
 import 'package:flutter_app/data/repositories/analytics_repository.dart';
 import 'package:flutter_app/data/sources/remote/analytics_remote_source.dart';
 import 'package:flutter_app/presentation/features/analytics/view/analytics_view.dart';
+import 'package:flutter_app/presentation/features/analytics/analytics_extended/view/analytics_extended_view.dart';
+import 'package:flutter_app/presentation/features/analytics/owner_income/view/owner_income_view.dart';
+import 'package:flutter_app/presentation/features/analytics/analytics_extended/viewmodel/analytics_extended_viewmodel.dart';
+import 'package:flutter_app/presentation/features/analytics/owner_income/viewmodel/owner_income_viewmodel.dart';
 
 import 'package:flutter_app/data/repositories/vehicle_repository.dart';
 import 'package:flutter_app/data/repositories/pricing_repository.dart';
@@ -313,6 +317,50 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
                         Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (context) => AnalyticsView(repository: repository),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    pillButton(
+                      Icons.map_rounded,
+                      'Demand Peaks Extended',
+                      onTap: () {
+                        final repository = AnalyticsRepositoryImpl(
+                          remoteSource: AnalyticsRemoteSourceImpl(
+                            client: http.Client(),
+                            baseUrl: kApiBase,
+                          ),
+                        );
+
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => ChangeNotifierProvider(
+                              create: (_) => AnalyticsExtendedViewModel(repository),
+                              child: const AnalyticsExtendedView(),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    pillButton(
+                      Icons.monetization_on_rounded,
+                      'Owner Income Analytics',
+                      onTap: () {
+                        final repository = AnalyticsRepositoryImpl(
+                          remoteSource: AnalyticsRemoteSourceImpl(
+                            client: http.Client(),
+                            baseUrl: kApiBase,
+                          ),
+                        );
+
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => ChangeNotifierProvider(
+                              create: (_) => OwnerIncomeViewModel(repository),
+                              child: const OwnerIncomeView(),
+                            ),
                           ),
                         );
                       },

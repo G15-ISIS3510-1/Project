@@ -49,4 +49,20 @@ class AnalyticsRepositoryImpl implements AnalyticsRepository {
       rethrow;
     }
   }
+
+  Future<List<dynamic>> getDemandPeaksExtended() async {
+    try {
+      return await remoteSource.getDemandPeaksExtended();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<List<dynamic>> getOwnerIncome() async {
+    try {
+      return await remoteSource.getOwnerIncome();
+    } catch (e) {
+      rethrow;
+    }
+  }
 }
