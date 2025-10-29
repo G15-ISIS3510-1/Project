@@ -1,5 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_app/data/repositories/analytics_repository.dart';
+import 'package:flutter_app/data/sources/remote/analytics_remote_source.dart';
+import 'package:flutter_app/main.dart';
+import 'package:flutter_app/presentation/features/analytics/view/analytics_view.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
@@ -12,6 +16,7 @@ import '../../profile/view/visited_places_view.dart';
 import '../../auth/view/login_view.dart';
 import '../../app_shell/viewmodel/host_mode_provider.dart';
 import 'package:flutter_app/presentation/features/vehicle/view/add_vehicle_view.dart';
+import 'package:flutter_app/presentation/features/analytics/view/analytics_view.dart';
 
 class UserProfile {
   final String id;
@@ -294,6 +299,25 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
                         Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (context) => const VisitedPlacesView(),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    pillButton(
+                      Icons.bar_chart_rounded,
+                      'Rental Zones',
+                      onTap: () {
+                        final repository = AnalyticsRepositoryImpl(
+                          remoteSource: AnalyticsRemoteSourceImpl(
+                            client: http.Client(),
+                            baseUrl: kApiBase,
+                          ),
+                        );
+
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => AnalyticsView(repository: repository),
                           ),
                         );
                       },

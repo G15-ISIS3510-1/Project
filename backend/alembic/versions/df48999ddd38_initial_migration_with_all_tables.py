@@ -1,10 +1,9 @@
 
-"""${message}
+"""init schema
 
-Revision ID: ${up_revision}
-Revises: ${down_revision | comma,n}
-Create Date: ${create_date}
-
+Revision ID: df48999ddd38
+Revises: None
+Create Date: 2025-10-28 00:00:00
 """
 
 from alembic import op
