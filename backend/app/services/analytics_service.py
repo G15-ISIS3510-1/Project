@@ -180,12 +180,12 @@ class BookingReminderAnalytics:
         stmt = (
             select(
                 models.Booking.host_id.label("owner_id"),
-                func.date_trunc("month", models.Payment.created_at).label("month"),
+                func.strftime("%Y-%m", models.Payment.created_at).label("month"),
                 func.sum(models.Payment.amount).label("monthly_income"),
             )
             .join(models.Payment, models.Payment.booking_id == models.Booking.booking_id)
             .where(models.Payment.status == models.PaymentStatus.captured)
-            .group_by(models.Booking.host_id, func.date_trunc("month", models.Payment.created_at))
+            .group_by(models.Booking.host_id, func.strftime("%Y-%m", models.Payment.created_at))
         )
 
         result = await db.execute(stmt)
@@ -223,7 +223,7 @@ class BookingReminderAnalytics:
             select(
                 func.round(models.Vehicle.lat, 1).label("lat_zone"),
                 func.round(models.Vehicle.lng, 1).label("lon_zone"),
-                extract("hour", models.Booking.start_ts).label("hour_slot"),
+                func.strftime("%H", models.Booking.start_ts).label("hour_slot"),
                 models.Vehicle.make.label("make"),
                 models.Vehicle.year.label("year"),
                 models.Vehicle.fuel_type.label("fuel_type"),

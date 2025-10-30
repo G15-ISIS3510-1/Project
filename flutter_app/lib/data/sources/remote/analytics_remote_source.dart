@@ -74,7 +74,7 @@ class AnalyticsRemoteSourceImpl implements AnalyticsRemoteSource {
   }
 
   Future<List<dynamic>> getOwnerIncome() async {
-    final url = Uri.parse('$baseUrl/analytics/owner-income');
+    final url = Uri.parse('$baseUrl/api/analytics/owner-income');
     final response = await http.get(url);
 
     if (response.statusCode == 200) {
@@ -85,7 +85,7 @@ class AnalyticsRemoteSourceImpl implements AnalyticsRemoteSource {
   }
 
   Future<List<dynamic>> getDemandPeaksExtended() async {
-    final url = Uri.parse('$baseUrl/analytics/demand-peaks-extended');
+    final url = Uri.parse('$baseUrl/api/analytics/demand-peaks-extended');
     final response = await http.get(url);
 
     if (response.statusCode == 200) {
