@@ -16,12 +16,10 @@ class PaymentFragment : Fragment(R.layout.fragment_payment) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentPaymentBinding.bind(view)
 
-
         val versionName = try {
             requireContext().packageManager.getPackageInfo(requireContext().packageName, 0).versionName
         } catch (e: Exception) { "3686.1000" }
         binding.tvVersion.text = "v.$versionName"
-
 
         binding.btnCurrency.setOnClickListener {
             findNavController().navigate(R.id.action_payment_to_currency)
@@ -29,6 +27,11 @@ class PaymentFragment : Fragment(R.layout.fragment_payment) {
 
         binding.btnPaymentAnalytics.setOnClickListener {
             findNavController().navigate(R.id.action_payment_to_analytics)
+        }
+
+
+        binding.btnFeedback.setOnClickListener {
+            findNavController().navigate(R.id.action_payment_to_feedback)
         }
     }
 
