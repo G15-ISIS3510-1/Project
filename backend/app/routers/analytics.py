@@ -138,3 +138,11 @@ async def get_demand_peaks(db: Session = Depends(get_db)):
         }
         for r in results
     ]
+
+@router.get("/owner-income")
+async def get_owner_income(db: Session = Depends(get_db)):
+    return await BookingReminderAnalytics.get_owner_income(db)
+
+@router.get("/demand-peaks-extended")
+async def get_demand_peaks_extended(db: Session = Depends(get_db)):
+    return await BookingReminderAnalytics.get_demand_peaks_extended(db)
