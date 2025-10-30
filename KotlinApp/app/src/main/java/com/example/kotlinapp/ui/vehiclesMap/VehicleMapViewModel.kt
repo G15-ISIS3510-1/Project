@@ -1,53 +1,62 @@
 package com.example.kotlinapp.ui.vehiclesMap
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.kotlinapp.data.repository.VehicleRepository
+import com.example.kotlinapp.data.repository.VehicleMapItem
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 
 class VehicleMapViewModel(
-    private val repo: VehicleRepository = VehicleRepository()
-) : ViewModel() {
+    application: Application
+) : AndroidViewModel(application) {
+
+    private val repo = VehicleRepository(context = application)
 
     private val _vehicles = MutableStateFlow<List<VehicleMapItem>>(emptyList())
-    val vehicles: StateFlow<List<VehicleMapItem>> = _vehicles
+    val vehicles: StateFlow<List<VehicleMapItem>> = _vehicles.asStateFlow()
+
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
+    private val _showCacheBanner = MutableStateFlow(false)
+    val showCacheBanner: StateFlow<Boolean> = _showCacheBanner.asStateFlow()
 
     init {
         loadVehicles()
     }
 
     private fun loadVehicles() {
+        // Suscribirse al Flow de Room
         viewModelScope.launch {
-            try {
-
-                val response = repo.getActiveVehicles()
-                _vehicles.value = response.map { vehicle ->
-                    VehicleMapItem(
-                        lat = vehicle.lat,
-                        lng = vehicle.lng,
-                        make = vehicle.make,
-                        model = vehicle.model,
-                        year = vehicle.year,
-                        dailyPrice = 0.0
-                    )
-                }
-
-            } catch (e: Exception) {
-                println("Error loading vehicles: ${e.message}")
-                e.printStackTrace()
-
+            repo.getActiveVehiclesFlow().collect { cachedVehicles ->
+                _vehicles.value = cachedVehicles
             }
+        }
+
+        // Revalidar en segundo plano
+        revalidate()
+    }
+
+    fun revalidate() {
+        viewModelScope.launch {
+            _isRefreshing.value = true
+
+            val startTime = System.currentTimeMillis()
+
+            val result = repo.revalidateVehicles()
+
+            val elapsed = System.currentTimeMillis() - startTime
+            if (elapsed < 800) {
+                delay(800 - elapsed)
+            }
+
+            _showCacheBanner.value = result.isFailure
+            _isRefreshing.value = false
         }
     }
 }
-
-data class VehicleMapItem(
-    val lat: Double,
-    val lng: Double,
-    val make: String,
-    val model: String,
-    val year: Int,
-    val dailyPrice: Double
-)
