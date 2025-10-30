@@ -101,7 +101,19 @@
             <action
                 android:id="@+id/action_payment_to_analytics"
                 app:destination="@id/paymentAnalyticsFragment" />
+            <!-- Dentro de paymentFragment -->
+            <action
+                android:id="@+id/action_payment_to_feedback"
+                app:destination="@id/feedbackFormFragment" />
+
         </fragment>
+        <!-- Feedback Form Fragment -->
+        <fragment
+            android:id="@+id/feedbackFormFragment"
+            android:name="com.example.kotlinapp.ui.feedback.FeedbackFormFragment"
+            android:label="Feedback"
+            tools:layout="@layout/fragment_feedback_form" />
+
         <fragment
             android:id="@+id/visitedPlacesFragment"
             android:name="com.example.kotlinapp.ui.places.VisitedPlacesFragment"
