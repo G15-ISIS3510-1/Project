@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import '../../../../../data/repositories/analytics_repository.dart';
 
 class OwnerIncomeViewModel extends ChangeNotifier {
@@ -6,6 +6,7 @@ class OwnerIncomeViewModel extends ChangeNotifier {
 
   bool loading = false;
   List<dynamic> ownerIncome = [];
+  String? error;
 
   OwnerIncomeViewModel(this.repository);
 
@@ -14,10 +15,27 @@ class OwnerIncomeViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      ownerIncome = await repository.getOwnerIncome();
-    } catch (e) {
+      final result = await repository.getOwnerIncome();
+
+      if (result is List) {
+        ownerIncome = result;
+      } else {
+        ownerIncome = [];
+        error = 'Unexpected response format';
+      }
+
+      if (kDebugMode) {
+        print('OWNER INCOME RESULT: $ownerIncome');
+      }
+
+      error = null;
+    } catch (e, stack) {
+      error = e.toString();
+      if (kDebugMode) {
+        print('ERROR fetching owner income: $e');
+        print(stack);
+      }
       ownerIncome = [];
-      debugPrint('Error fetching owner income: $e');
     } finally {
       loading = false;
       notifyListeners();

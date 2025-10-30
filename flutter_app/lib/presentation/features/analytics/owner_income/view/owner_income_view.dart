@@ -34,10 +34,16 @@ class OwnerIncomeView extends StatelessWidget {
                       child: ListTile(
                         title: Text(
                           isGlobal
-                              ? '🌍 Global Average'
+                              ? 'Global Average'
                               : 'Owner ID: ${item["owner_id"] ?? "N/A"}',
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
+                        subtitle: isGlobal
+                            ? const Text(
+                                'Average monthly income across all owners',
+                                style: TextStyle(color: Colors.black54),
+                              )
+                            : null,
                         trailing: Text(
                           '\$${item["average_monthly_income"] ?? 0}',
                           style: TextStyle(
