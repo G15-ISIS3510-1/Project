@@ -185,22 +185,13 @@ class BookingReminderAnalytics:
             )
             .join(models.Payment, models.Payment.booking_id == models.Booking.booking_id)
             .where(models.Payment.status == models.PaymentStatus.captured)
-            .group_by(models.Booking.host_id, func.date_trunc("month", models.Payment.created_at))
-            .order_by(models.Booking.host_id)
+            .group_by("owner_id", "month")
+            .order_by("owner_id")
         )
-
         result = await db.execute(stmt)
-        rows = result.all()
+        return result.all()
 
-        return [
-            {
-                "owner_id": r.owner_id,
-                "month": r.month.strftime("%Y-%m") if r.month else None,
-                "total_income": round(r.total_income, 2) if r.total_income else 0.0,
-            }
-            for r in rows
-        ]
-    
+
     async def get_demand_peaks_extended(db: Session):
         stmt = (
             select(
@@ -216,9 +207,9 @@ class BookingReminderAnalytics:
             .join(models.Vehicle, models.Vehicle.vehicle_id == models.Booking.vehicle_id)
             .where(models.Booking.status == models.BookingStatus.completed)
             .group_by(
-                func.round(models.Vehicle.lat, 1),
-                func.round(models.Vehicle.lng, 1),
-                func.date_part("hour", models.Booking.start_ts),
+                "lat_zone",
+                "lon_zone",
+                "hour_slot",
                 models.Vehicle.make,
                 models.Vehicle.year,
                 models.Vehicle.fuel_type,
@@ -226,20 +217,5 @@ class BookingReminderAnalytics:
             )
             .order_by(func.count(models.Booking.booking_id).desc())
         )
-
         result = await db.execute(stmt)
-        rows = result.all()
-
-        return [
-            {
-                "lat_zone": r.lat_zone,
-                "lon_zone": r.lon_zone,
-                "hour_slot": int(r.hour_slot) if r.hour_slot is not None else None,
-                "make": r.make,
-                "year": r.year,
-                "fuel_type": r.fuel_type,
-                "transmission": r.transmission,
-                "rentals": r.rentals,
-            }
-            for r in rows
-        ]
+        return result.all()
