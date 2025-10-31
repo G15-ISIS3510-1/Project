@@ -239,7 +239,7 @@ class VehicleRepository(
 
             Log.d("VehicleRepo", "Sincronización completa de $localId")
 
-            Result.success(Unit)
+            return@withContext Result.success(Unit)
 
         } catch (e: Exception) {
             Log.e("VehicleRepo", "Error subiendo $localId: ${e.message}")
@@ -258,6 +258,10 @@ class VehicleRepository(
                 delay(10_000)  // 10 segundos
                 uploadPendingVehicle(localId)
             }
+            
+            return@withContext Result.failure(e)
+        }
+    }
 
     fun getActiveVehiclesFlow(): Flow<List<VehicleMapItem>> {
         val dao = getDao()
