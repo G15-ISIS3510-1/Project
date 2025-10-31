@@ -5133,6 +5133,1338 @@ class KvsCompanion extends UpdateCompanion<KvEntry> {
   }
 }
 
+class $AnalyticsDemandTableTable extends AnalyticsDemandTable
+    with TableInfo<$AnalyticsDemandTableTable, AnalyticsDemandEntity> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AnalyticsDemandTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    true,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _latZoneMeta = const VerificationMeta(
+    'latZone',
+  );
+  @override
+  late final GeneratedColumn<double> latZone = GeneratedColumn<double>(
+    'lat_zone',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _lonZoneMeta = const VerificationMeta(
+    'lonZone',
+  );
+  @override
+  late final GeneratedColumn<double> lonZone = GeneratedColumn<double>(
+    'lon_zone',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _rentalsMeta = const VerificationMeta(
+    'rentals',
+  );
+  @override
+  late final GeneratedColumn<int> rentals = GeneratedColumn<int>(
+    'rentals',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _lastUpdatedMeta = const VerificationMeta(
+    'lastUpdated',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastUpdated = GeneratedColumn<DateTime>(
+    'last_updated',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    latZone,
+    lonZone,
+    rentals,
+    lastUpdated,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'analytics_demand_table';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AnalyticsDemandEntity> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('lat_zone')) {
+      context.handle(
+        _latZoneMeta,
+        latZone.isAcceptableOrUnknown(data['lat_zone']!, _latZoneMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_latZoneMeta);
+    }
+    if (data.containsKey('lon_zone')) {
+      context.handle(
+        _lonZoneMeta,
+        lonZone.isAcceptableOrUnknown(data['lon_zone']!, _lonZoneMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_lonZoneMeta);
+    }
+    if (data.containsKey('rentals')) {
+      context.handle(
+        _rentalsMeta,
+        rentals.isAcceptableOrUnknown(data['rentals']!, _rentalsMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_rentalsMeta);
+    }
+    if (data.containsKey('last_updated')) {
+      context.handle(
+        _lastUpdatedMeta,
+        lastUpdated.isAcceptableOrUnknown(
+          data['last_updated']!,
+          _lastUpdatedMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  AnalyticsDemandEntity map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AnalyticsDemandEntity(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      ),
+      latZone: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}lat_zone'],
+      )!,
+      lonZone: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}lon_zone'],
+      )!,
+      rentals: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}rentals'],
+      )!,
+      lastUpdated: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_updated'],
+      )!,
+    );
+  }
+
+  @override
+  $AnalyticsDemandTableTable createAlias(String alias) {
+    return $AnalyticsDemandTableTable(attachedDatabase, alias);
+  }
+}
+
+class AnalyticsDemandEntity extends DataClass
+    implements Insertable<AnalyticsDemandEntity> {
+  final int? id;
+  final double latZone;
+  final double lonZone;
+  final int rentals;
+  final DateTime lastUpdated;
+  const AnalyticsDemandEntity({
+    this.id,
+    required this.latZone,
+    required this.lonZone,
+    required this.rentals,
+    required this.lastUpdated,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (!nullToAbsent || id != null) {
+      map['id'] = Variable<int>(id);
+    }
+    map['lat_zone'] = Variable<double>(latZone);
+    map['lon_zone'] = Variable<double>(lonZone);
+    map['rentals'] = Variable<int>(rentals);
+    map['last_updated'] = Variable<DateTime>(lastUpdated);
+    return map;
+  }
+
+  AnalyticsDemandTableCompanion toCompanion(bool nullToAbsent) {
+    return AnalyticsDemandTableCompanion(
+      id: id == null && nullToAbsent ? const Value.absent() : Value(id),
+      latZone: Value(latZone),
+      lonZone: Value(lonZone),
+      rentals: Value(rentals),
+      lastUpdated: Value(lastUpdated),
+    );
+  }
+
+  factory AnalyticsDemandEntity.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AnalyticsDemandEntity(
+      id: serializer.fromJson<int?>(json['id']),
+      latZone: serializer.fromJson<double>(json['latZone']),
+      lonZone: serializer.fromJson<double>(json['lonZone']),
+      rentals: serializer.fromJson<int>(json['rentals']),
+      lastUpdated: serializer.fromJson<DateTime>(json['lastUpdated']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int?>(id),
+      'latZone': serializer.toJson<double>(latZone),
+      'lonZone': serializer.toJson<double>(lonZone),
+      'rentals': serializer.toJson<int>(rentals),
+      'lastUpdated': serializer.toJson<DateTime>(lastUpdated),
+    };
+  }
+
+  AnalyticsDemandEntity copyWith({
+    Value<int?> id = const Value.absent(),
+    double? latZone,
+    double? lonZone,
+    int? rentals,
+    DateTime? lastUpdated,
+  }) => AnalyticsDemandEntity(
+    id: id.present ? id.value : this.id,
+    latZone: latZone ?? this.latZone,
+    lonZone: lonZone ?? this.lonZone,
+    rentals: rentals ?? this.rentals,
+    lastUpdated: lastUpdated ?? this.lastUpdated,
+  );
+  AnalyticsDemandEntity copyWithCompanion(AnalyticsDemandTableCompanion data) {
+    return AnalyticsDemandEntity(
+      id: data.id.present ? data.id.value : this.id,
+      latZone: data.latZone.present ? data.latZone.value : this.latZone,
+      lonZone: data.lonZone.present ? data.lonZone.value : this.lonZone,
+      rentals: data.rentals.present ? data.rentals.value : this.rentals,
+      lastUpdated: data.lastUpdated.present
+          ? data.lastUpdated.value
+          : this.lastUpdated,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AnalyticsDemandEntity(')
+          ..write('id: $id, ')
+          ..write('latZone: $latZone, ')
+          ..write('lonZone: $lonZone, ')
+          ..write('rentals: $rentals, ')
+          ..write('lastUpdated: $lastUpdated')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, latZone, lonZone, rentals, lastUpdated);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AnalyticsDemandEntity &&
+          other.id == this.id &&
+          other.latZone == this.latZone &&
+          other.lonZone == this.lonZone &&
+          other.rentals == this.rentals &&
+          other.lastUpdated == this.lastUpdated);
+}
+
+class AnalyticsDemandTableCompanion
+    extends UpdateCompanion<AnalyticsDemandEntity> {
+  final Value<int?> id;
+  final Value<double> latZone;
+  final Value<double> lonZone;
+  final Value<int> rentals;
+  final Value<DateTime> lastUpdated;
+  const AnalyticsDemandTableCompanion({
+    this.id = const Value.absent(),
+    this.latZone = const Value.absent(),
+    this.lonZone = const Value.absent(),
+    this.rentals = const Value.absent(),
+    this.lastUpdated = const Value.absent(),
+  });
+  AnalyticsDemandTableCompanion.insert({
+    this.id = const Value.absent(),
+    required double latZone,
+    required double lonZone,
+    required int rentals,
+    this.lastUpdated = const Value.absent(),
+  }) : latZone = Value(latZone),
+       lonZone = Value(lonZone),
+       rentals = Value(rentals);
+  static Insertable<AnalyticsDemandEntity> custom({
+    Expression<int>? id,
+    Expression<double>? latZone,
+    Expression<double>? lonZone,
+    Expression<int>? rentals,
+    Expression<DateTime>? lastUpdated,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (latZone != null) 'lat_zone': latZone,
+      if (lonZone != null) 'lon_zone': lonZone,
+      if (rentals != null) 'rentals': rentals,
+      if (lastUpdated != null) 'last_updated': lastUpdated,
+    });
+  }
+
+  AnalyticsDemandTableCompanion copyWith({
+    Value<int?>? id,
+    Value<double>? latZone,
+    Value<double>? lonZone,
+    Value<int>? rentals,
+    Value<DateTime>? lastUpdated,
+  }) {
+    return AnalyticsDemandTableCompanion(
+      id: id ?? this.id,
+      latZone: latZone ?? this.latZone,
+      lonZone: lonZone ?? this.lonZone,
+      rentals: rentals ?? this.rentals,
+      lastUpdated: lastUpdated ?? this.lastUpdated,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (latZone.present) {
+      map['lat_zone'] = Variable<double>(latZone.value);
+    }
+    if (lonZone.present) {
+      map['lon_zone'] = Variable<double>(lonZone.value);
+    }
+    if (rentals.present) {
+      map['rentals'] = Variable<int>(rentals.value);
+    }
+    if (lastUpdated.present) {
+      map['last_updated'] = Variable<DateTime>(lastUpdated.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AnalyticsDemandTableCompanion(')
+          ..write('id: $id, ')
+          ..write('latZone: $latZone, ')
+          ..write('lonZone: $lonZone, ')
+          ..write('rentals: $rentals, ')
+          ..write('lastUpdated: $lastUpdated')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $AnalyticsExtendedTableTable extends AnalyticsExtendedTable
+    with TableInfo<$AnalyticsExtendedTableTable, AnalyticsExtendedEntity> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AnalyticsExtendedTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    true,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _latZoneMeta = const VerificationMeta(
+    'latZone',
+  );
+  @override
+  late final GeneratedColumn<double> latZone = GeneratedColumn<double>(
+    'lat_zone',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _lonZoneMeta = const VerificationMeta(
+    'lonZone',
+  );
+  @override
+  late final GeneratedColumn<double> lonZone = GeneratedColumn<double>(
+    'lon_zone',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _hourSlotMeta = const VerificationMeta(
+    'hourSlot',
+  );
+  @override
+  late final GeneratedColumn<int> hourSlot = GeneratedColumn<int>(
+    'hour_slot',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _makeMeta = const VerificationMeta('make');
+  @override
+  late final GeneratedColumn<String> make = GeneratedColumn<String>(
+    'make',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _yearMeta = const VerificationMeta('year');
+  @override
+  late final GeneratedColumn<int> year = GeneratedColumn<int>(
+    'year',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _fuelTypeMeta = const VerificationMeta(
+    'fuelType',
+  );
+  @override
+  late final GeneratedColumn<String> fuelType = GeneratedColumn<String>(
+    'fuel_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _transmissionMeta = const VerificationMeta(
+    'transmission',
+  );
+  @override
+  late final GeneratedColumn<String> transmission = GeneratedColumn<String>(
+    'transmission',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _rentalsMeta = const VerificationMeta(
+    'rentals',
+  );
+  @override
+  late final GeneratedColumn<int> rentals = GeneratedColumn<int>(
+    'rentals',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _lastUpdatedMeta = const VerificationMeta(
+    'lastUpdated',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastUpdated = GeneratedColumn<DateTime>(
+    'last_updated',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    latZone,
+    lonZone,
+    hourSlot,
+    make,
+    year,
+    fuelType,
+    transmission,
+    rentals,
+    lastUpdated,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'analytics_extended_table';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AnalyticsExtendedEntity> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('lat_zone')) {
+      context.handle(
+        _latZoneMeta,
+        latZone.isAcceptableOrUnknown(data['lat_zone']!, _latZoneMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_latZoneMeta);
+    }
+    if (data.containsKey('lon_zone')) {
+      context.handle(
+        _lonZoneMeta,
+        lonZone.isAcceptableOrUnknown(data['lon_zone']!, _lonZoneMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_lonZoneMeta);
+    }
+    if (data.containsKey('hour_slot')) {
+      context.handle(
+        _hourSlotMeta,
+        hourSlot.isAcceptableOrUnknown(data['hour_slot']!, _hourSlotMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_hourSlotMeta);
+    }
+    if (data.containsKey('make')) {
+      context.handle(
+        _makeMeta,
+        make.isAcceptableOrUnknown(data['make']!, _makeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_makeMeta);
+    }
+    if (data.containsKey('year')) {
+      context.handle(
+        _yearMeta,
+        year.isAcceptableOrUnknown(data['year']!, _yearMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_yearMeta);
+    }
+    if (data.containsKey('fuel_type')) {
+      context.handle(
+        _fuelTypeMeta,
+        fuelType.isAcceptableOrUnknown(data['fuel_type']!, _fuelTypeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fuelTypeMeta);
+    }
+    if (data.containsKey('transmission')) {
+      context.handle(
+        _transmissionMeta,
+        transmission.isAcceptableOrUnknown(
+          data['transmission']!,
+          _transmissionMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_transmissionMeta);
+    }
+    if (data.containsKey('rentals')) {
+      context.handle(
+        _rentalsMeta,
+        rentals.isAcceptableOrUnknown(data['rentals']!, _rentalsMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_rentalsMeta);
+    }
+    if (data.containsKey('last_updated')) {
+      context.handle(
+        _lastUpdatedMeta,
+        lastUpdated.isAcceptableOrUnknown(
+          data['last_updated']!,
+          _lastUpdatedMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  AnalyticsExtendedEntity map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AnalyticsExtendedEntity(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      ),
+      latZone: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}lat_zone'],
+      )!,
+      lonZone: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}lon_zone'],
+      )!,
+      hourSlot: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}hour_slot'],
+      )!,
+      make: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}make'],
+      )!,
+      year: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}year'],
+      )!,
+      fuelType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}fuel_type'],
+      )!,
+      transmission: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}transmission'],
+      )!,
+      rentals: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}rentals'],
+      )!,
+      lastUpdated: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_updated'],
+      )!,
+    );
+  }
+
+  @override
+  $AnalyticsExtendedTableTable createAlias(String alias) {
+    return $AnalyticsExtendedTableTable(attachedDatabase, alias);
+  }
+}
+
+class AnalyticsExtendedEntity extends DataClass
+    implements Insertable<AnalyticsExtendedEntity> {
+  final int? id;
+  final double latZone;
+  final double lonZone;
+  final int hourSlot;
+  final String make;
+  final int year;
+  final String fuelType;
+  final String transmission;
+  final int rentals;
+  final DateTime lastUpdated;
+  const AnalyticsExtendedEntity({
+    this.id,
+    required this.latZone,
+    required this.lonZone,
+    required this.hourSlot,
+    required this.make,
+    required this.year,
+    required this.fuelType,
+    required this.transmission,
+    required this.rentals,
+    required this.lastUpdated,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (!nullToAbsent || id != null) {
+      map['id'] = Variable<int>(id);
+    }
+    map['lat_zone'] = Variable<double>(latZone);
+    map['lon_zone'] = Variable<double>(lonZone);
+    map['hour_slot'] = Variable<int>(hourSlot);
+    map['make'] = Variable<String>(make);
+    map['year'] = Variable<int>(year);
+    map['fuel_type'] = Variable<String>(fuelType);
+    map['transmission'] = Variable<String>(transmission);
+    map['rentals'] = Variable<int>(rentals);
+    map['last_updated'] = Variable<DateTime>(lastUpdated);
+    return map;
+  }
+
+  AnalyticsExtendedTableCompanion toCompanion(bool nullToAbsent) {
+    return AnalyticsExtendedTableCompanion(
+      id: id == null && nullToAbsent ? const Value.absent() : Value(id),
+      latZone: Value(latZone),
+      lonZone: Value(lonZone),
+      hourSlot: Value(hourSlot),
+      make: Value(make),
+      year: Value(year),
+      fuelType: Value(fuelType),
+      transmission: Value(transmission),
+      rentals: Value(rentals),
+      lastUpdated: Value(lastUpdated),
+    );
+  }
+
+  factory AnalyticsExtendedEntity.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AnalyticsExtendedEntity(
+      id: serializer.fromJson<int?>(json['id']),
+      latZone: serializer.fromJson<double>(json['latZone']),
+      lonZone: serializer.fromJson<double>(json['lonZone']),
+      hourSlot: serializer.fromJson<int>(json['hourSlot']),
+      make: serializer.fromJson<String>(json['make']),
+      year: serializer.fromJson<int>(json['year']),
+      fuelType: serializer.fromJson<String>(json['fuelType']),
+      transmission: serializer.fromJson<String>(json['transmission']),
+      rentals: serializer.fromJson<int>(json['rentals']),
+      lastUpdated: serializer.fromJson<DateTime>(json['lastUpdated']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int?>(id),
+      'latZone': serializer.toJson<double>(latZone),
+      'lonZone': serializer.toJson<double>(lonZone),
+      'hourSlot': serializer.toJson<int>(hourSlot),
+      'make': serializer.toJson<String>(make),
+      'year': serializer.toJson<int>(year),
+      'fuelType': serializer.toJson<String>(fuelType),
+      'transmission': serializer.toJson<String>(transmission),
+      'rentals': serializer.toJson<int>(rentals),
+      'lastUpdated': serializer.toJson<DateTime>(lastUpdated),
+    };
+  }
+
+  AnalyticsExtendedEntity copyWith({
+    Value<int?> id = const Value.absent(),
+    double? latZone,
+    double? lonZone,
+    int? hourSlot,
+    String? make,
+    int? year,
+    String? fuelType,
+    String? transmission,
+    int? rentals,
+    DateTime? lastUpdated,
+  }) => AnalyticsExtendedEntity(
+    id: id.present ? id.value : this.id,
+    latZone: latZone ?? this.latZone,
+    lonZone: lonZone ?? this.lonZone,
+    hourSlot: hourSlot ?? this.hourSlot,
+    make: make ?? this.make,
+    year: year ?? this.year,
+    fuelType: fuelType ?? this.fuelType,
+    transmission: transmission ?? this.transmission,
+    rentals: rentals ?? this.rentals,
+    lastUpdated: lastUpdated ?? this.lastUpdated,
+  );
+  AnalyticsExtendedEntity copyWithCompanion(
+    AnalyticsExtendedTableCompanion data,
+  ) {
+    return AnalyticsExtendedEntity(
+      id: data.id.present ? data.id.value : this.id,
+      latZone: data.latZone.present ? data.latZone.value : this.latZone,
+      lonZone: data.lonZone.present ? data.lonZone.value : this.lonZone,
+      hourSlot: data.hourSlot.present ? data.hourSlot.value : this.hourSlot,
+      make: data.make.present ? data.make.value : this.make,
+      year: data.year.present ? data.year.value : this.year,
+      fuelType: data.fuelType.present ? data.fuelType.value : this.fuelType,
+      transmission: data.transmission.present
+          ? data.transmission.value
+          : this.transmission,
+      rentals: data.rentals.present ? data.rentals.value : this.rentals,
+      lastUpdated: data.lastUpdated.present
+          ? data.lastUpdated.value
+          : this.lastUpdated,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AnalyticsExtendedEntity(')
+          ..write('id: $id, ')
+          ..write('latZone: $latZone, ')
+          ..write('lonZone: $lonZone, ')
+          ..write('hourSlot: $hourSlot, ')
+          ..write('make: $make, ')
+          ..write('year: $year, ')
+          ..write('fuelType: $fuelType, ')
+          ..write('transmission: $transmission, ')
+          ..write('rentals: $rentals, ')
+          ..write('lastUpdated: $lastUpdated')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    latZone,
+    lonZone,
+    hourSlot,
+    make,
+    year,
+    fuelType,
+    transmission,
+    rentals,
+    lastUpdated,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AnalyticsExtendedEntity &&
+          other.id == this.id &&
+          other.latZone == this.latZone &&
+          other.lonZone == this.lonZone &&
+          other.hourSlot == this.hourSlot &&
+          other.make == this.make &&
+          other.year == this.year &&
+          other.fuelType == this.fuelType &&
+          other.transmission == this.transmission &&
+          other.rentals == this.rentals &&
+          other.lastUpdated == this.lastUpdated);
+}
+
+class AnalyticsExtendedTableCompanion
+    extends UpdateCompanion<AnalyticsExtendedEntity> {
+  final Value<int?> id;
+  final Value<double> latZone;
+  final Value<double> lonZone;
+  final Value<int> hourSlot;
+  final Value<String> make;
+  final Value<int> year;
+  final Value<String> fuelType;
+  final Value<String> transmission;
+  final Value<int> rentals;
+  final Value<DateTime> lastUpdated;
+  const AnalyticsExtendedTableCompanion({
+    this.id = const Value.absent(),
+    this.latZone = const Value.absent(),
+    this.lonZone = const Value.absent(),
+    this.hourSlot = const Value.absent(),
+    this.make = const Value.absent(),
+    this.year = const Value.absent(),
+    this.fuelType = const Value.absent(),
+    this.transmission = const Value.absent(),
+    this.rentals = const Value.absent(),
+    this.lastUpdated = const Value.absent(),
+  });
+  AnalyticsExtendedTableCompanion.insert({
+    this.id = const Value.absent(),
+    required double latZone,
+    required double lonZone,
+    required int hourSlot,
+    required String make,
+    required int year,
+    required String fuelType,
+    required String transmission,
+    required int rentals,
+    this.lastUpdated = const Value.absent(),
+  }) : latZone = Value(latZone),
+       lonZone = Value(lonZone),
+       hourSlot = Value(hourSlot),
+       make = Value(make),
+       year = Value(year),
+       fuelType = Value(fuelType),
+       transmission = Value(transmission),
+       rentals = Value(rentals);
+  static Insertable<AnalyticsExtendedEntity> custom({
+    Expression<int>? id,
+    Expression<double>? latZone,
+    Expression<double>? lonZone,
+    Expression<int>? hourSlot,
+    Expression<String>? make,
+    Expression<int>? year,
+    Expression<String>? fuelType,
+    Expression<String>? transmission,
+    Expression<int>? rentals,
+    Expression<DateTime>? lastUpdated,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (latZone != null) 'lat_zone': latZone,
+      if (lonZone != null) 'lon_zone': lonZone,
+      if (hourSlot != null) 'hour_slot': hourSlot,
+      if (make != null) 'make': make,
+      if (year != null) 'year': year,
+      if (fuelType != null) 'fuel_type': fuelType,
+      if (transmission != null) 'transmission': transmission,
+      if (rentals != null) 'rentals': rentals,
+      if (lastUpdated != null) 'last_updated': lastUpdated,
+    });
+  }
+
+  AnalyticsExtendedTableCompanion copyWith({
+    Value<int?>? id,
+    Value<double>? latZone,
+    Value<double>? lonZone,
+    Value<int>? hourSlot,
+    Value<String>? make,
+    Value<int>? year,
+    Value<String>? fuelType,
+    Value<String>? transmission,
+    Value<int>? rentals,
+    Value<DateTime>? lastUpdated,
+  }) {
+    return AnalyticsExtendedTableCompanion(
+      id: id ?? this.id,
+      latZone: latZone ?? this.latZone,
+      lonZone: lonZone ?? this.lonZone,
+      hourSlot: hourSlot ?? this.hourSlot,
+      make: make ?? this.make,
+      year: year ?? this.year,
+      fuelType: fuelType ?? this.fuelType,
+      transmission: transmission ?? this.transmission,
+      rentals: rentals ?? this.rentals,
+      lastUpdated: lastUpdated ?? this.lastUpdated,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (latZone.present) {
+      map['lat_zone'] = Variable<double>(latZone.value);
+    }
+    if (lonZone.present) {
+      map['lon_zone'] = Variable<double>(lonZone.value);
+    }
+    if (hourSlot.present) {
+      map['hour_slot'] = Variable<int>(hourSlot.value);
+    }
+    if (make.present) {
+      map['make'] = Variable<String>(make.value);
+    }
+    if (year.present) {
+      map['year'] = Variable<int>(year.value);
+    }
+    if (fuelType.present) {
+      map['fuel_type'] = Variable<String>(fuelType.value);
+    }
+    if (transmission.present) {
+      map['transmission'] = Variable<String>(transmission.value);
+    }
+    if (rentals.present) {
+      map['rentals'] = Variable<int>(rentals.value);
+    }
+    if (lastUpdated.present) {
+      map['last_updated'] = Variable<DateTime>(lastUpdated.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AnalyticsExtendedTableCompanion(')
+          ..write('id: $id, ')
+          ..write('latZone: $latZone, ')
+          ..write('lonZone: $lonZone, ')
+          ..write('hourSlot: $hourSlot, ')
+          ..write('make: $make, ')
+          ..write('year: $year, ')
+          ..write('fuelType: $fuelType, ')
+          ..write('transmission: $transmission, ')
+          ..write('rentals: $rentals, ')
+          ..write('lastUpdated: $lastUpdated')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $OwnerIncomeTableTable extends OwnerIncomeTable
+    with TableInfo<$OwnerIncomeTableTable, OwnerIncomeEntity> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $OwnerIncomeTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    true,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _ownerIdMeta = const VerificationMeta(
+    'ownerId',
+  );
+  @override
+  late final GeneratedColumn<String> ownerId = GeneratedColumn<String>(
+    'owner_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _monthlyIncomeMeta = const VerificationMeta(
+    'monthlyIncome',
+  );
+  @override
+  late final GeneratedColumn<double> monthlyIncome = GeneratedColumn<double>(
+    'monthly_income',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _monthMeta = const VerificationMeta('month');
+  @override
+  late final GeneratedColumn<String> month = GeneratedColumn<String>(
+    'month',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _lastUpdatedMeta = const VerificationMeta(
+    'lastUpdated',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastUpdated = GeneratedColumn<DateTime>(
+    'last_updated',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    ownerId,
+    monthlyIncome,
+    month,
+    lastUpdated,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'owner_income_table';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<OwnerIncomeEntity> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('owner_id')) {
+      context.handle(
+        _ownerIdMeta,
+        ownerId.isAcceptableOrUnknown(data['owner_id']!, _ownerIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerIdMeta);
+    }
+    if (data.containsKey('monthly_income')) {
+      context.handle(
+        _monthlyIncomeMeta,
+        monthlyIncome.isAcceptableOrUnknown(
+          data['monthly_income']!,
+          _monthlyIncomeMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_monthlyIncomeMeta);
+    }
+    if (data.containsKey('month')) {
+      context.handle(
+        _monthMeta,
+        month.isAcceptableOrUnknown(data['month']!, _monthMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_monthMeta);
+    }
+    if (data.containsKey('last_updated')) {
+      context.handle(
+        _lastUpdatedMeta,
+        lastUpdated.isAcceptableOrUnknown(
+          data['last_updated']!,
+          _lastUpdatedMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  OwnerIncomeEntity map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return OwnerIncomeEntity(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      ),
+      ownerId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_id'],
+      )!,
+      monthlyIncome: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}monthly_income'],
+      )!,
+      month: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}month'],
+      )!,
+      lastUpdated: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_updated'],
+      )!,
+    );
+  }
+
+  @override
+  $OwnerIncomeTableTable createAlias(String alias) {
+    return $OwnerIncomeTableTable(attachedDatabase, alias);
+  }
+}
+
+class OwnerIncomeEntity extends DataClass
+    implements Insertable<OwnerIncomeEntity> {
+  final int? id;
+  final String ownerId;
+  final double monthlyIncome;
+  final String month;
+  final DateTime lastUpdated;
+  const OwnerIncomeEntity({
+    this.id,
+    required this.ownerId,
+    required this.monthlyIncome,
+    required this.month,
+    required this.lastUpdated,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (!nullToAbsent || id != null) {
+      map['id'] = Variable<int>(id);
+    }
+    map['owner_id'] = Variable<String>(ownerId);
+    map['monthly_income'] = Variable<double>(monthlyIncome);
+    map['month'] = Variable<String>(month);
+    map['last_updated'] = Variable<DateTime>(lastUpdated);
+    return map;
+  }
+
+  OwnerIncomeTableCompanion toCompanion(bool nullToAbsent) {
+    return OwnerIncomeTableCompanion(
+      id: id == null && nullToAbsent ? const Value.absent() : Value(id),
+      ownerId: Value(ownerId),
+      monthlyIncome: Value(monthlyIncome),
+      month: Value(month),
+      lastUpdated: Value(lastUpdated),
+    );
+  }
+
+  factory OwnerIncomeEntity.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return OwnerIncomeEntity(
+      id: serializer.fromJson<int?>(json['id']),
+      ownerId: serializer.fromJson<String>(json['ownerId']),
+      monthlyIncome: serializer.fromJson<double>(json['monthlyIncome']),
+      month: serializer.fromJson<String>(json['month']),
+      lastUpdated: serializer.fromJson<DateTime>(json['lastUpdated']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int?>(id),
+      'ownerId': serializer.toJson<String>(ownerId),
+      'monthlyIncome': serializer.toJson<double>(monthlyIncome),
+      'month': serializer.toJson<String>(month),
+      'lastUpdated': serializer.toJson<DateTime>(lastUpdated),
+    };
+  }
+
+  OwnerIncomeEntity copyWith({
+    Value<int?> id = const Value.absent(),
+    String? ownerId,
+    double? monthlyIncome,
+    String? month,
+    DateTime? lastUpdated,
+  }) => OwnerIncomeEntity(
+    id: id.present ? id.value : this.id,
+    ownerId: ownerId ?? this.ownerId,
+    monthlyIncome: monthlyIncome ?? this.monthlyIncome,
+    month: month ?? this.month,
+    lastUpdated: lastUpdated ?? this.lastUpdated,
+  );
+  OwnerIncomeEntity copyWithCompanion(OwnerIncomeTableCompanion data) {
+    return OwnerIncomeEntity(
+      id: data.id.present ? data.id.value : this.id,
+      ownerId: data.ownerId.present ? data.ownerId.value : this.ownerId,
+      monthlyIncome: data.monthlyIncome.present
+          ? data.monthlyIncome.value
+          : this.monthlyIncome,
+      month: data.month.present ? data.month.value : this.month,
+      lastUpdated: data.lastUpdated.present
+          ? data.lastUpdated.value
+          : this.lastUpdated,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('OwnerIncomeEntity(')
+          ..write('id: $id, ')
+          ..write('ownerId: $ownerId, ')
+          ..write('monthlyIncome: $monthlyIncome, ')
+          ..write('month: $month, ')
+          ..write('lastUpdated: $lastUpdated')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, ownerId, monthlyIncome, month, lastUpdated);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is OwnerIncomeEntity &&
+          other.id == this.id &&
+          other.ownerId == this.ownerId &&
+          other.monthlyIncome == this.monthlyIncome &&
+          other.month == this.month &&
+          other.lastUpdated == this.lastUpdated);
+}
+
+class OwnerIncomeTableCompanion extends UpdateCompanion<OwnerIncomeEntity> {
+  final Value<int?> id;
+  final Value<String> ownerId;
+  final Value<double> monthlyIncome;
+  final Value<String> month;
+  final Value<DateTime> lastUpdated;
+  const OwnerIncomeTableCompanion({
+    this.id = const Value.absent(),
+    this.ownerId = const Value.absent(),
+    this.monthlyIncome = const Value.absent(),
+    this.month = const Value.absent(),
+    this.lastUpdated = const Value.absent(),
+  });
+  OwnerIncomeTableCompanion.insert({
+    this.id = const Value.absent(),
+    required String ownerId,
+    required double monthlyIncome,
+    required String month,
+    this.lastUpdated = const Value.absent(),
+  }) : ownerId = Value(ownerId),
+       monthlyIncome = Value(monthlyIncome),
+       month = Value(month);
+  static Insertable<OwnerIncomeEntity> custom({
+    Expression<int>? id,
+    Expression<String>? ownerId,
+    Expression<double>? monthlyIncome,
+    Expression<String>? month,
+    Expression<DateTime>? lastUpdated,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (ownerId != null) 'owner_id': ownerId,
+      if (monthlyIncome != null) 'monthly_income': monthlyIncome,
+      if (month != null) 'month': month,
+      if (lastUpdated != null) 'last_updated': lastUpdated,
+    });
+  }
+
+  OwnerIncomeTableCompanion copyWith({
+    Value<int?>? id,
+    Value<String>? ownerId,
+    Value<double>? monthlyIncome,
+    Value<String>? month,
+    Value<DateTime>? lastUpdated,
+  }) {
+    return OwnerIncomeTableCompanion(
+      id: id ?? this.id,
+      ownerId: ownerId ?? this.ownerId,
+      monthlyIncome: monthlyIncome ?? this.monthlyIncome,
+      month: month ?? this.month,
+      lastUpdated: lastUpdated ?? this.lastUpdated,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (ownerId.present) {
+      map['owner_id'] = Variable<String>(ownerId.value);
+    }
+    if (monthlyIncome.present) {
+      map['monthly_income'] = Variable<double>(monthlyIncome.value);
+    }
+    if (month.present) {
+      map['month'] = Variable<String>(month.value);
+    }
+    if (lastUpdated.present) {
+      map['last_updated'] = Variable<DateTime>(lastUpdated.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('OwnerIncomeTableCompanion(')
+          ..write('id: $id, ')
+          ..write('ownerId: $ownerId, ')
+          ..write('monthlyIncome: $monthlyIncome, ')
+          ..write('month: $month, ')
+          ..write('lastUpdated: $lastUpdated')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -5146,6 +6478,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $PricingsTable pricings = $PricingsTable(this);
   late final $BookingsTable bookings = $BookingsTable(this);
   late final $KvsTable kvs = $KvsTable(this);
+  late final $AnalyticsDemandTableTable analyticsDemandTable =
+      $AnalyticsDemandTableTable(this);
+  late final $AnalyticsExtendedTableTable analyticsExtendedTable =
+      $AnalyticsExtendedTableTable(this);
+  late final $OwnerIncomeTableTable ownerIncomeTable = $OwnerIncomeTableTable(
+    this,
+  );
   late final VehiclesDao vehiclesDao = VehiclesDao(this as AppDatabase);
   late final InfraDao infraDao = InfraDao(this as AppDatabase);
   @override
@@ -5162,6 +6501,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     pricings,
     bookings,
     kvs,
+    analyticsDemandTable,
+    analyticsExtendedTable,
+    ownerIncomeTable,
   ];
 }
 
@@ -7696,6 +9038,738 @@ typedef $$KvsTableProcessedTableManager =
       KvEntry,
       PrefetchHooks Function()
     >;
+typedef $$AnalyticsDemandTableTableCreateCompanionBuilder =
+    AnalyticsDemandTableCompanion Function({
+      Value<int?> id,
+      required double latZone,
+      required double lonZone,
+      required int rentals,
+      Value<DateTime> lastUpdated,
+    });
+typedef $$AnalyticsDemandTableTableUpdateCompanionBuilder =
+    AnalyticsDemandTableCompanion Function({
+      Value<int?> id,
+      Value<double> latZone,
+      Value<double> lonZone,
+      Value<int> rentals,
+      Value<DateTime> lastUpdated,
+    });
+
+class $$AnalyticsDemandTableTableFilterComposer
+    extends Composer<_$AppDatabase, $AnalyticsDemandTableTable> {
+  $$AnalyticsDemandTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get latZone => $composableBuilder(
+    column: $table.latZone,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get lonZone => $composableBuilder(
+    column: $table.lonZone,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get rentals => $composableBuilder(
+    column: $table.rentals,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastUpdated => $composableBuilder(
+    column: $table.lastUpdated,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$AnalyticsDemandTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $AnalyticsDemandTableTable> {
+  $$AnalyticsDemandTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get latZone => $composableBuilder(
+    column: $table.latZone,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get lonZone => $composableBuilder(
+    column: $table.lonZone,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get rentals => $composableBuilder(
+    column: $table.rentals,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastUpdated => $composableBuilder(
+    column: $table.lastUpdated,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$AnalyticsDemandTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $AnalyticsDemandTableTable> {
+  $$AnalyticsDemandTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<double> get latZone =>
+      $composableBuilder(column: $table.latZone, builder: (column) => column);
+
+  GeneratedColumn<double> get lonZone =>
+      $composableBuilder(column: $table.lonZone, builder: (column) => column);
+
+  GeneratedColumn<int> get rentals =>
+      $composableBuilder(column: $table.rentals, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get lastUpdated => $composableBuilder(
+    column: $table.lastUpdated,
+    builder: (column) => column,
+  );
+}
+
+class $$AnalyticsDemandTableTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $AnalyticsDemandTableTable,
+          AnalyticsDemandEntity,
+          $$AnalyticsDemandTableTableFilterComposer,
+          $$AnalyticsDemandTableTableOrderingComposer,
+          $$AnalyticsDemandTableTableAnnotationComposer,
+          $$AnalyticsDemandTableTableCreateCompanionBuilder,
+          $$AnalyticsDemandTableTableUpdateCompanionBuilder,
+          (
+            AnalyticsDemandEntity,
+            BaseReferences<
+              _$AppDatabase,
+              $AnalyticsDemandTableTable,
+              AnalyticsDemandEntity
+            >,
+          ),
+          AnalyticsDemandEntity,
+          PrefetchHooks Function()
+        > {
+  $$AnalyticsDemandTableTableTableManager(
+    _$AppDatabase db,
+    $AnalyticsDemandTableTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$AnalyticsDemandTableTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$AnalyticsDemandTableTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$AnalyticsDemandTableTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int?> id = const Value.absent(),
+                Value<double> latZone = const Value.absent(),
+                Value<double> lonZone = const Value.absent(),
+                Value<int> rentals = const Value.absent(),
+                Value<DateTime> lastUpdated = const Value.absent(),
+              }) => AnalyticsDemandTableCompanion(
+                id: id,
+                latZone: latZone,
+                lonZone: lonZone,
+                rentals: rentals,
+                lastUpdated: lastUpdated,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int?> id = const Value.absent(),
+                required double latZone,
+                required double lonZone,
+                required int rentals,
+                Value<DateTime> lastUpdated = const Value.absent(),
+              }) => AnalyticsDemandTableCompanion.insert(
+                id: id,
+                latZone: latZone,
+                lonZone: lonZone,
+                rentals: rentals,
+                lastUpdated: lastUpdated,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$AnalyticsDemandTableTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $AnalyticsDemandTableTable,
+      AnalyticsDemandEntity,
+      $$AnalyticsDemandTableTableFilterComposer,
+      $$AnalyticsDemandTableTableOrderingComposer,
+      $$AnalyticsDemandTableTableAnnotationComposer,
+      $$AnalyticsDemandTableTableCreateCompanionBuilder,
+      $$AnalyticsDemandTableTableUpdateCompanionBuilder,
+      (
+        AnalyticsDemandEntity,
+        BaseReferences<
+          _$AppDatabase,
+          $AnalyticsDemandTableTable,
+          AnalyticsDemandEntity
+        >,
+      ),
+      AnalyticsDemandEntity,
+      PrefetchHooks Function()
+    >;
+typedef $$AnalyticsExtendedTableTableCreateCompanionBuilder =
+    AnalyticsExtendedTableCompanion Function({
+      Value<int?> id,
+      required double latZone,
+      required double lonZone,
+      required int hourSlot,
+      required String make,
+      required int year,
+      required String fuelType,
+      required String transmission,
+      required int rentals,
+      Value<DateTime> lastUpdated,
+    });
+typedef $$AnalyticsExtendedTableTableUpdateCompanionBuilder =
+    AnalyticsExtendedTableCompanion Function({
+      Value<int?> id,
+      Value<double> latZone,
+      Value<double> lonZone,
+      Value<int> hourSlot,
+      Value<String> make,
+      Value<int> year,
+      Value<String> fuelType,
+      Value<String> transmission,
+      Value<int> rentals,
+      Value<DateTime> lastUpdated,
+    });
+
+class $$AnalyticsExtendedTableTableFilterComposer
+    extends Composer<_$AppDatabase, $AnalyticsExtendedTableTable> {
+  $$AnalyticsExtendedTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get latZone => $composableBuilder(
+    column: $table.latZone,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get lonZone => $composableBuilder(
+    column: $table.lonZone,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get hourSlot => $composableBuilder(
+    column: $table.hourSlot,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get make => $composableBuilder(
+    column: $table.make,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get year => $composableBuilder(
+    column: $table.year,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get fuelType => $composableBuilder(
+    column: $table.fuelType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get transmission => $composableBuilder(
+    column: $table.transmission,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get rentals => $composableBuilder(
+    column: $table.rentals,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastUpdated => $composableBuilder(
+    column: $table.lastUpdated,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$AnalyticsExtendedTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $AnalyticsExtendedTableTable> {
+  $$AnalyticsExtendedTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get latZone => $composableBuilder(
+    column: $table.latZone,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get lonZone => $composableBuilder(
+    column: $table.lonZone,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get hourSlot => $composableBuilder(
+    column: $table.hourSlot,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get make => $composableBuilder(
+    column: $table.make,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get year => $composableBuilder(
+    column: $table.year,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get fuelType => $composableBuilder(
+    column: $table.fuelType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get transmission => $composableBuilder(
+    column: $table.transmission,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get rentals => $composableBuilder(
+    column: $table.rentals,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastUpdated => $composableBuilder(
+    column: $table.lastUpdated,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$AnalyticsExtendedTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $AnalyticsExtendedTableTable> {
+  $$AnalyticsExtendedTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<double> get latZone =>
+      $composableBuilder(column: $table.latZone, builder: (column) => column);
+
+  GeneratedColumn<double> get lonZone =>
+      $composableBuilder(column: $table.lonZone, builder: (column) => column);
+
+  GeneratedColumn<int> get hourSlot =>
+      $composableBuilder(column: $table.hourSlot, builder: (column) => column);
+
+  GeneratedColumn<String> get make =>
+      $composableBuilder(column: $table.make, builder: (column) => column);
+
+  GeneratedColumn<int> get year =>
+      $composableBuilder(column: $table.year, builder: (column) => column);
+
+  GeneratedColumn<String> get fuelType =>
+      $composableBuilder(column: $table.fuelType, builder: (column) => column);
+
+  GeneratedColumn<String> get transmission => $composableBuilder(
+    column: $table.transmission,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get rentals =>
+      $composableBuilder(column: $table.rentals, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get lastUpdated => $composableBuilder(
+    column: $table.lastUpdated,
+    builder: (column) => column,
+  );
+}
+
+class $$AnalyticsExtendedTableTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $AnalyticsExtendedTableTable,
+          AnalyticsExtendedEntity,
+          $$AnalyticsExtendedTableTableFilterComposer,
+          $$AnalyticsExtendedTableTableOrderingComposer,
+          $$AnalyticsExtendedTableTableAnnotationComposer,
+          $$AnalyticsExtendedTableTableCreateCompanionBuilder,
+          $$AnalyticsExtendedTableTableUpdateCompanionBuilder,
+          (
+            AnalyticsExtendedEntity,
+            BaseReferences<
+              _$AppDatabase,
+              $AnalyticsExtendedTableTable,
+              AnalyticsExtendedEntity
+            >,
+          ),
+          AnalyticsExtendedEntity,
+          PrefetchHooks Function()
+        > {
+  $$AnalyticsExtendedTableTableTableManager(
+    _$AppDatabase db,
+    $AnalyticsExtendedTableTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$AnalyticsExtendedTableTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$AnalyticsExtendedTableTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$AnalyticsExtendedTableTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int?> id = const Value.absent(),
+                Value<double> latZone = const Value.absent(),
+                Value<double> lonZone = const Value.absent(),
+                Value<int> hourSlot = const Value.absent(),
+                Value<String> make = const Value.absent(),
+                Value<int> year = const Value.absent(),
+                Value<String> fuelType = const Value.absent(),
+                Value<String> transmission = const Value.absent(),
+                Value<int> rentals = const Value.absent(),
+                Value<DateTime> lastUpdated = const Value.absent(),
+              }) => AnalyticsExtendedTableCompanion(
+                id: id,
+                latZone: latZone,
+                lonZone: lonZone,
+                hourSlot: hourSlot,
+                make: make,
+                year: year,
+                fuelType: fuelType,
+                transmission: transmission,
+                rentals: rentals,
+                lastUpdated: lastUpdated,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int?> id = const Value.absent(),
+                required double latZone,
+                required double lonZone,
+                required int hourSlot,
+                required String make,
+                required int year,
+                required String fuelType,
+                required String transmission,
+                required int rentals,
+                Value<DateTime> lastUpdated = const Value.absent(),
+              }) => AnalyticsExtendedTableCompanion.insert(
+                id: id,
+                latZone: latZone,
+                lonZone: lonZone,
+                hourSlot: hourSlot,
+                make: make,
+                year: year,
+                fuelType: fuelType,
+                transmission: transmission,
+                rentals: rentals,
+                lastUpdated: lastUpdated,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$AnalyticsExtendedTableTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $AnalyticsExtendedTableTable,
+      AnalyticsExtendedEntity,
+      $$AnalyticsExtendedTableTableFilterComposer,
+      $$AnalyticsExtendedTableTableOrderingComposer,
+      $$AnalyticsExtendedTableTableAnnotationComposer,
+      $$AnalyticsExtendedTableTableCreateCompanionBuilder,
+      $$AnalyticsExtendedTableTableUpdateCompanionBuilder,
+      (
+        AnalyticsExtendedEntity,
+        BaseReferences<
+          _$AppDatabase,
+          $AnalyticsExtendedTableTable,
+          AnalyticsExtendedEntity
+        >,
+      ),
+      AnalyticsExtendedEntity,
+      PrefetchHooks Function()
+    >;
+typedef $$OwnerIncomeTableTableCreateCompanionBuilder =
+    OwnerIncomeTableCompanion Function({
+      Value<int?> id,
+      required String ownerId,
+      required double monthlyIncome,
+      required String month,
+      Value<DateTime> lastUpdated,
+    });
+typedef $$OwnerIncomeTableTableUpdateCompanionBuilder =
+    OwnerIncomeTableCompanion Function({
+      Value<int?> id,
+      Value<String> ownerId,
+      Value<double> monthlyIncome,
+      Value<String> month,
+      Value<DateTime> lastUpdated,
+    });
+
+class $$OwnerIncomeTableTableFilterComposer
+    extends Composer<_$AppDatabase, $OwnerIncomeTableTable> {
+  $$OwnerIncomeTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get ownerId => $composableBuilder(
+    column: $table.ownerId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get monthlyIncome => $composableBuilder(
+    column: $table.monthlyIncome,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get month => $composableBuilder(
+    column: $table.month,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastUpdated => $composableBuilder(
+    column: $table.lastUpdated,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$OwnerIncomeTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $OwnerIncomeTableTable> {
+  $$OwnerIncomeTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get ownerId => $composableBuilder(
+    column: $table.ownerId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get monthlyIncome => $composableBuilder(
+    column: $table.monthlyIncome,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get month => $composableBuilder(
+    column: $table.month,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastUpdated => $composableBuilder(
+    column: $table.lastUpdated,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$OwnerIncomeTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $OwnerIncomeTableTable> {
+  $$OwnerIncomeTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get ownerId =>
+      $composableBuilder(column: $table.ownerId, builder: (column) => column);
+
+  GeneratedColumn<double> get monthlyIncome => $composableBuilder(
+    column: $table.monthlyIncome,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get month =>
+      $composableBuilder(column: $table.month, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get lastUpdated => $composableBuilder(
+    column: $table.lastUpdated,
+    builder: (column) => column,
+  );
+}
+
+class $$OwnerIncomeTableTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $OwnerIncomeTableTable,
+          OwnerIncomeEntity,
+          $$OwnerIncomeTableTableFilterComposer,
+          $$OwnerIncomeTableTableOrderingComposer,
+          $$OwnerIncomeTableTableAnnotationComposer,
+          $$OwnerIncomeTableTableCreateCompanionBuilder,
+          $$OwnerIncomeTableTableUpdateCompanionBuilder,
+          (
+            OwnerIncomeEntity,
+            BaseReferences<
+              _$AppDatabase,
+              $OwnerIncomeTableTable,
+              OwnerIncomeEntity
+            >,
+          ),
+          OwnerIncomeEntity,
+          PrefetchHooks Function()
+        > {
+  $$OwnerIncomeTableTableTableManager(
+    _$AppDatabase db,
+    $OwnerIncomeTableTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$OwnerIncomeTableTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$OwnerIncomeTableTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$OwnerIncomeTableTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int?> id = const Value.absent(),
+                Value<String> ownerId = const Value.absent(),
+                Value<double> monthlyIncome = const Value.absent(),
+                Value<String> month = const Value.absent(),
+                Value<DateTime> lastUpdated = const Value.absent(),
+              }) => OwnerIncomeTableCompanion(
+                id: id,
+                ownerId: ownerId,
+                monthlyIncome: monthlyIncome,
+                month: month,
+                lastUpdated: lastUpdated,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int?> id = const Value.absent(),
+                required String ownerId,
+                required double monthlyIncome,
+                required String month,
+                Value<DateTime> lastUpdated = const Value.absent(),
+              }) => OwnerIncomeTableCompanion.insert(
+                id: id,
+                ownerId: ownerId,
+                monthlyIncome: monthlyIncome,
+                month: month,
+                lastUpdated: lastUpdated,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$OwnerIncomeTableTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $OwnerIncomeTableTable,
+      OwnerIncomeEntity,
+      $$OwnerIncomeTableTableFilterComposer,
+      $$OwnerIncomeTableTableOrderingComposer,
+      $$OwnerIncomeTableTableAnnotationComposer,
+      $$OwnerIncomeTableTableCreateCompanionBuilder,
+      $$OwnerIncomeTableTableUpdateCompanionBuilder,
+      (
+        OwnerIncomeEntity,
+        BaseReferences<
+          _$AppDatabase,
+          $OwnerIncomeTableTable,
+          OwnerIncomeEntity
+        >,
+      ),
+      OwnerIncomeEntity,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -7717,4 +9791,13 @@ class $AppDatabaseManager {
   $$BookingsTableTableManager get bookings =>
       $$BookingsTableTableManager(_db, _db.bookings);
   $$KvsTableTableManager get kvs => $$KvsTableTableManager(_db, _db.kvs);
+  $$AnalyticsDemandTableTableTableManager get analyticsDemandTable =>
+      $$AnalyticsDemandTableTableTableManager(_db, _db.analyticsDemandTable);
+  $$AnalyticsExtendedTableTableTableManager get analyticsExtendedTable =>
+      $$AnalyticsExtendedTableTableTableManager(
+        _db,
+        _db.analyticsExtendedTable,
+      );
+  $$OwnerIncomeTableTableTableManager get ownerIncomeTable =>
+      $$OwnerIncomeTableTableTableManager(_db, _db.ownerIncomeTable);
 }

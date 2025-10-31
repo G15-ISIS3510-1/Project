@@ -73,6 +73,11 @@ import 'package:flutter_app/presentation/features/vehicle/viewmodel/add_vehicle_
 import 'package:flutter_app/presentation/features/analytics/viewmodel/analytics_viewmodel.dart';
 import 'package:flutter_app/presentation/features/analytics/view/analytics_view.dart';
 
+import 'package:flutter_app/data/sources/local/analytics_local_source.dart';
+import 'package:flutter_app/data/sources/local/analytics_extended_local_source.dart';
+import 'package:flutter_app/data/sources/local/owner_income_local_source.dart';
+
+
 import 'app/theme/theme_controller.dart';
 
 /// Auth/session holder leído por la UI (ligero y notifica cambios).
@@ -203,6 +208,16 @@ Future<void> main() async {
         ),
         Provider<LastReadPrefs>(create: (_) => LastReadPrefs()),
 
+        ProxyProvider<AppDatabase, AnalyticsLocalSource>(
+          update: (c, db, _) => AnalyticsLocalSource(db),
+        ),
+        ProxyProvider<AppDatabase, AnalyticsExtendedLocalSource>(
+          update: (c, db, _) => AnalyticsExtendedLocalSource(db),
+        ),
+        ProxyProvider<AppDatabase, OwnerIncomeLocalSource>(
+          update: (c, db, _) => OwnerIncomeLocalSource(db),
+        ),
+
         // ───────── low-level remote services
         Provider<Api>.value(value: api),
         Provider<http.Client>.value(value: httpClient),
@@ -248,6 +263,9 @@ Future<void> main() async {
         Provider<AnalyticsRepository>(
           create: (c) => AnalyticsRepositoryImpl(
             remoteSource: c.read<AnalyticsRemoteSource>(),
+            localAnalytics: c.read<AnalyticsLocalSource>(),
+            localExtended: c.read<AnalyticsExtendedLocalSource>(),
+            localIncome: c.read<OwnerIncomeLocalSource>(),
           ),
         ),
 
