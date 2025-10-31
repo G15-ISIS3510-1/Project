@@ -167,30 +167,23 @@ async def get_owner_income(db: Session = Depends(get_db)):
 
 @router.get("/demand-peaks-extended")
 async def get_demand_peaks_extended(db: Session = Depends(get_db)):
-    dialect = db.bind.dialect.name if hasattr(db, "bind") else "sqlite"
-
-    if dialect == "sqlite":
-        hour_expr = func.strftime("%H", models.Booking.start_ts)
-    else:
-        hour_expr = func.date_part("hour", models.Booking.start_ts)
-
     stmt = (
         select(
             func.round(models.Vehicle.lat, 1).label("lat_zone"),
             func.round(models.Vehicle.lng, 1).label("lon_zone"),
-            hour_expr.label("hour_slot"),
+            func.date_part("hour", models.Booking.start_ts).label("hour_slot"),
             models.Vehicle.make.label("make"),
             models.Vehicle.year.label("year"),
             models.Vehicle.fuel_type.label("fuel_type"),
             models.Vehicle.transmission.label("transmission"),
             func.count(models.Booking.booking_id).label("rentals"),
         )
-        .join(models.Vehicle, models.Vehicle.vehicle_id == models.Booking.vehicle_id)
+        .join(models.Booking, models.Vehicle.vehicle_id == models.Booking.vehicle_id)
         .where(models.Booking.status == models.BookingStatus.completed)
         .group_by(
-            "lat_zone",
-            "lon_zone",
-            "hour_slot",
+            func.round(models.Vehicle.lat, 1),
+            func.round(models.Vehicle.lng, 1),
+            func.date_part("hour", models.Booking.start_ts),
             models.Vehicle.make,
             models.Vehicle.year,
             models.Vehicle.fuel_type,
