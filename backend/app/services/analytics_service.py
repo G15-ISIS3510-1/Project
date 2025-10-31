@@ -6,7 +6,7 @@ from fastapi import HTTPException
 from app.db.models import Booking, BookingStatus, User 
 
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, extract
 from app.db import models
 
 class BookingReminderAnalytics:
@@ -175,3 +175,71 @@ class BookingReminderAnalytics:
         )
         result = await db.execute(stmt)
         return result.all()
+    
+    async def get_owner_income(db: Session):
+        stmt = (
+            select(
+                models.Booking.host_id.label("owner_id"),
+                func.date_trunc("month", models.Payment.created_at).label("month"),
+                func.sum(models.Payment.amount).label("total_income"),
+            )
+            .join(models.Payment, models.Payment.booking_id == models.Booking.booking_id)
+            .where(models.Payment.status == models.PaymentStatus.captured)
+            .group_by(models.Booking.host_id, func.date_trunc("month", models.Payment.created_at))
+            .order_by(models.Booking.host_id)
+        )
+
+        result = await db.execute(stmt)
+        rows = result.all()
+
+        return [
+            {
+                "owner_id": r.owner_id,
+                "month": r.month.strftime("%Y-%m") if r.month else None,
+                "total_income": round(r.total_income, 2) if r.total_income else 0.0,
+            }
+            for r in rows
+        ]
+    
+    async def get_demand_peaks_extended(db: Session):
+        stmt = (
+            select(
+                func.round(models.Vehicle.lat, 1).label("lat_zone"),
+                func.round(models.Vehicle.lng, 1).label("lon_zone"),
+                func.date_part("hour", models.Booking.start_ts).label("hour_slot"),
+                models.Vehicle.make.label("make"),
+                models.Vehicle.year.label("year"),
+                models.Vehicle.fuel_type.label("fuel_type"),
+                models.Vehicle.transmission.label("transmission"),
+                func.count(models.Booking.booking_id).label("rentals"),
+            )
+            .join(models.Vehicle, models.Vehicle.vehicle_id == models.Booking.vehicle_id)
+            .where(models.Booking.status == models.BookingStatus.completed)
+            .group_by(
+                func.round(models.Vehicle.lat, 1),
+                func.round(models.Vehicle.lng, 1),
+                func.date_part("hour", models.Booking.start_ts),
+                models.Vehicle.make,
+                models.Vehicle.year,
+                models.Vehicle.fuel_type,
+                models.Vehicle.transmission,
+            )
+            .order_by(func.count(models.Booking.booking_id).desc())
+        )
+
+        result = await db.execute(stmt)
+        rows = result.all()
+
+        return [
+            {
+                "lat_zone": r.lat_zone,
+                "lon_zone": r.lon_zone,
+                "hour_slot": int(r.hour_slot) if r.hour_slot is not None else None,
+                "make": r.make,
+                "year": r.year,
+                "fuel_type": r.fuel_type,
+                "transmission": r.transmission,
+                "rentals": r.rentals,
+            }
+            for r in rows
+        ]
