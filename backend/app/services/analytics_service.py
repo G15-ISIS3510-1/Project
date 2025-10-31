@@ -180,50 +180,33 @@ class BookingReminderAnalytics:
         stmt = (
             select(
                 models.Booking.host_id.label("owner_id"),
-                func.strftime("%Y-%m", models.Payment.created_at).label("month"),
-                func.sum(models.Payment.amount).label("monthly_income"),
+                func.date_trunc("month", models.Payment.created_at).label("month"),
+                func.sum(models.Payment.amount).label("total_income"),
             )
             .join(models.Payment, models.Payment.booking_id == models.Booking.booking_id)
             .where(models.Payment.status == models.PaymentStatus.captured)
-            .group_by(models.Booking.host_id, func.strftime("%Y-%m", models.Payment.created_at))
+            .group_by(models.Booking.host_id, func.date_trunc("month", models.Payment.created_at))
+            .order_by(models.Booking.host_id)
         )
 
         result = await db.execute(stmt)
         rows = result.all()
 
-        if not rows:
-            return [{"message": "No captured payments found."}]
-
-        owner_totals = {}
-        for owner_id, month, income in rows:
-            owner_totals.setdefault(owner_id, []).append(income)
-
-        owners_list = []
-        for owner_id, incomes in owner_totals.items():
-            avg_income = sum(incomes) / len(incomes)
-            owners_list.append({
-                "owner_id": owner_id,
-                "average_monthly_income": round(avg_income, 2)
-            })
-
-        global_avg = (
-            sum(item["average_monthly_income"] for item in owners_list) / len(owners_list)
-            if owners_list else 0.0
-        )
-
-        owners_list.append({
-            "owner_id": "ALL",
-            "average_monthly_income": round(global_avg, 2)
-        })
-
-        return owners_list
+        return [
+            {
+                "owner_id": r.owner_id,
+                "month": r.month.strftime("%Y-%m") if r.month else None,
+                "total_income": round(r.total_income, 2) if r.total_income else 0.0,
+            }
+            for r in rows
+        ]
     
     async def get_demand_peaks_extended(db: Session):
         stmt = (
             select(
                 func.round(models.Vehicle.lat, 1).label("lat_zone"),
                 func.round(models.Vehicle.lng, 1).label("lon_zone"),
-                func.strftime("%H", models.Booking.start_ts).label("hour_slot"),
+                func.date_part("hour", models.Booking.start_ts).label("hour_slot"),
                 models.Vehicle.make.label("make"),
                 models.Vehicle.year.label("year"),
                 models.Vehicle.fuel_type.label("fuel_type"),
@@ -233,9 +216,9 @@ class BookingReminderAnalytics:
             .join(models.Vehicle, models.Vehicle.vehicle_id == models.Booking.vehicle_id)
             .where(models.Booking.status == models.BookingStatus.completed)
             .group_by(
-                "lat_zone",
-                "lon_zone",
-                "hour_slot",
+                func.round(models.Vehicle.lat, 1),
+                func.round(models.Vehicle.lng, 1),
+                func.date_part("hour", models.Booking.start_ts),
                 models.Vehicle.make,
                 models.Vehicle.year,
                 models.Vehicle.fuel_type,
@@ -245,4 +228,18 @@ class BookingReminderAnalytics:
         )
 
         result = await db.execute(stmt)
-        return result.all()
+        rows = result.all()
+
+        return [
+            {
+                "lat_zone": r.lat_zone,
+                "lon_zone": r.lon_zone,
+                "hour_slot": int(r.hour_slot) if r.hour_slot is not None else None,
+                "make": r.make,
+                "year": r.year,
+                "fuel_type": r.fuel_type,
+                "transmission": r.transmission,
+                "rentals": r.rentals,
+            }
+            for r in rows
+        ]
