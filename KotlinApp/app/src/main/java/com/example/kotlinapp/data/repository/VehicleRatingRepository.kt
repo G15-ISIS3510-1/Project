@@ -4,8 +4,10 @@ import com.example.kotlinapp.data.api.VehicleRatingApi
 import com.example.kotlinapp.data.cache.SimpleCacheManager
 import com.example.kotlinapp.data.models.TopRatedVehicle
 import com.example.kotlinapp.data.models.TopRatedVehicleSearch
+import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.lang.reflect.Type
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -30,7 +32,8 @@ class VehicleRatingRepository(
             
             // PATRÓN CACHE-ASIDE: Paso 1 - Verificar cache
             if (useCache && cacheManager != null) {
-                val cachedData: List<TopRatedVehicle>? = cacheManager.get(cacheKey)
+                val listType: Type = object : TypeToken<List<TopRatedVehicle>>() {}.type
+                val cachedData: List<TopRatedVehicle>? = cacheManager.get(cacheKey, listType)
                 if (cachedData != null) {
                     // Cache hit - Retornar inmediatamente
                     return@withContext Result.success(cachedData)
@@ -67,7 +70,8 @@ class VehicleRatingRepository(
             } else {
                 // Si hay error de API, intentar devolver cache como fallback
                 if (useCache && cacheManager != null) {
-                    val cachedData: List<TopRatedVehicle>? = cacheManager.get(cacheKey)
+                    val listType: Type = object : TypeToken<List<TopRatedVehicle>>() {}.type
+                    val cachedData: List<TopRatedVehicle>? = cacheManager.get(cacheKey, listType)
                     if (cachedData != null) {
                         return@withContext Result.success(cachedData)
                     }
@@ -80,7 +84,8 @@ class VehicleRatingRepository(
             // Error de red - intentar devolver cache
             if (useCache && cacheManager != null) {
                 val cacheKey = generateCacheKey(startDate, endDate, latitude, longitude, radiusKm, limit)
-                val cachedData: List<TopRatedVehicle>? = cacheManager.get(cacheKey)
+                val listType: Type = object : TypeToken<List<TopRatedVehicle>>() {}.type
+                val cachedData: List<TopRatedVehicle>? = cacheManager.get(cacheKey, listType)
                 if (cachedData != null) {
                     // Fallback: devolver cache aunque esté desactualizado
                     return@withContext Result.success(cachedData)

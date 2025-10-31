@@ -58,20 +58,17 @@ class SimpleCacheManager(context: Context) {
      * Obtener datos del cache (Cache-Aside Pattern)
      * Prioriza: L1 (memoria) → L2 (disco) → null
      */
-    fun <T> get(key: String): T? {
+    fun <T> get(key: String, type: java.lang.reflect.Type): T? {
         // 1. Buscar en memoria (L1)
         val memEntry = memoryCache[key] as? CacheEntry<T>
         if (memEntry != null && !memEntry.isExpired()) {
             return memEntry.data
         }
         
-        // 2. Buscar en disco (L2)
+        // 2. Buscar en disco en memoria (L2 - fast lookup)
         val diskEntry = diskCache[key]
         if (diskEntry != null && !diskEntry.isExpired()) {
             try {
-                val type = com.google.gson.reflect.TypeToken.getParameterized(
-                    object : com.google.gson.reflect.TypeToken<T>() {}
-                ).type
                 val data = gson.fromJson<T>(diskEntry.json, type)
                 
                 // Mover a memoria para próximo acceso
@@ -83,6 +80,35 @@ class SimpleCacheManager(context: Context) {
                 return data
             } catch (e: Exception) {
                 // Error al deserializar
+            }
+        }
+        
+        // 3. Buscar en SharedPreferences (persistencia real)
+        if (prefs.contains(key)) {
+            val timestamp = prefs.getLong("${key}_timestamp", 0)
+            val ttl = prefs.getLong("${key}_ttl", 15 * 60 * 1000)
+            
+            // Verificar si está expirado
+            if (System.currentTimeMillis() - timestamp < ttl) {
+                try {
+                    val json = prefs.getString(key, null)
+                    if (json != null) {
+                        val data = gson.fromJson<T>(json, type)
+                        
+                        // Mover a memoria y diskCache para próximos accesos
+                        if (data != null) {
+                            val memEntry = CacheEntry(data, timestamp, ttl)
+                            memoryCache[key] = memEntry as CacheEntry<Any>
+                            
+                            val diskEntry = DiskCacheEntry(json, timestamp, ttl)
+                            diskCache[key] = diskEntry
+                        }
+                        
+                        return data
+                    }
+                } catch (e: Exception) {
+                    // Error al deserializar
+                }
             }
         }
         
