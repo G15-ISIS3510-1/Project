@@ -26,17 +26,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 class VehicleRepository(
-    private val context: Context? = null,  // ← AGREGAR context
+    private val context: Context? = null,
     private val vehiclesApi: VehiclesApiService = BackendApis.vehicles,
     private val pricingApi: PricingApiService = BackendApis.pricing
 ) {
 
-    // ========== CÓDIGO ORIGINAL (sin cambios) ==========
 
-    /**
-     * Crea vehículo CON internet (método original)
-     * Mantén este método por si lo usas en otras partes
-     */
     suspend fun createVehicleWithPricing(
         v: VehicleCreate,
         p: PricingCreate,
@@ -65,7 +60,7 @@ class VehicleRepository(
         return vehiclesApi.getActiveVehicles()
     }
 
-    // ========== EVENTUAL CONNECTIVITY - NUEVO CÓDIGO ==========
+    // EVENTUAL CONNECTIVITY
 
     private val pendingDao by lazy {
         AppDatabase.getDatabase(context!!).pendingVehicleDao()
@@ -75,14 +70,6 @@ class VehicleRepository(
         NetworkMonitor(context!!)
     }
 
-    /**
-     * Crea un vehículo con estrategia de eventual connectivity
-     * USO: Reemplaza createVehicleWithPricing en AddCarViewModel
-     */
-
-    /**
-     * Crea un vehículo con estrategia de eventual connectivity
-     */
     suspend fun createVehicleWithRetry(
         vehicle: VehicleCreate,
         pricing: PricingCreate,
@@ -123,15 +110,15 @@ class VehicleRepository(
         )
 
         pendingDao.insert(pendingEntity)
-        Log.d("VehicleRepo", "💾 Vehículo guardado localmente: $localId")
+        Log.d("VehicleRepo", " Vehículo guardado localmente: $localId")
 
         // 3. Intentar subir si hay internet
         if (networkMonitor.isConnected()) {
-            Log.d("VehicleRepo", "🌐 Hay internet, intentando subir inmediatamente")
+            Log.d("VehicleRepo", " Hay internet, intentando subir inmediatamente")
             uploadPendingVehicle(localId)
         } else {
-            Log.d("VehicleRepo", "📶 Sin internet, esperando conectividad")
-            // ← SOLUCIÓN: Usar CoroutineScope apropiado
+            Log.d("VehicleRepo", " Sin internet, esperando conectividad")
+
             kotlinx.coroutines.CoroutineScope(Dispatchers.IO).launch {
                 monitorAndUpload(localId)
             }
@@ -140,9 +127,6 @@ class VehicleRepository(
         Result.success(localId)
     }
 
-    /**
-     * Guarda la foto en almacenamiento interno
-     */
     private fun savePhotoLocally(sourceFile: File, localId: String): String {
         val photosDir = File(context!!.filesDir, "pending_photos")
         if (!photosDir.exists()) photosDir.mkdirs()
@@ -150,37 +134,31 @@ class VehicleRepository(
         val destFile = File(photosDir, "$localId.jpg")
         sourceFile.copyTo(destFile, overwrite = true)
 
-        Log.d("VehicleRepo", "📸 Foto guardada en: ${destFile.absolutePath}")
+        Log.d("VehicleRepo", " Foto guardada en: ${destFile.absolutePath}")
         return destFile.absolutePath
     }
 
-    /**
-     * Monitorea la conectividad y sube cuando haya internet
-     */
     private suspend fun monitorAndUpload(localId: String) = withContext(Dispatchers.IO) {
         networkMonitor.observeConnectivity()
-            .filter { it == true }  // Solo cuando HAY internet
+            .filter { it == true }
             .take(1)
             .collect {
-                Log.d("VehicleRepo", "✅ Internet recuperado, subiendo $localId")
+                Log.d("VehicleRepo", " Internet recuperado, subiendo $localId")
                 uploadPendingVehicle(localId)
-                // No canceles el flow aquí, déjalo activo por si falla
+
             }
     }
 
-    /**
-     * Intenta subir un vehículo pendiente al backend
-     */
     suspend fun uploadPendingVehicle(localId: String): Result<Unit> = withContext(Dispatchers.IO) {
         val pending = pendingDao.getById(localId)
 
         if (pending == null) {
-            Log.w("VehicleRepo", "⚠️ Vehículo $localId no encontrado")
+            Log.w("VehicleRepo", "Vehículo $localId no encontrado")
             return@withContext Result.failure(Exception("Vehicle not found"))
         }
 
         if (pending.syncStatus == "SYNCED") {
-            Log.d("VehicleRepo", "✅ Vehículo $localId ya está sincronizado")
+            Log.d("VehicleRepo", "Vehículo $localId ya está sincronizado")
             return@withContext Result.success(Unit)
         }
 
@@ -188,9 +166,9 @@ class VehicleRepository(
         pendingDao.updateSyncStatus(localId, "UPLOADING", null, System.currentTimeMillis())
 
         try {
-            Log.d("VehicleRepo", "📤 Subiendo vehículo $localId...")
+            Log.d("VehicleRepo", "Subiendo vehículo $localId...")
 
-            // 1. POST /vehicles
+
             val vehicleDto = VehicleCreate(
                 make = pending.make,
                 model = pending.model,
@@ -208,14 +186,14 @@ class VehicleRepository(
             val vehicleResponse = vehiclesApi.createVehicle(vehicleDto)
             val remoteVehicleId = vehicleResponse.vehicle_id
 
-            Log.d("VehicleRepo", "✅ Vehículo creado en backend: $remoteVehicleId")
+            Log.d("VehicleRepo", "Vehículo creado en backend: $remoteVehicleId")
 
             // 2. POST /photo (si existe)
             if (pending.photoPath != null) {
                 val photoFile = File(pending.photoPath)
                 if (photoFile.exists()) {
                     uploadPhoto(remoteVehicleId, photoFile)
-                    Log.d("VehicleRepo", "✅ Foto subida")
+                    Log.d("VehicleRepo", "Foto subida")
                 }
             }
 
@@ -229,7 +207,7 @@ class VehicleRepository(
             )
 
             pricingApi.createPricing(pricingDto)
-            Log.d("VehicleRepo", "✅ Pricing creado")
+            Log.d("VehicleRepo", "Pricing creado")
 
             // 4. Marcar como SYNCED y eliminar
             pendingDao.updateSyncStatus(
@@ -246,12 +224,12 @@ class VehicleRepository(
             delay(1000)  // Pequeño delay para que la UI vea el cambio
             pendingDao.delete(localId)
 
-            Log.d("VehicleRepo", "🎉 Sincronización completa de $localId")
+            Log.d("VehicleRepo", "Sincronización completa de $localId")
 
             Result.success(Unit)
 
         } catch (e: Exception) {
-            Log.e("VehicleRepo", "❌ Error subiendo $localId: ${e.message}")
+            Log.e("VehicleRepo", "Error subiendo $localId: ${e.message}")
 
             // Guardar error
             pendingDao.updateWithError(
@@ -263,7 +241,7 @@ class VehicleRepository(
 
             // Reintentar después de un delay si no excede límite
             if (pending.attempts < 5) {
-                Log.d("VehicleRepo", "🔄 Reintentando en 10 segundos (intento ${pending.attempts + 1}/5)")
+                Log.d("VehicleRepo", "Reintentando en 10 segundos (intento ${pending.attempts + 1}/5)")
                 delay(10_000)  // 10 segundos
                 uploadPendingVehicle(localId)
             }
@@ -272,32 +250,23 @@ class VehicleRepository(
         }
     }
 
-    /**
-     * Sube la foto de un vehículo
-     */
     private suspend fun uploadPhoto(vehicleId: String, photoFile: File) {
         val requestFile = photoFile.asRequestBody("image/jpeg".toMediaTypeOrNull())
         val body = MultipartBody.Part.createFormData("file", photoFile.name, requestFile)
         vehiclesApi.uploadPhoto(vehicleId, body)
     }
 
-    /**
-     * Flow de vehículos pendientes (para UI)
-     */
+
     fun getPendingVehiclesFlow(): Flow<List<PendingVehicleEntity>> {
         return pendingDao.getAllPendingFlow()
     }
 
-    /**
-     * Obtiene el conteo de vehículos pendientes
-     */
+
     fun getPendingCount(): Flow<Int> {
         return pendingDao.countPending()
     }
 
-    /**
-     * Sincroniza todos los vehículos pendientes manualmente
-     */
+
     suspend fun syncAllPending(): Result<Int> = withContext(Dispatchers.IO) {
         val pending = pendingDao.getAllPendingList()
         var successCount = 0
@@ -310,9 +279,7 @@ class VehicleRepository(
         Result.success(successCount)
     }
 
-    /**
-     * Verifica si hay conexión a internet
-     */
+
     fun isConnected(): Boolean {
         return context?.let { networkMonitor.isConnected() } ?: false
     }

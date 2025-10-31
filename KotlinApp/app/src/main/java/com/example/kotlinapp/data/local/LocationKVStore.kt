@@ -6,14 +6,14 @@ class LocationKVStore {
 
     private val mmkv: MMKV = MMKV.defaultMMKV()
 
-    // Guardar última ubicación
+
     fun saveLastLocation(lat: Double, lng: Double) {
         mmkv.encode("last_lat", lat.toFloat())
         mmkv.encode("last_lng", lng.toFloat())
         mmkv.encode("last_location_timestamp", System.currentTimeMillis())
     }
 
-    // Obtener última ubicación
+
     fun getLastLocation(): Pair<Double, Double>? {
         val lat = mmkv.decodeFloat("last_lat", Float.MIN_VALUE)
         val lng = mmkv.decodeFloat("last_lng", Float.MIN_VALUE)
@@ -25,7 +25,7 @@ class LocationKVStore {
         }
     }
 
-    // Verificar si la ubicación es reciente (menos de 24 horas)
+
     fun isLocationRecent(): Boolean {
         val timestamp = mmkv.decodeLong("last_location_timestamp", 0L)
         val now = System.currentTimeMillis()
@@ -34,7 +34,7 @@ class LocationKVStore {
         return (now - timestamp) < oneDayInMillis
     }
 
-    // Limpiar ubicación guardada
+
     fun clearLocation() {
         mmkv.remove("last_lat")
         mmkv.remove("last_lng")

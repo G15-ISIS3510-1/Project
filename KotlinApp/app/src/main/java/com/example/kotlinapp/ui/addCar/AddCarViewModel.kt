@@ -42,10 +42,10 @@ class AddCarViewModel(application: Application) : AndroidViewModel(application) 
                 val previousCount = _pendingCount.value
                 _pendingCount.value = count
 
-                android.util.Log.d("AddCarVM", "📊 Vehículos pendientes: $count")
+                android.util.Log.d("AddCarVM", "Vehículos pendientes: $count")
 
                 if (waitingForSync && previousCount > 0 && count == 0) {
-                    android.util.Log.d("AddCarVM", "🎉 Sincronización automática completada")
+                    android.util.Log.d("AddCarVM", "Sincronización automática completada")
                     _ui.value = _ui.value.copy(
                         loading = false,
                         success = true,
@@ -56,11 +56,11 @@ class AddCarViewModel(application: Application) : AndroidViewModel(application) 
             }
         }
 
-        // ← NUEVO: Observar cambios de conectividad
+        // Observar cambios de conectividad
         viewModelScope.launch {
             repo.observeConnectivity().collect { isConnected ->
                 _isOffline.value = !isConnected
-                android.util.Log.d("AddCarVM", "📡 Conectividad cambió: ${if (isConnected) "ONLINE" else "OFFLINE"}")
+                android.util.Log.d("AddCarVM", "Conectividad cambió: ${if (isConnected) "ONLINE" else "OFFLINE"}")
             }
         }
     }
@@ -72,7 +72,7 @@ class AddCarViewModel(application: Application) : AndroidViewModel(application) 
             val hasInternet = repo.isConnected()
             _isOffline.value = !hasInternet
 
-            android.util.Log.d("AddCarVM", "📝 Creando vehículo (Internet: $hasInternet)")
+            android.util.Log.d("AddCarVM", "Creando vehículo (Internet: $hasInternet)")
 
             try {
                 val result = repo.createVehicleWithRetry(vehicle, pricing, photoFile)
@@ -83,7 +83,7 @@ class AddCarViewModel(application: Application) : AndroidViewModel(application) 
                     _hasRecentLocation.value = true
 
                     if (hasInternet) {
-                        android.util.Log.d("AddCarVM", "✅ Vehículo creado con internet")
+                        android.util.Log.d("AddCarVM", "Vehículo creado con internet")
                         _ui.value = _ui.value.copy(
                             loading = false,
                             success = true,
@@ -92,7 +92,7 @@ class AddCarViewModel(application: Application) : AndroidViewModel(application) 
                         )
                         waitingForSync = false
                     } else {
-                        android.util.Log.d("AddCarVM", "💾 Vehículo guardado localmente")
+                        android.util.Log.d("AddCarVM", "Vehículo guardado localmente")
                         _ui.value = _ui.value.copy(
                             loading = false,
                             success = false,
@@ -103,7 +103,7 @@ class AddCarViewModel(application: Application) : AndroidViewModel(application) 
                     }
                 } else {
                     val error = result.exceptionOrNull()
-                    android.util.Log.e("AddCarVM", "❌ Error: ${error?.message}")
+                    android.util.Log.e("AddCarVM", "Error: ${error?.message}")
                     _ui.value = _ui.value.copy(
                         loading = false,
                         error = error?.message ?: "Unknown error"
@@ -112,7 +112,7 @@ class AddCarViewModel(application: Application) : AndroidViewModel(application) 
                 }
 
             } catch (e: Exception) {
-                android.util.Log.e("AddCarVM", "❌ Excepción: ${e.message}")
+                android.util.Log.e("AddCarVM", "Excepción: ${e.message}")
                 _ui.value = _ui.value.copy(
                     loading = false,
                     error = e.message ?: "Failed to save vehicle"
@@ -135,7 +135,7 @@ class AddCarViewModel(application: Application) : AndroidViewModel(application) 
 
     fun syncPending() {
         viewModelScope.launch {
-            android.util.Log.d("AddCarVM", "🔄 Sincronizando vehículos pendientes...")
+            android.util.Log.d("AddCarVM", "Sincronizando vehículos pendientes...")
             _ui.value = _ui.value.copy(loading = true, error = null)
 
             try {
@@ -143,7 +143,7 @@ class AddCarViewModel(application: Application) : AndroidViewModel(application) 
 
                 if (result.isSuccess) {
                     val syncedCount = result.getOrNull() ?: 0
-                    android.util.Log.d("AddCarVM", "✅ $syncedCount vehículos sincronizados")
+                    android.util.Log.d("AddCarVM", "$syncedCount vehículos sincronizados")
 
                     _ui.value = _ui.value.copy(
                         loading = false,
@@ -160,7 +160,7 @@ class AddCarViewModel(application: Application) : AndroidViewModel(application) 
                     )
                 }
             } catch (e: Exception) {
-                android.util.Log.e("AddCarVM", "❌ Error en sync: ${e.message}")
+                android.util.Log.e("AddCarVM", "Error en sync: ${e.message}")
                 _ui.value = _ui.value.copy(
                     loading = false,
                     error = e.message ?: "Sync failed"

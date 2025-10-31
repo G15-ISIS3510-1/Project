@@ -14,9 +14,7 @@ class NetworkMonitor(private val context: Context) {
     private val connectivityManager =
         context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 
-    /**
-     * Verifica si hay conexión a internet AHORA
-     */
+
     fun isConnected(): Boolean {
         val network = connectivityManager.activeNetwork ?: return false
         val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
@@ -25,10 +23,6 @@ class NetworkMonitor(private val context: Context) {
                 capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
     }
 
-    /**
-     * Flow que emite cada vez que cambia el estado de la red
-     * Emite true cuando HAY internet, false cuando NO hay
-     */
     fun observeConnectivity(): Flow<Boolean> = callbackFlow {
         val callback = object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: Network) {
@@ -60,7 +54,7 @@ class NetworkMonitor(private val context: Context) {
 
         connectivityManager.registerNetworkCallback(request, callback)
 
-        // Emitir el estado actual inmediatamente
+
         trySend(isConnected())
 
         awaitClose {

@@ -91,15 +91,15 @@ fun AddCar(
 
     val vm: AddCarViewModel = viewModel()
     val ui by vm.ui.collectAsState()
-    val pendingCount by vm.pendingCount.collectAsState()  // ← NUEVO
-    val isOffline by vm.isOffline.collectAsState()  // ← NUEVO
+    val pendingCount by vm.pendingCount.collectAsState()
+    val isOffline by vm.isOffline.collectAsState()
 
     val context = LocalContext.current
     val statusValue = "active"
     val hasRecentLocation by vm.hasRecentLocation.collectAsState()
 
     LaunchedEffect(hasRecentLocation) {
-        android.util.Log.d("AddCarUI", "🎨 hasRecentLocation cambió a: $hasRecentLocation")
+        android.util.Log.d("AddCarUI", "hasRecentLocation cambió a: $hasRecentLocation")
     }
 
     val cameraLauncher = rememberLauncherForActivityResult(
@@ -176,7 +176,7 @@ fun AddCar(
         }
     }
 
-    // ========== NUEVO: Limpiar formulario y navegar ==========
+
     LaunchedEffect(ui.success) {
         if (ui.success) {
             // Mostrar mensaje de éxito
@@ -242,7 +242,7 @@ fun AddCar(
                         )
                         Spacer(Modifier.width(8.dp))
                         Text(
-                            text = "📶 Offline Mode - Vehicle will be saved locally and synced when online",
+                            text = " Offline Mode - Vehicle will be saved locally and synced when online",
                             color = Color(0xFF856404),
                             style = MaterialTheme.typography.bodyMedium
                         )
@@ -250,7 +250,7 @@ fun AddCar(
                 }
             }
 
-            // ========== NUEVO: Banner de vehículos pendientes ==========
+
             if (pendingCount > 0) {
                 Card(
                     colors = CardDefaults.cardColors(
@@ -273,7 +273,7 @@ fun AddCar(
                             )
                             Spacer(Modifier.width(8.dp))
                             Text(
-                                text = "📤 $pendingCount vehicle(s) waiting to sync",
+                                text = " $pendingCount vehicle(s) waiting to sync",
                                 color = MaterialTheme.colorScheme.onSecondaryContainer,
                                 style = MaterialTheme.typography.bodyMedium
                             )
@@ -290,7 +290,7 @@ fun AddCar(
                 }
             }
 
-            // ========== Banner de ERROR (original) ==========
+
             if (ui.error != null) {
                 Card(
                     colors = CardDefaults.cardColors(
@@ -306,7 +306,7 @@ fun AddCar(
                 }
             }
 
-            // ========== NUEVO: Banner de mensaje informativo ==========
+
             if (ui.message != null && !ui.success) {
                 Card(
                     colors = CardDefaults.cardColors(
@@ -333,7 +333,7 @@ fun AddCar(
                 }
             }
 
-            // ========== Banner de validación (original) ==========
+
             if (validationError != null) {
                 Card(
                     colors = CardDefaults.cardColors(
@@ -349,7 +349,7 @@ fun AddCar(
                 }
             }
 
-            // ========== Card de FOTO (sin cambios) ==========
+
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
@@ -400,7 +400,7 @@ fun AddCar(
                 }
             }
 
-            // ========== Card de UBICACIÓN (sin cambios) ==========
+            // Card de UBICACIÓN
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
@@ -431,7 +431,7 @@ fun AddCar(
 
                     Spacer(Modifier.height(8.dp))
 
-                    // ✅ NUEVO: Fila de botones
+
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier.fillMaxWidth()
@@ -449,12 +449,12 @@ fun AddCar(
                             Text("Get location")
                         }
 
-                        // ✅ NUEVO: Botón condicional "Use Last"
+
                         if (hasRecentLocation) {
                             OutlinedButton(
                                 onClick = {
                                     val lastLocation = vm.getLastLocation()
-                                    android.util.Log.d("AddCarUI", "📍 Usando última ubicación: $lastLocation")
+                                    android.util.Log.d("AddCarUI", "Usando última ubicación: $lastLocation")
 
                                     if (lastLocation != null) {
                                         latValue = lastLocation.first
@@ -481,7 +481,7 @@ fun AddCar(
                 }
             }
 
-            // ========== CAMPOS DEL FORMULARIO (sin cambios) ==========
+
             OutlinedTextField(
                 value = make,
                 onValueChange = { make = it },
@@ -625,11 +625,11 @@ fun AddCar(
 
             Spacer(Modifier.height(24.dp))
 
-            // ========== BOTÓN SUBMIT (sin cambios en lógica, solo texto) ==========
+
             Button(
                 onClick = {
                     validationError = null
-                    vm.refreshConnectivity()  // ← NUEVO: Refrescar estado de conectividad
+                    vm.refreshConnectivity()
 
                     if (latValue == null || lngValue == null) {
                         validationError = "Debes obtener la ubicación del vehículo"
@@ -695,7 +695,7 @@ fun AddCar(
                     )
                     Spacer(Modifier.width(8.dp))
                 }
-                // ← NUEVO: Texto dinámico según conectividad
+
                 Text(if (isOffline) "Save Locally" else "Add Vehicle")
             }
         }
