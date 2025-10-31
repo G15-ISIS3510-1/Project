@@ -10,6 +10,7 @@ from app.db.models import User
 from app.schemas.message import MessageResponse, MessageCreate, MessageUpdate
 from app.services.message_service import MessageService
 from app.routers.users import get_current_user_from_token
+from app.utils.feature_tracking_decorator import track_feature_usage
 
 router = APIRouter(tags=["messages"])
 
@@ -189,6 +190,7 @@ async def get_thread_with_user(
 
 # Root collection — POST
 @router.post("", response_model=MessageResponse, status_code=status.HTTP_201_CREATED)
+@track_feature_usage("chat_with_owner")
 async def send_message(
     payload: MessageCreate,
     db: AsyncSession = Depends(get_db),
