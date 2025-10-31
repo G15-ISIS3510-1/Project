@@ -23,7 +23,7 @@ class PreferencesManager(context: Context) {
         private const val KEY_IS_LOGGED_IN = "is_logged_in"
     }
     
-    // Guardar token de acceso
+
     fun saveAccessToken(token: String, tokenType: String = "bearer") {
         sharedPreferences.edit()
             .putString(KEY_ACCESS_TOKEN, token)
@@ -42,7 +42,7 @@ class PreferencesManager(context: Context) {
         return if (token != null) "$tokenType $token" else null
     }
     
-    // Guardar información del usuario
+
     fun saveUserInfo(user: UserResponse) {
         sharedPreferences.edit()
             .putString(KEY_USER_ID, user.userId)
@@ -52,7 +52,7 @@ class PreferencesManager(context: Context) {
             .apply()
     }
     
-    // Obtener información del usuario
+
     fun getUserInfo(): UserResponse? {
         val userId = sharedPreferences.getString(KEY_USER_ID, null)
         val userName = sharedPreferences.getString(KEY_USER_NAME, null)
@@ -64,7 +64,7 @@ class PreferencesManager(context: Context) {
                 userId = userId,
                 name = userName,
                 email = userEmail,
-                phone = "", // No guardamos phone por seguridad
+                phone = "",
                 role = userRole ?: "renter",
                 driverLicenseStatus = "pending",
                 status = "active",
