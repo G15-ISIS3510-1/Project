@@ -44,6 +44,9 @@ async def get_low_usage_features(
     """
     Obtiene las funcionalidades que se usan menos de 'threshold' veces por semana por usuario en promedio.
     
+    Calcula PRIMERO por usuario individual y luego promedia esos promedios.
+    Esto da una mejor representación de cuánto usa cada usuario individualmente cada funcionalidad.
+    
     Args:
         db: Sesión de base de datos async
         weeks: Número de semanas a considerar (default: 4, aprox 1 mes)
@@ -54,17 +57,26 @@ async def get_low_usage_features(
     """
     cutoff_date = datetime.utcnow() - timedelta(weeks=weeks)
     
-    # Query SQL directa para calcular el promedio semanal
+    # Query SQL: Primero calcula por usuario, luego promedia los promedios individuales
+    # Esto da una mejor métrica: el promedio de cuánto usa cada usuario individual
     query = text("""
+        WITH user_weekly_avg AS (
+            SELECT 
+                feature_name,
+                user_id,
+                COUNT(*)::float / :weeks AS uses_per_week_per_user
+            FROM feature_usage_log
+            WHERE timestamp >= :cutoff_date
+            GROUP BY feature_name, user_id
+        )
         SELECT 
             feature_name,
-            COUNT(*)::float / NULLIF(COUNT(DISTINCT user_id), 0) / :weeks AS avg_uses_per_week_per_user,
-            COUNT(*) AS total_uses,
+            AVG(uses_per_week_per_user) AS avg_uses_per_week_per_user,
+            SUM(uses_per_week_per_user * :weeks)::int AS total_uses,
             COUNT(DISTINCT user_id) AS unique_users
-        FROM feature_usage_log
-        WHERE timestamp >= :cutoff_date
+        FROM user_weekly_avg
         GROUP BY feature_name
-        HAVING COUNT(*)::float / NULLIF(COUNT(DISTINCT user_id), 0) / :weeks < :threshold
+        HAVING AVG(uses_per_week_per_user) < :threshold
         ORDER BY avg_uses_per_week_per_user ASC
     """)
     
@@ -98,6 +110,8 @@ async def get_feature_usage_stats(
     """
     Obtiene estadísticas de uso de funcionalidades.
     
+    Calcula PRIMERO por usuario individual y luego promedia esos promedios.
+    
     Args:
         db: Sesión de base de datos async
         feature_name: Nombre de funcionalidad específica (None para todas)
@@ -108,32 +122,71 @@ async def get_feature_usage_stats(
     """
     cutoff_date = datetime.utcnow() - timedelta(weeks=weeks)
     
-    query = select(
-        FeatureUsageLog.feature_name,
-        func.count(FeatureUsageLog.id).label("total_uses"),
-        func.count(func.distinct(FeatureUsageLog.user_id)).label("unique_users"),
-        func.count(FeatureUsageLog.id).label("total_count")
-    ).where(
-        FeatureUsageLog.timestamp >= cutoff_date
-    )
+    # Query SQL: Primero calcula por usuario, luego promedia
+    base_query = text("""
+        WITH user_weekly_avg AS (
+            SELECT 
+                feature_name,
+                user_id,
+                COUNT(*)::float / :weeks AS uses_per_week_per_user,
+                COUNT(*)::int AS user_total_uses
+            FROM feature_usage_log
+            WHERE timestamp >= :cutoff_date
+            GROUP BY feature_name, user_id
+        )
+        SELECT 
+            feature_name,
+            AVG(uses_per_week_per_user) AS avg_uses_per_week_per_user,
+            SUM(user_total_uses)::int AS total_uses,
+            COUNT(DISTINCT user_id) AS unique_users,
+            AVG(uses_per_week_per_user) * :weeks AS avg_uses_per_user
+        FROM user_weekly_avg
+        GROUP BY feature_name
+        ORDER BY total_uses DESC
+    """)
+    
+    params = {
+        "cutoff_date": cutoff_date,
+        "weeks": float(weeks)
+    }
     
     if feature_name:
-        query = query.where(FeatureUsageLog.feature_name == feature_name)
+        # Modificar la query para filtrar por feature_name
+        query = text("""
+            WITH user_weekly_avg AS (
+                SELECT 
+                    feature_name,
+                    user_id,
+                    COUNT(*)::float / :weeks AS uses_per_week_per_user,
+                    COUNT(*)::int AS user_total_uses
+                FROM feature_usage_log
+                WHERE timestamp >= :cutoff_date AND feature_name = :feature_name
+                GROUP BY feature_name, user_id
+            )
+            SELECT 
+                feature_name,
+                AVG(uses_per_week_per_user) AS avg_uses_per_week_per_user,
+                SUM(user_total_uses)::int AS total_uses,
+                COUNT(DISTINCT user_id) AS unique_users,
+                AVG(uses_per_week_per_user) * :weeks AS avg_uses_per_user
+            FROM user_weekly_avg
+            GROUP BY feature_name
+            ORDER BY total_uses DESC
+        """)
+        params["feature_name"] = feature_name
+    else:
+        query = base_query
     
-    query = query.group_by(FeatureUsageLog.feature_name).order_by(
-        func.count(FeatureUsageLog.id).desc()
-    )
-    
-    result = await db.execute(query)
-    rows = result.all()
+    result = await db.execute(query, params)
+    rows = result.fetchall()
     
     return [
         {
-            "feature_name": row.feature_name,
-            "total_uses": row.total_uses,
-            "unique_users": row.unique_users,
-            "avg_uses_per_user": round(row.total_uses / row.unique_users if row.unique_users > 0 else 0, 2),
-            "avg_uses_per_week_per_user": round((row.total_uses / row.unique_users if row.unique_users > 0 else 0) / weeks, 2)
+            "feature_name": row[0],
+            "total_uses": int(row[2]),
+            "unique_users": int(row[3]),
+            "avg_uses_per_user": round(float(row[4]), 2) if row[4] else 0.0,
+            "avg_uses_per_week_per_user": round(float(row[1]), 3) if row[1] else 0.0
         }
         for row in rows
     ]

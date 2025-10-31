@@ -50,7 +50,10 @@ class PaginatedVehicleWithPricingResponse(BaseModel):
 
 # ---------- Routes ----------
 
+from app.utils.feature_tracking_decorator import track_feature_usage
+
 @router.get("/", response_model=PaginatedVehicleResponse)
+@track_feature_usage("vehicle_list_view")
 async def get_vehicles(
     skip: int = 0,
     limit: int = 100,
@@ -255,6 +258,7 @@ async def get_vehicles_by_owner(
 
 
 @router.post("/", response_model=VehicleResponse)
+@track_feature_usage("vehicle_registration")
 async def create_vehicle(
     vehicle_data: VehicleCreate,
     db: AsyncSession = Depends(get_db),

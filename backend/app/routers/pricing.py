@@ -210,7 +210,10 @@ async def delete_pricing_by_vehicle(
     return {"message": "Pricing eliminado correctamente"}
 
 
+from app.utils.feature_tracking_decorator import track_feature_usage
+
 @router.post("/suggest", response_model=SuggestPriceResponse)
+@track_feature_usage("price_suggestion")
 async def suggest_price(
     body: SuggestPriceRequest,
     db: AsyncSession = Depends(get_db),

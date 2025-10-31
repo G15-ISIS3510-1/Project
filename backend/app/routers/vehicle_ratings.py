@@ -43,6 +43,7 @@ class PaginatedDetailedRatingResponse(BaseModel):
 
 
 @router.get("/", response_model=PaginatedRatingResponse)
+@track_feature_usage("ratings_list_view")
 async def list_ratings(
     skip: int = 0,
     limit: int = 100,

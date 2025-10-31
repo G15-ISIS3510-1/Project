@@ -13,6 +13,7 @@ from app.schemas.insurance_plan import (
 )
 from app.services.insurance_plan_service import InsurancePlanService
 from app.routers.users import get_current_user_from_token
+from app.utils.feature_tracking_decorator import track_feature_usage
 
 router = APIRouter(tags=["insurance_plans"])
 
@@ -36,6 +37,7 @@ async def create_plan(
 
 
 @router.get("/", response_model=PaginatedInsurancePlanResponse)
+@track_feature_usage("insurance_plans_view")
 async def list_plans(
     skip: int = 0,
     limit: int = 100,

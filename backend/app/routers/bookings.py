@@ -46,8 +46,11 @@ def _validate_datetimes(start_ts: datetime, end_ts: datetime):
 # Endpoints
 # -------------------------
 
+from app.utils.feature_tracking_decorator import track_feature_usage
+
 # Root collection — POST
 @router.post("", response_model=BookingResponse, status_code=status.HTTP_201_CREATED)
+@track_feature_usage("booking_creation")
 async def create_booking(
     payload: BookingCreate,
     db: AsyncSession = Depends(get_db),
@@ -99,6 +102,7 @@ async def create_booking_alias(
 
 # Root collection — GET
 @router.get("", response_model=PaginatedBookingResponse)
+@track_feature_usage("bookings_list_view")
 async def list_my_bookings(
     skip: int = 0,
     limit: int = 100,
