@@ -1,7 +1,8 @@
-@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class,
-    com.google.accompanist.permissions.ExperimentalPermissionsApi::class)
+@file:OptIn(
+    androidx.compose.material3.ExperimentalMaterial3Api::class,
+    com.google.accompanist.permissions.ExperimentalPermissionsApi::class
+)
 package com.example.kotlinapp.ui.addCar
-
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -40,8 +41,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.kotlinapp.data.remote.dto.PricingCreate
 import com.example.kotlinapp.data.remote.dto.VehicleCreate
 
-
-
 import android.net.Uri
 import android.os.Environment
 import android.widget.Toast
@@ -50,6 +49,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material.icons.filled.CloudOff
+import androidx.compose.material.icons.filled.Sync
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.FileProvider
 import coil.compose.AsyncImage
@@ -61,7 +63,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-
 import androidx.compose.ui.res.painterResource
 
 @Composable
@@ -90,6 +91,9 @@ fun AddCar(
 
     val vm: AddCarViewModel = viewModel()
     val ui by vm.ui.collectAsState()
+    val pendingCount by vm.pendingCount.collectAsState()  // ← NUEVO
+    val isOffline by vm.isOffline.collectAsState()  // ← NUEVO
+
     val context = LocalContext.current
     val statusValue = "active"
 
@@ -167,8 +171,15 @@ fun AddCar(
         }
     }
 
+    // ========== NUEVO: Limpiar formulario y navegar ==========
     LaunchedEffect(ui.success) {
-        if (ui.success){
+        if (ui.success) {
+            // Mostrar mensaje de éxito
+            ui.message?.let {
+                Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+            }
+
+            // Limpiar formulario
             make = ""
             model = ""
             year = ""
@@ -186,6 +197,8 @@ fun AddCar(
             latValue = null
             lngValue = null
             validationError = null
+
+            // Navegar atrás si es necesario
             onDone()
         }
     }
@@ -205,6 +218,74 @@ fun AddCar(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
 
+            // ========== NUEVO: Banner de modo offline ==========
+            if (isOffline) {
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFFFFF3CD)  // Amarillo suave
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CloudOff,
+                            contentDescription = null,
+                            tint = Color(0xFF856404)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = "📶 Offline Mode - Vehicle will be saved locally and synced when online",
+                            color = Color(0xFF856404),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
+            }
+
+            // ========== NUEVO: Banner de vehículos pendientes ==========
+            if (pendingCount > 0) {
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Sync,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = "📤 $pendingCount vehicle(s) waiting to sync",
+                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+
+                        // Botón para sincronizar manualmente
+                        TextButton(
+                            onClick = { vm.syncPending() },
+                            enabled = !ui.loading
+                        ) {
+                            Text("Sync Now")
+                        }
+                    }
+                }
+            }
+
+            // ========== Banner de ERROR (original) ==========
             if (ui.error != null) {
                 Card(
                     colors = CardDefaults.cardColors(
@@ -220,6 +301,34 @@ fun AddCar(
                 }
             }
 
+            // ========== NUEVO: Banner de mensaje informativo ==========
+            if (ui.message != null && !ui.success) {
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = ui.message!!,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
+            }
+
+            // ========== Banner de validación (original) ==========
             if (validationError != null) {
                 Card(
                     colors = CardDefaults.cardColors(
@@ -235,6 +344,7 @@ fun AddCar(
                 }
             }
 
+            // ========== Card de FOTO (sin cambios) ==========
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
@@ -285,6 +395,7 @@ fun AddCar(
                 }
             }
 
+            // ========== Card de UBICACIÓN (sin cambios) ==========
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
@@ -328,6 +439,7 @@ fun AddCar(
                 }
             }
 
+            // ========== CAMPOS DEL FORMULARIO (sin cambios) ==========
             OutlinedTextField(
                 value = make,
                 onValueChange = { make = it },
@@ -471,9 +583,11 @@ fun AddCar(
 
             Spacer(Modifier.height(24.dp))
 
+            // ========== BOTÓN SUBMIT (sin cambios en lógica, solo texto) ==========
             Button(
                 onClick = {
                     validationError = null
+                    vm.refreshConnectivity()  // ← NUEVO: Refrescar estado de conectividad
 
                     if (latValue == null || lngValue == null) {
                         validationError = "Debes obtener la ubicación del vehículo"
@@ -539,12 +653,14 @@ fun AddCar(
                     )
                     Spacer(Modifier.width(8.dp))
                 }
-                Text("Add Vehicle")
+                // ← NUEVO: Texto dinámico según conectividad
+                Text(if (isOffline) "Save Locally" else "Add Vehicle")
             }
         }
     }
 }
 
+// ========== SimpleDropdown y TopAddCar sin cambios ==========
 
 @Composable
 fun SimpleDropdown(
@@ -560,9 +676,7 @@ fun SimpleDropdown(
     ExposedDropdownMenuBox(
         expanded = expanded,
         onExpandedChange = {
-
             expanded = !expanded
-
             if (expanded) focusManager.clearFocus()
         },
         modifier = modifier
@@ -576,7 +690,7 @@ fun SimpleDropdown(
                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
             },
             modifier = Modifier
-                 .menuAnchor()
+                .menuAnchor()
                 .fillMaxWidth()
         )
 
@@ -597,7 +711,6 @@ fun SimpleDropdown(
     }
 }
 
-
 @Composable
 private fun TopAddCar() {
     Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 0.dp) {
@@ -609,6 +722,5 @@ private fun TopAddCar() {
         ) {
             Text("Add Vehicle", fontSize = 28.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.sp)
         }
-
     }
 }
