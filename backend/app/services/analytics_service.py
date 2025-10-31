@@ -191,25 +191,24 @@ class BookingReminderAnalytics:
         result = await db.execute(stmt)
         return result.all()
 
-
     async def get_demand_peaks_extended(db: Session):
         stmt = (
             select(
                 func.round(models.Vehicle.lat, 1).label("lat_zone"),
                 func.round(models.Vehicle.lng, 1).label("lon_zone"),
-                func.date_part("hour", models.Booking.start_ts).label("hour_slot"),
+                func.date_trunc('hour', models.Booking.start_ts).label("hour_slot"),
                 models.Vehicle.make.label("make"),
                 models.Vehicle.year.label("year"),
                 models.Vehicle.fuel_type.label("fuel_type"),
                 models.Vehicle.transmission.label("transmission"),
                 func.count(models.Booking.booking_id).label("rentals"),
             )
-            .join(models.Vehicle, models.Vehicle.vehicle_id == models.Booking.vehicle_id)
+            .join(models.Booking, models.Vehicle.vehicle_id == models.Booking.vehicle_id)
             .where(models.Booking.status == models.BookingStatus.completed)
             .group_by(
-                "lat_zone",
-                "lon_zone",
-                "hour_slot",
+                func.round(models.Vehicle.lat, 1),
+                func.round(models.Vehicle.lng, 1),
+                func.date_trunc('hour', models.Booking.start_ts),
                 models.Vehicle.make,
                 models.Vehicle.year,
                 models.Vehicle.fuel_type,
@@ -217,5 +216,6 @@ class BookingReminderAnalytics:
             )
             .order_by(func.count(models.Booking.booking_id).desc())
         )
+
         result = await db.execute(stmt)
         return result.all()
