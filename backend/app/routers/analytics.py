@@ -167,11 +167,18 @@ async def get_owner_income(db: Session = Depends(get_db)):
 
 @router.get("/demand-peaks-extended")
 async def get_demand_peaks_extended(db: Session = Depends(get_db)):
+    dialect = db.bind.dialect.name if hasattr(db, "bind") else "sqlite"
+
+    if dialect == "sqlite":
+        hour_expr = func.strftime("%H", models.Booking.start_ts)
+    else:
+        hour_expr = func.date_part("hour", models.Booking.start_ts)
+
     stmt = (
         select(
             func.round(models.Vehicle.lat, 1).label("lat_zone"),
             func.round(models.Vehicle.lng, 1).label("lon_zone"),
-            func.date_part("hour", models.Booking.start_ts).label("hour_slot"),
+            hour_expr.label("hour_slot"),
             models.Vehicle.make.label("make"),
             models.Vehicle.year.label("year"),
             models.Vehicle.fuel_type.label("fuel_type"),
