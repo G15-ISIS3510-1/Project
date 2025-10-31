@@ -8,6 +8,8 @@ import com.example.kotlinapp.data.api.VehiclesApiService
 import com.example.kotlinapp.data.local.AppDatabase
 import com.example.kotlinapp.data.local.entity.PendingVehicleEntity
 import com.example.kotlinapp.data.network.NetworkMonitor
+import com.example.kotlinapp.data.local.dao.VehicleLocationDao
+import com.example.kotlinapp.data.local.entity.VehicleLocationEntity
 import com.example.kotlinapp.data.remote.dto.PricingCreate
 import com.example.kotlinapp.data.remote.dto.PricingResponse
 import com.example.kotlinapp.data.remote.dto.VehicleCreate
@@ -18,12 +20,14 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.map
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import java.net.UnknownHostException
 
 class VehicleRepository(
     private val context: Context? = null,
@@ -57,7 +61,16 @@ class VehicleRepository(
     }
 
     suspend fun getActiveVehicles(): List<VehicleResponse> {
-        return vehiclesApi.getActiveVehicles()
+        return vehiclesApi.getActiveVehicles().items
+    }
+
+
+    private fun getDao(): VehicleLocationDao {
+        return requireNotNull(context) {
+            "Context is required for cache operations"
+        }.let {
+            AppDatabase.getDatabase(it).vehicleLocationDao()
+        }
     }
 
     // EVENTUAL CONNECTIVITY
@@ -246,6 +259,30 @@ class VehicleRepository(
                 uploadPendingVehicle(localId)
             }
 
+    fun getActiveVehiclesFlow(): Flow<List<VehicleMapItem>> {
+        val dao = getDao()
+
+        return dao.getAllVehiclesFlow().map { entities ->
+            entities.map { it.toMapItem() }
+        }
+    }
+
+    suspend fun revalidateVehicles(): Result<Unit> {
+        val dao = getDao()
+
+        return try {
+            val response = getActiveVehicles()
+            val entities = response.map { it.toEntity() }
+
+            dao.deleteAll()
+            dao.insertVehicles(entities)
+
+            Result.success(Unit)
+        } catch (e: UnknownHostException) {
+            Log.w("VehicleRepository", "No internet connection, using cache")
+            Result.failure(e)
+        } catch (e: Exception) {
+            Log.e("VehicleRepository", "API error: ${e.message}", e)
             Result.failure(e)
         }
     }
@@ -286,4 +323,45 @@ class VehicleRepository(
     fun observeConnectivity(): Flow<Boolean> {
         return networkMonitor.observeConnectivity()
     }
+
+    private fun VehicleResponse.toEntity() = VehicleLocationEntity(
+        vehicle_id = this.vehicle_id,
+        lat = this.lat,
+        lng = this.lng,
+        make = this.make,
+        model = this.model,
+        year = this.year,
+        plate = this.plate,
+        seats = this.seats,
+        transmission = this.transmission,
+        fuel_type = this.fuel_type,
+        mileage = this.mileage,
+        status = this.status,
+        photo_url = this.photo_url,
+        dailyPrice = 0.0,
+        updatedAt = System.currentTimeMillis(),
+        source = "network"
+    )
+
+    private fun VehicleLocationEntity.toMapItem() = VehicleMapItem(
+        vehicleId = this.vehicle_id,
+        lat = this.lat,
+        lng = this.lng,
+        make = this.make,
+        model = this.model,
+        year = this.year,
+        dailyPrice = this.dailyPrice,
+        plate = this.plate
+    )
 }
+
+data class VehicleMapItem(
+    val vehicleId: String,
+    val lat: Double,
+    val lng: Double,
+    val make: String,
+    val model: String,
+    val year: Int,
+    val dailyPrice: Double,
+    val plate: String
+)

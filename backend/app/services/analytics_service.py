@@ -181,49 +181,23 @@ class BookingReminderAnalytics:
             select(
                 models.Booking.host_id.label("owner_id"),
                 func.date_trunc("month", models.Payment.created_at).label("month"),
-                func.sum(models.Payment.amount).label("monthly_income"),
+                func.sum(models.Payment.amount).label("total_income"),
             )
             .join(models.Payment, models.Payment.booking_id == models.Booking.booking_id)
             .where(models.Payment.status == models.PaymentStatus.captured)
-            .group_by(models.Booking.host_id, func.date_trunc("month", models.Payment.created_at))
+            .group_by("owner_id", "month")
+            .order_by("owner_id")
         )
-
         result = await db.execute(stmt)
-        rows = result.all()
+        return result.all()
 
-        if not rows:
-            return [{"message": "No captured payments found."}]
 
-        owner_totals = {}
-        for owner_id, month, income in rows:
-            owner_totals.setdefault(owner_id, []).append(income)
-
-        owners_list = []
-        for owner_id, incomes in owner_totals.items():
-            avg_income = sum(incomes) / len(incomes)
-            owners_list.append({
-                "owner_id": owner_id,
-                "average_monthly_income": round(avg_income, 2)
-            })
-
-        global_avg = (
-            sum(item["average_monthly_income"] for item in owners_list) / len(owners_list)
-            if owners_list else 0.0
-        )
-
-        owners_list.append({
-            "owner_id": "ALL",
-            "average_monthly_income": round(global_avg, 2)
-        })
-
-        return owners_list
-    
     async def get_demand_peaks_extended(db: Session):
         stmt = (
             select(
                 func.round(models.Vehicle.lat, 1).label("lat_zone"),
                 func.round(models.Vehicle.lng, 1).label("lon_zone"),
-                extract("hour", models.Booking.start_ts).label("hour_slot"),
+                func.date_part("hour", models.Booking.start_ts).label("hour_slot"),
                 models.Vehicle.make.label("make"),
                 models.Vehicle.year.label("year"),
                 models.Vehicle.fuel_type.label("fuel_type"),
@@ -243,6 +217,5 @@ class BookingReminderAnalytics:
             )
             .order_by(func.count(models.Booking.booking_id).desc())
         )
-
         result = await db.execute(stmt)
         return result.all()

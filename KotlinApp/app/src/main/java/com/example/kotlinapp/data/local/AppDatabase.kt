@@ -12,15 +12,15 @@ import com.example.kotlinapp.data.local.entity.VehicleLocationEntity
 @Database(
     entities = [
         VehicleLocationEntity::class,
-        PendingVehicleEntity::class  // ← AGREGAR ESTA LÍNEA
+        PendingVehicleEntity::class
     ],
-    version = 2,  // ← INCREMENTAR LA VERSIÓN (era 1, ahora 2)
+    version = 2,          
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun vehicleLocationDao(): VehicleLocationDao
-    abstract fun pendingVehicleDao(): PendingVehicleDao  // ← AGREGAR ESTE DAO
+    abstract fun pendingVehicleDao(): PendingVehicleDao
 
     companion object {
         @Volatile
@@ -33,8 +33,10 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "vehicle_rental_db"
                 )
-                    .fallbackToDestructiveMigration()  // ← IMPORTANTE para desarrollo
-                    .build()
+
+                .fallbackToDestructiveMigration()
+                .build()
+
                 INSTANCE = instance
                 instance
             }
