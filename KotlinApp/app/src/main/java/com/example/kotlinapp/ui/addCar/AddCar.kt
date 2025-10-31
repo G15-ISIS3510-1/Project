@@ -96,6 +96,11 @@ fun AddCar(
 
     val context = LocalContext.current
     val statusValue = "active"
+    val hasRecentLocation by vm.hasRecentLocation.collectAsState()
+
+    LaunchedEffect(hasRecentLocation) {
+        android.util.Log.d("AddCarUI", "🎨 hasRecentLocation cambió a: $hasRecentLocation")
+    }
 
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture()
@@ -404,7 +409,7 @@ fun AddCar(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        "vehicle location",
+                        "Vehicle location",
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -425,16 +430,53 @@ fun AddCar(
                     }
 
                     Spacer(Modifier.height(8.dp))
-                    Button(
-                        onClick = { getLocation() },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary
-                        )
+
+                    // ✅ NUEVO: Fila de botones
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Icon(Icons.Default.MyLocation, contentDescription = null)
-                        Spacer(Modifier.width(8.dp))
-                        Text("Get location")
+                        Button(
+                            onClick = { getLocation() },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            ),
+                            modifier = if (hasRecentLocation) Modifier.weight(1f) else Modifier.fillMaxWidth()
+                        ) {
+                            Icon(Icons.Default.MyLocation, contentDescription = null)
+                            Spacer(Modifier.width(8.dp))
+                            Text("Get location")
+                        }
+
+                        // ✅ NUEVO: Botón condicional "Use Last"
+                        if (hasRecentLocation) {
+                            OutlinedButton(
+                                onClick = {
+                                    val lastLocation = vm.getLastLocation()
+                                    android.util.Log.d("AddCarUI", "📍 Usando última ubicación: $lastLocation")
+
+                                    if (lastLocation != null) {
+                                        latValue = lastLocation.first
+                                        lngValue = lastLocation.second
+                                        Toast.makeText(
+                                            context,
+                                            "Using saved location: ${lastLocation.first}, ${lastLocation.second}",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    } else {
+                                        Toast.makeText(
+                                            context,
+                                            "No saved location found",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text("Use Last")
+                            }
+                        }
                     }
                 }
             }

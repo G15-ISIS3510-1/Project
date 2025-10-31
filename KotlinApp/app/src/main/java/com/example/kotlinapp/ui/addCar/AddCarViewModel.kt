@@ -11,10 +11,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.io.File
+import com.example.kotlinapp.data.local.LocationKVStore
 
 class AddCarViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repo = VehicleRepository(context = application)
+    private val locationKV = LocationKVStore()
 
     private val _ui = MutableStateFlow(UiState())
     val ui: StateFlow<UiState> = _ui.asStateFlow()
@@ -25,10 +27,16 @@ class AddCarViewModel(application: Application) : AndroidViewModel(application) 
     private val _isOffline = MutableStateFlow(false)
     val isOffline: StateFlow<Boolean> = _isOffline.asStateFlow()
 
+    private val _hasRecentLocation = MutableStateFlow(false)
+    val hasRecentLocation: StateFlow<Boolean> = _hasRecentLocation.asStateFlow()
+
     private var waitingForSync = false
 
     init {
-        // Observar el conteo de pendientes
+
+        val isRecent = locationKV.isLocationRecent()
+        _hasRecentLocation.value = isRecent
+
         viewModelScope.launch {
             repo.getPendingCount().collect { count ->
                 val previousCount = _pendingCount.value
@@ -71,6 +79,8 @@ class AddCarViewModel(application: Application) : AndroidViewModel(application) 
 
                 if (result.isSuccess) {
                     val localId = result.getOrNull()
+                    locationKV.saveLastLocation(vehicle.lat, vehicle.lng)
+                    _hasRecentLocation.value = true
 
                     if (hasInternet) {
                         android.util.Log.d("AddCarVM", "✅ Vehículo creado con internet")
@@ -110,6 +120,17 @@ class AddCarViewModel(application: Application) : AndroidViewModel(application) 
                 waitingForSync = false
             }
         }
+    }
+
+
+    fun getLastLocation(): Pair<Double, Double>? {
+        return locationKV.getLastLocation()
+    }
+
+
+    fun clearSavedLocation() {
+        locationKV.clearLocation()
+        _hasRecentLocation.value = false
     }
 
     fun syncPending() {
