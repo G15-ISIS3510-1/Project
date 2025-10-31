@@ -61,6 +61,10 @@ class AccountFragment : Fragment() {
             findNavController().navigate(R.id.action_account_to_payment)
         }
 
+        binding.btnMetrics.setOnClickListener {
+            findNavController().navigate(R.id.action_account_to_metrics)
+        }
+
         binding.btnSwitchAccount.setOnClickListener {
             Toast.makeText(requireContext(), "Switch Account clicked", Toast.LENGTH_SHORT).show()
             // TODO: Implement account switch
