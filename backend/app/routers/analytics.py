@@ -167,44 +167,57 @@ async def get_owner_income(db: Session = Depends(get_db)):
 
 @router.get("/demand-peaks-extended")
 async def get_demand_peaks_extended(db: Session = Depends(get_db)):
-    stmt = (
-        select(
-            func.round(models.Vehicle.lat, 1).label("lat_zone"),
-            func.round(models.Vehicle.lng, 1).label("lon_zone"),
-            func.date_trunc('hour', models.Booking.start_ts).label("hour_slot"),
-            models.Vehicle.make.label("make"),
-            models.Vehicle.year.label("year"),
-            models.Vehicle.fuel_type.label("fuel_type"),
-            models.Vehicle.transmission.label("transmission"),
-            func.count(models.Booking.booking_id).label("total_rentals"),
-        )
-        .join(models.Booking, models.Vehicle.vehicle_id == models.Booking.vehicle_id)
-        .where(models.Booking.status == models.BookingStatus.completed)
-        .group_by(
-            func.round(models.Vehicle.lat, 1),
-            func.round(models.Vehicle.lng, 1),
-            func.date_trunc('hour', models.Booking.start_ts),
-            models.Vehicle.make,
-            models.Vehicle.year,
-            models.Vehicle.fuel_type,
-            models.Vehicle.transmission,
-        )
-        .order_by(func.count(models.Booking.booking_id).desc())
-    )
+    try:
+        print(">>> Ejecutando query /demand-peaks-extended")
 
-    result = await db.execute(stmt)
-    results = result.all()
+        stmt = (
+            select(
+                func.round(models.Vehicle.lat, 1).label("lat_zone"),
+                func.round(models.Vehicle.lng, 1).label("lon_zone"),
+                func.date_trunc('hour', models.Booking.start_ts).label("hour_slot"),
+                models.Vehicle.make.label("make"),
+                models.Vehicle.year.label("year"),
+                models.Vehicle.fuel_type.label("fuel_type"),
+                models.Vehicle.transmission.label("transmission"),
+                func.count(models.Booking.booking_id).label("total_rentals"),
+            )
+            .join(models.Booking, models.Vehicle.vehicle_id == models.Booking.vehicle_id)
+            .where(models.Booking.status == models.BookingStatus.completed)
+            .group_by(
+                func.round(models.Vehicle.lat, 1),
+                func.round(models.Vehicle.lng, 1),
+                func.date_trunc('hour', models.Booking.start_ts),
+                models.Vehicle.make,
+                models.Vehicle.year,
+                models.Vehicle.fuel_type,
+                models.Vehicle.transmission,
+            )
+            .order_by(func.count(models.Booking.booking_id).desc())
+        )
 
-    return [
-        {
-            "lat_zone": r.lat_zone,
-            "lon_zone": r.lon_zone,
-            "hour_slot": r.hour_slot.strftime("%H") if hasattr(r.hour_slot, "strftime") else str(r.hour_slot),
-            "make": r.make,
-            "year": r.year,
-            "fuel_type": r.fuel_type,
-            "transmission": r.transmission,
-            "total_rentals": r.total_rentals,
-        }
-        for r in results
-    ]
+        print(">>> Ejecutando statement SQL...")
+        result = await db.execute(stmt)
+        print(">>> Query ejecutada correctamente")
+
+        results = result.all()
+        print(f">>> Se obtuvieron {len(results)} filas")
+
+        return [
+            {
+                "lat_zone": r.lat_zone,
+                "lon_zone": r.lon_zone,
+                "hour_slot": str(r.hour_slot),
+                "make": r.make,
+                "year": r.year,
+                "fuel_type": r.fuel_type,
+                "transmission": r.transmission,
+                "total_rentals": r.total_rentals,
+            }
+            for r in results
+        ]
+
+    except Exception as e:
+        import traceback
+        print("ERROR en /demand-peaks-extended")
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=str(e))
