@@ -14,6 +14,7 @@ import com.example.kotlinapp.data.remote.dto.PricingCreate
 import com.example.kotlinapp.data.remote.dto.PricingResponse
 import com.example.kotlinapp.data.remote.dto.VehicleCreate
 import com.example.kotlinapp.data.remote.dto.VehicleResponse
+import com.example.kotlinapp.data.remote.dto.VehicleWithPricingResponse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -61,7 +62,13 @@ class VehicleRepository(
     }
 
     suspend fun getActiveVehicles(): List<VehicleResponse> {
-        return vehiclesApi.getActiveVehicles().items
+        val vehicles = vehiclesApi.getActiveVehicles()
+
+        println("🚗 === ACTIVE VEHICLES (${vehicles.size}) ===")
+        vehicles.forEachIndexed { index, vehicle ->
+            println("[$index] ${vehicle.make} ${vehicle.model} - Lat: ${vehicle.lat}, Lng: ${vehicle.lng}")
+        }
+        return vehiclesApi.getActiveVehicles()
     }
 
 

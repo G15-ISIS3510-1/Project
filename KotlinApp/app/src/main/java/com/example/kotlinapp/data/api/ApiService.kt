@@ -23,13 +23,15 @@ interface VehiclesApiService {
 
     @GET("api/vehicles/active")
     //suspend fun getActiveVehicles(): List<VehicleResponse>
-    suspend fun getActiveVehicles(): VehicleListResponse
+    suspend fun getActiveVehicles(): List<VehicleResponse>
 
     @GET("api/vehicles/active-with-pricing")
     suspend fun getActiveVehiclesWithPricing(
         @Query("search") search: String? = null,
         @Query("category") category: String? = null
-    ): List<VehicleWithPricingResponse>
+    ): VehicleListResponse
+
+
     @POST("api/vehicles/")
     suspend fun createVehicle(@Body body: VehicleCreate): VehicleResponse
 
