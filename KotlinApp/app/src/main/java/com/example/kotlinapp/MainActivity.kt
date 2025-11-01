@@ -9,11 +9,13 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.navigation.fragment.NavHostFragment
 import com.example.kotlinapp.core.ThemeController
 import android.util.Log
+import com.tencent.mmkv.MMKV
 
 class MainActivity : AppCompatActivity() {
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        MMKV.initialize(this)
         
         setupTheme()
         

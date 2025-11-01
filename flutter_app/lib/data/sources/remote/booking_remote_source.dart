@@ -1,40 +1,43 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'api_client.dart';
 
-class BookingsRemoteSource {
-  final String baseUrl;
-  final Future<String?> Function()? getToken;
+String _snip(String s, [int max = 600]) =>
+    s.length <= max ? s : s.substring(0, max) + '…[snip]';
 
-  BookingsRemoteSource({required this.baseUrl, this.getToken});
-
-  Future<List<Map<String, dynamic>>> listMyBookings({
-    required int skip,
-    required int limit,
-    String? statusFilter, // "pending|confirmed|completed|cancelled"
+class BookingService {
+  Future<http.Response> listMyBookings({
+    int skip = 0,
+    int limit = 100,
+    String? statusFilter,
+    bool asHost = false,
   }) async {
-    final uri = Uri.parse('$baseUrl/api/bookings').replace(
-      queryParameters: {
-        'skip': '$skip',
-        'limit': '$limit',
-        if (statusFilter != null) 'status_filter': statusFilter,
-      },
-    );
+    final path =
+        '/api/bookings/?skip=$skip&limit=$limit'
+        '${statusFilter != null ? '&status_filter=$statusFilter' : ''}'
+        '&as_host=$asHost'; // ← aunque el backend no lo use, sirve para traza
 
-    final headers = <String, String>{
-      'Content-Type': 'application/json',
-      if (getToken != null)
-        'Authorization': 'Bearer ${await getToken!() ?? ''}',
-    };
-
-    final resp = await http.get(uri, headers: headers);
-    if (resp.statusCode < 200 || resp.statusCode >= 300) {
-      throw Exception('HTTP ${resp.statusCode} ${resp.reasonPhrase}');
+    if (kDebugMode) {
+      // si Api.I() expone el token/uid, también imprímelos acá
+      debugPrint('[BookingService] GET $path');
     }
 
-    final data = json.decode(resp.body);
-    if (data is List) {
-      return data.cast<Map<String, dynamic>>();
-    }
-    throw Exception('Respuesta inesperada: se esperaba una lista JSON');
+    final resp = Api.I().get(path);
+    resp.then((r) {
+      if (kDebugMode) {
+        debugPrint(
+          '[BookingService] ← ${r.statusCode} '
+          'len=${r.body.length} body=${_snip(r.body)}',
+        );
+      }
+    });
+    return resp;
+  }
+
+  Future<http.Response> create(Map<String, dynamic> body) {
+    if (kDebugMode)
+      debugPrint('[BookingService] POST /api/bookings body=$body');
+    return Api.I().post('/api/bookings', body);
   }
 }

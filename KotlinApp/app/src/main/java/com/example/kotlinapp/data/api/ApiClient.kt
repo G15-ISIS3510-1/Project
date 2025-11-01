@@ -10,7 +10,8 @@ import java.util.concurrent.TimeUnit
 object ApiClient {
     
     // private const val BASE_URL = "http://192.168.100.27:8000/"  
-    private const val BASE_URL = "http://10.0.2.2:8000/"  // Emulador Android (funciona siempre)  
+    // private const val BASE_URL = "http://10.0.2.2:8000/"  // Emulador Android (funciona siempre)
+    private const val BASE_URL = "https://qovo-api-gfa6drobhq-uc.a.run.app/"  // GCP Cloud Run  
 
     private val gson = GsonBuilder()
         .setLenient()
@@ -25,9 +26,9 @@ object ApiClient {
     private val okHttpClient = OkHttpClient.Builder()
         .addInterceptor(loggingInterceptor)
         .addInterceptor(authInterceptor)
-        .connectTimeout(30, TimeUnit.SECONDS)
-        .readTimeout(30, TimeUnit.SECONDS)
-        .writeTimeout(30, TimeUnit.SECONDS)
+        .connectTimeout(10, TimeUnit.SECONDS)
+        .readTimeout(15, TimeUnit.SECONDS)
+        .writeTimeout(15, TimeUnit.SECONDS)
         .build()
     
     private val retrofit = Retrofit.Builder()
@@ -41,6 +42,8 @@ object ApiClient {
 
     val vehiclesApi: VehiclesApiService = retrofit.create(VehiclesApiService::class.java)
     val pricingApi: PricingApiService = retrofit.create(PricingApiService::class.java)
+    val conversationsApi: ConversationsApiService = retrofit.create(ConversationsApiService::class.java)
+    val messagesApi: MessagesApiService = retrofit.create(MessagesApiService::class.java)
 
     fun <T> create(service: Class<T>): T = retrofit.create(service)
 }

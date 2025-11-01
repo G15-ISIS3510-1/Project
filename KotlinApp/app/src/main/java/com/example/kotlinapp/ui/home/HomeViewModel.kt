@@ -65,10 +65,10 @@ class HomeViewModel : ViewModel() {
                     category = category
                 )
 
-                println("ehículos encontrados: ${vehicles.size}")
+                println("ehículos encontrados: ${vehicles.items.size}")
 
                 _uiState.value = _uiState.value.copy(
-                    vehicles = vehicles,
+                    vehicles = vehicles.items,
                     loading = false
                 )
             } catch (e: Exception) {

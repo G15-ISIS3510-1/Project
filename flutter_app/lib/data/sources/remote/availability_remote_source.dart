@@ -22,9 +22,13 @@ import '../../models/availability_model.dart';
 // }
 
 class AvailabilityService {
-  Future<http.Response> getByVehicle(String vehicleId) {
+  Future<http.Response> getByVehicle(
+    String vehicleId, {
+    int skip = 0,
+    int limit = 20,
+  }) {
     return Api.I().get(
-      '/api/vehicle-availability/vehicle?vehicle_id=$vehicleId',
+      '/api/vehicle-availability/vehicle/$vehicleId?skip=$skip&limit=$limit',
     );
   }
 }

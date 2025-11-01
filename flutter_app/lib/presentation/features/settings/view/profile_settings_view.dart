@@ -4,14 +4,27 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
 
+import 'package:flutter_app/main.dart'; // AuthProvider, kApiBase
+import 'package:flutter_app/data/repositories/analytics_repository.dart';
+import 'package:flutter_app/data/sources/remote/analytics_remote_source.dart';
+import 'package:flutter_app/presentation/features/analytics/view/analytics_view.dart';
+import 'package:flutter_app/presentation/features/analytics/analytics_extended/view/analytics_extended_view.dart';
+import 'package:flutter_app/presentation/features/analytics/owner_income/view/owner_income_view.dart';
+import 'package:flutter_app/presentation/features/analytics/analytics_extended/viewmodel/analytics_extended_viewmodel.dart';
+import 'package:flutter_app/presentation/features/analytics/owner_income/viewmodel/owner_income_viewmodel.dart';
+
 import 'package:flutter_app/data/repositories/vehicle_repository.dart';
 import 'package:flutter_app/data/repositories/pricing_repository.dart';
 import 'package:flutter_app/presentation/features/vehicle/viewmodel/add_vehicle_viewmodel.dart';
 import 'package:flutter_app/presentation/features/booking_reminders/view/booking_reminders_view.dart';
-import '../../profile/view/visited_places_view.dart';
-import '../../auth/view/login_view.dart';
-import '../../app_shell/viewmodel/host_mode_provider.dart';
+import 'package:flutter_app/presentation/features/profile/view/visited_places_view.dart';
+import 'package:flutter_app/presentation/features/auth/view/login_view.dart';
 import 'package:flutter_app/presentation/features/vehicle/view/add_vehicle_view.dart';
+
+import 'package:flutter_app/data/sources/local/analytics_local_source.dart';
+import 'package:flutter_app/data/sources/local/analytics_extended_local_source.dart';
+import 'package:flutter_app/data/sources/local/owner_income_local_source.dart';
+
 
 class UserProfile {
   final String id;
@@ -47,7 +60,7 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
   static const _storage = FlutterSecureStorage();
   final String baseUrl = const String.fromEnvironment(
     'API_BASE',
-    defaultValue: 'https://qovo-api-gfa6drobhq-uc.a.run.app',
+    defaultValue: 'https://qovo-api-862569067561.us-central1.run.app',
   );
 
   late Future<UserProfile> _futureProfile;
@@ -82,26 +95,22 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
   }
 
   Future<void> _signOut({bool showMessage = true}) async {
-    await _storage.delete(key: 'access_token');
-    await _storage.delete(key: 'refresh_token');
-
     if (!mounted) return;
 
-    try {
-      context.read<HostModeProvider>().setHostMode(false);
-    } catch (_) {}
+    // 1) Sign out centralizado (esto dispara _clearAppData del main.dart)
+    await context.read<AuthProvider>().signOut();
 
-    if (mounted) {
-      if (showMessage) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Sesión cerrada')));
-      }
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-        (route) => false,
-      );
+    // 2) Feedback y navegación
+    if (!mounted) return;
+    if (showMessage) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Sesión cerrada')));
     }
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (route) => false,
+    );
   }
 
   @override
@@ -294,6 +303,79 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
                         Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (context) => const VisitedPlacesView(),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    pillButton(
+                      Icons.bar_chart_rounded,
+                      'Rental Zones',
+                      onTap: () {
+                        final repository = AnalyticsRepositoryImpl(
+                          remoteSource: AnalyticsRemoteSourceImpl(
+                            client: http.Client(),
+                            baseUrl: kApiBase,
+                          ),
+                          localAnalytics: context.read<AnalyticsLocalSource>(),
+                          localExtended: context.read<AnalyticsExtendedLocalSource>(),
+                          localIncome: context.read<OwnerIncomeLocalSource>(),
+                        );
+
+
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => AnalyticsView(repository: repository),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    pillButton(
+                      Icons.map_rounded,
+                      'Demand Peaks Extended',
+                      onTap: () {
+                        final repository = AnalyticsRepositoryImpl(
+                          remoteSource: AnalyticsRemoteSourceImpl(
+                            client: http.Client(),
+                            baseUrl: kApiBase,
+                          ),
+                          localAnalytics: context.read<AnalyticsLocalSource>(),
+                          localExtended: context.read<AnalyticsExtendedLocalSource>(),
+                          localIncome: context.read<OwnerIncomeLocalSource>(),
+                        );
+
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => ChangeNotifierProvider(
+                              create: (_) => AnalyticsExtendedViewModel(repository),
+                              child: const AnalyticsExtendedView(),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    pillButton(
+                      Icons.monetization_on_rounded,
+                      'Owner Income Analytics',
+                      onTap: () {
+                        final repository = AnalyticsRepositoryImpl(
+                          remoteSource: AnalyticsRemoteSourceImpl(
+                            client: http.Client(),
+                            baseUrl: kApiBase,
+                          ),
+                          localAnalytics: context.read<AnalyticsLocalSource>(),
+                          localExtended: context.read<AnalyticsExtendedLocalSource>(),
+                          localIncome: context.read<OwnerIncomeLocalSource>(),
+                        );
+
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => ChangeNotifierProvider(
+                              create: (_) => OwnerIncomeViewModel(repository),
+                              child: const OwnerIncomeView(),
+                            ),
                           ),
                         );
                       },

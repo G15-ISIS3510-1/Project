@@ -1,21 +1,28 @@
+// lib/presentation/features/conversation/viewmodel/conversation_viewmodel.dart
+import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/scheduler.dart' show SchedulerBinding;
+
 import 'package:flutter_app/data/models/message_model.dart';
 import 'package:flutter_app/data/repositories/chat_repository.dart';
 
 enum ConvStatus { loading, ready, error }
 
 class ConversationViewModel extends ChangeNotifier {
-  final ChatRepository _repo;
+  final ChatRepository repo;
   final String currentUserId;
   final String otherUserId;
   final String? conversationId;
 
   ConversationViewModel({
-    required ChatRepository repo,
+    required this.repo,
     required this.currentUserId,
     required this.otherUserId,
-    this.conversationId,
-  }) : _repo = repo;
+    required this.conversationId,
+  });
+
+  final List<MessageModel> _messages = [];
+  List<MessageModel> get messages => List.unmodifiable(_messages);
 
   ConvStatus _status = ConvStatus.loading;
   ConvStatus get status => _status;
@@ -23,87 +30,78 @@ class ConversationViewModel extends ChangeNotifier {
   String? _error;
   String? get error => _error;
 
-  final List<MessageModel> _messages = [];
-  List<MessageModel> get messages => List.unmodifiable(_messages);
-
   bool _didChange = false;
   bool get didChange => _didChange;
 
-  // paginación sencilla
-  int _skip = 0;
-  final int _limit = 50;
-  bool _hasMore = true;
-  bool get hasMore => _hasMore;
+  StreamSubscription<List<MessageModel>>? _sub;
+  bool _disposed = false;
 
   Future<void> init() async {
-    await load(reset: true);
-    await markAsRead();
-  }
+    _status = ConvStatus.loading;
+    _error = null;
+    _safeNotify();
 
-  Future<void> load({bool reset = false}) async {
     try {
-      if (reset) {
-        _status = ConvStatus.loading;
-        _error = null;
-        _messages.clear();
-        _skip = 0;
-        _hasMore = true;
-        notifyListeners();
-      }
-
-      final list = await _repo.getThread(
-        otherUserId,
-        skip: _skip,
-        limit: _limit,
-        onlyUnread: false,
-      );
-
-      // backend → DESC; UI → antiguos arriba
-      final orderedAsc = list.reversed.toList();
-
-      if (reset) {
-        _messages
-          ..clear()
-          ..addAll(orderedAsc);
-      } else {
-        _messages.addAll(orderedAsc);
-      }
-
-      _hasMore = list.length == _limit;
-      if (_hasMore) _skip += _limit;
-
+      // Initial load
+      final initial = await repo.getThread(otherUserId, skip: 0, limit: 100);
+      if (_disposed) return;
+      _messages
+        ..clear()
+        ..addAll(initial);
       _status = ConvStatus.ready;
-      notifyListeners();
+      _safeNotify();
+
+      // "Realtime" updates via polling/stream
+      _sub?.cancel();
+      _sub = repo.watchThread(otherUserId).listen((list) {
+        if (_disposed) return;
+        // Update after frame to avoid build conflicts
+        SchedulerBinding.instance.addPostFrameCallback((_) {
+          if (_disposed) return;
+          _messages
+            ..clear()
+            ..addAll(list);
+          _safeNotify();
+        });
+      }, onError: (e) {
+        if (_disposed) return;
+        _error = e.toString();
+        _status = ConvStatus.error;
+        _safeNotify();
+      });
     } catch (e) {
       _error = e.toString();
       _status = ConvStatus.error;
-      notifyListeners();
+      _safeNotify();
     }
   }
 
   Future<void> send(String text) async {
-    final content = text.trim();
-    if (content.isEmpty) return;
+    final t = text.trim();
+    if (t.isEmpty) return;
     try {
-      final m = await _repo.sendMessage(
+      await repo.sendMessage(
         receiverId: otherUserId,
-        content: content,
+        content: t,
         conversationId: conversationId,
       );
-      _messages.add(
-        m,
-      ); // ya viene con timestamps; lo ponemos al final (parte baja)
-      _didChange = true;
-      notifyListeners();
-    } catch (_) {
-      // podrías exponer error si lo necesitas
+      _didChange = true; // parent list can refresh on pop
+      // Stream will refresh messages; no extra fetch needed.
+    } catch (e) {
+      _error = e.toString();
+      _status = ConvStatus.error;
+      _safeNotify();
     }
   }
 
-  Future<void> markAsRead() async {
-    try {
-      await _repo.markThreadAsRead(otherUserId);
-      _didChange = true;
-    } catch (_) {}
+  void _safeNotify() {
+    if (!_disposed) notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    _sub?.cancel();
+    super.dispose();
   }
 }

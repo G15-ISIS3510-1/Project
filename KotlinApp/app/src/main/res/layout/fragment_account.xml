@@ -181,6 +181,37 @@
             app:strokeColor="?attr/colorOutline"
             app:cornerRadius="16dp" />
 
+        <!-- Botón: Metrics -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnMetrics"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="12dp"
+            android:text="@string/metrics"
+            android:textSize="18sp"
+            android:fontFamily="@font/poppins_semibold"
+            app:icon="@android:drawable/ic_menu_info_details"
+            app:iconGravity="textStart"
+            app:iconPadding="12dp"
+            app:strokeColor="?attr/colorOutline"
+            app:cornerRadius="16dp" />
+      
+         <!-- NUEVO: Botón Price Analytics -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnPriceAnalytics"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="12dp"
+            android:text="Price Analytics"
+            android:textSize="18sp"
+            android:fontFamily="@font/poppins_semibold"
+            app:iconGravity="textStart"
+            app:iconPadding="12dp"
+            app:strokeColor="?attr/colorOutline"
+            app:cornerRadius="16dp" />
+
         <!-- Divider inferior -->
         <View
             android:layout_width="match_parent"
