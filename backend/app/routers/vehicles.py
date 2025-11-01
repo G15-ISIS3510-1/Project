@@ -39,6 +39,8 @@ class VehicleWithPricingItem(BaseModel):
     currency: str
     minDays: int
     maxDays: Optional[int]
+    lat: float
+    lng: float
 
 
 class PaginatedVehicleWithPricingResponse(BaseModel):
@@ -196,6 +198,8 @@ async def get_active_vehicles_with_pricing(
                 currency=pricing.currency if pricing else "USD",
                 minDays=pricing.min_days if pricing else 1,
                 maxDays=pricing.max_days if pricing else None,
+                lat=vehicle.lat,
+                lng=vehicle.lng
             )
         )
 
