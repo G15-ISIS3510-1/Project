@@ -17,6 +17,7 @@ from app.schemas.vehicle_rating import (
 )
 from app.services.vehicle_rating_service import VehicleRatingService
 from app.routers.users import get_current_user_from_token
+from app.utils.feature_tracking_decorator import track_feature_usage
 
 router = APIRouter(prefix="/vehicle-ratings", tags=["vehicle-ratings"])
 
@@ -42,6 +43,7 @@ class PaginatedDetailedRatingResponse(BaseModel):
 
 
 @router.get("/", response_model=PaginatedRatingResponse)
+@track_feature_usage("ratings_list_view")
 async def list_ratings(
     skip: int = 0,
     limit: int = 100,
@@ -182,6 +184,7 @@ async def get_vehicle_rating_stats(
 
 
 @router.post("/", response_model=VehicleRatingResponse)
+@track_feature_usage("damage_report")
 async def create_rating(
     rating_data: VehicleRatingCreate,
     db: AsyncSession = Depends(get_db),
@@ -302,6 +305,7 @@ async def delete_rating(
 
 
 @router.post("/search/top-rated", response_model=List[TopRatedVehicleResponse])
+@track_feature_usage("search_filters", require_auth=False)
 async def search_top_rated_vehicles(
     search_params: TopRatedVehicleSearch,
     db: AsyncSession = Depends(get_db)

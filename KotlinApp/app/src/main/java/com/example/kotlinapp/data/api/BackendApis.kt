@@ -6,5 +6,5 @@ object BackendApis {
     val payments: PaymentsApiService by lazy { ApiClient.create(PaymentsApiService::class.java) }
     val conversations: ConversationsApiService by lazy { ApiClient.create(ConversationsApiService::class.java) }
     val messages: MessagesApiService by lazy { ApiClient.create(MessagesApiService::class.java) }
-
+    val analytics: AnalyticsApiService by lazy { ApiClient.create(AnalyticsApiService::class.java) }
 }

@@ -18,6 +18,7 @@
     <string name="visited_places">Visited Places</string>
     <string name="communications">Communications</string>
     <string name="payment">Payment</string>
+    <string name="metrics">Métricas</string>
 
     <!-- Botones inferiores -->
     <string name="switch_account">Switch Account</string>

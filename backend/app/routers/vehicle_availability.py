@@ -116,7 +116,10 @@ async def get_availabilities_by_vehicle(
     }
 
 
+from app.utils.feature_tracking_decorator import track_feature_usage
+
 @router.get("/search/available", response_model=PaginatedAvailabilityResponse)
+@track_feature_usage("availability_search")
 async def search_available_vehicles(
     start_ts: str = Query(..., description="Fecha y hora de inicio (ISO format)"),
     end_ts: str = Query(..., description="Fecha y hora de fin (ISO format)"),

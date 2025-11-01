@@ -33,7 +33,10 @@ class PaginatedPaymentResponse(BaseModel):
     limit: int
 
 
+from app.utils.feature_tracking_decorator import track_feature_usage
+
 @router.post("/", response_model=PaymentResponse, status_code=status.HTTP_201_CREATED)
+@track_feature_usage("payment_processing")
 async def create_payment(
     payload: PaymentCreate,
     db: AsyncSession = Depends(get_db),
