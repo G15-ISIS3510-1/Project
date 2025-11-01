@@ -12,6 +12,7 @@ from app.schemas.conversation import (
 )
 from app.services.conversation_service import ConversationService
 from app.routers.users import get_current_user_from_token
+from app.utils.feature_tracking_decorator import track_feature_usage
 
 router = APIRouter(tags=["conversations"])
 
@@ -26,6 +27,7 @@ class PaginatedConversationResponse(BaseModel):
 
 
 @router.post("/direct", response_model=ConversationResponse, status_code=status.HTTP_201_CREATED)
+@track_feature_usage("conversation_creation")
 async def ensure_direct_conversation(
     payload: ConversationCreateDirect,
     db: AsyncSession = Depends(get_db),

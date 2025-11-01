@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '/app/utils/net.dart';
 import '../../../../data/repositories/analytics_repository.dart';
 
 class AnalyticsViewModel extends ChangeNotifier {
@@ -6,24 +7,37 @@ class AnalyticsViewModel extends ChangeNotifier {
   bool loading = false;
   List<dynamic> data = [];
   String? error;
+  bool usedCache = false; // ← agregado
 
   AnalyticsViewModel({required this.repository});
 
   Future<void> loadDemandPeaks() async {
     loading = true;
+    error = null;
+    usedCache = false;
     notifyListeners();
+
     try {
+      final isOnline = await Net.isOnline();
       final result = await repository.getDemandPeaks();
-      if (result is List) {
+
+      if (result is List && result.isNotEmpty) {
         data = result;
       } else {
         data = [];
-        error = 'Unexpected response format';
+        error = 'No results found from API';
       }
+
+      if (!isOnline) {
+        usedCache = true;
+        if (kDebugMode) {
+          print('⚠️ Using cache data until reconnection');
+        }
+      }
+
       if (kDebugMode) {
-        print('RESULT: $data');
+        print('RESULT (DemandPeaks): $data');
       }
-      error = null;
     } catch (e, stack) {
       error = e.toString();
       if (kDebugMode) {

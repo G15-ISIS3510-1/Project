@@ -4,16 +4,23 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.example.kotlinapp.data.local.dao.PendingVehicleDao
 import com.example.kotlinapp.data.local.dao.VehicleLocationDao
+import com.example.kotlinapp.data.local.entity.PendingVehicleEntity
 import com.example.kotlinapp.data.local.entity.VehicleLocationEntity
 
 @Database(
-    entities = [VehicleLocationEntity::class],
-    version = 1,
+    entities = [
+        VehicleLocationEntity::class,
+        PendingVehicleEntity::class
+    ],
+    version = 2,          
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
+
     abstract fun vehicleLocationDao(): VehicleLocationDao
+    abstract fun pendingVehicleDao(): PendingVehicleDao
 
     companion object {
         @Volatile
@@ -25,7 +32,11 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "vehicle_rental_db"
-                ).build()
+                )
+
+                .fallbackToDestructiveMigration()
+                .build()
+
                 INSTANCE = instance
                 instance
             }

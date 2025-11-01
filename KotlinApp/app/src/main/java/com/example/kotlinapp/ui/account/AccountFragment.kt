@@ -64,6 +64,8 @@ class AccountFragment : Fragment() {
         binding.btnPriceAnalytics.setOnClickListener {
             Toast.makeText(requireContext(), "Price Analytics clicked", Toast.LENGTH_SHORT).show()
             findNavController().navigate(R.id.priceAnalyticsFragment)
+        binding.btnMetrics.setOnClickListener {
+            findNavController().navigate(R.id.action_account_to_metrics)
         }
 
         binding.btnSwitchAccount.setOnClickListener {

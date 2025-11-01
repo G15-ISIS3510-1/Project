@@ -39,6 +39,8 @@ class VehicleWithPricingItem(BaseModel):
     currency: str
     minDays: int
     maxDays: Optional[int]
+    lat: Optional[float] = None
+    lng: Optional[float] = None
 
 
 class PaginatedVehicleWithPricingResponse(BaseModel):
@@ -50,7 +52,10 @@ class PaginatedVehicleWithPricingResponse(BaseModel):
 
 # ---------- Routes ----------
 
+from app.utils.feature_tracking_decorator import track_feature_usage
+
 @router.get("/", response_model=PaginatedVehicleResponse)
+@track_feature_usage("vehicle_list_view")
 async def get_vehicles(
     skip: int = 0,
     limit: int = 100,
@@ -193,6 +198,8 @@ async def get_active_vehicles_with_pricing(
                 currency=pricing.currency if pricing else "USD",
                 minDays=pricing.min_days if pricing else 1,
                 maxDays=pricing.max_days if pricing else None,
+                lat=vehicle.lat,
+                lng=vehicle.lng
             )
         )
 
@@ -255,6 +262,7 @@ async def get_vehicles_by_owner(
 
 
 @router.post("/", response_model=VehicleResponse)
+@track_feature_usage("vehicle_registration")
 async def create_vehicle(
     vehicle_data: VehicleCreate,
     db: AsyncSession = Depends(get_db),

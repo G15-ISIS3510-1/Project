@@ -21,6 +21,11 @@ import 'package:flutter_app/presentation/features/profile/view/visited_places_vi
 import 'package:flutter_app/presentation/features/auth/view/login_view.dart';
 import 'package:flutter_app/presentation/features/vehicle/view/add_vehicle_view.dart';
 
+import 'package:flutter_app/data/sources/local/analytics_local_source.dart';
+import 'package:flutter_app/data/sources/local/analytics_extended_local_source.dart';
+import 'package:flutter_app/data/sources/local/owner_income_local_source.dart';
+
+
 class UserProfile {
   final String id;
   final String name;
@@ -312,7 +317,11 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
                             client: http.Client(),
                             baseUrl: kApiBase,
                           ),
+                          localAnalytics: context.read<AnalyticsLocalSource>(),
+                          localExtended: context.read<AnalyticsExtendedLocalSource>(),
+                          localIncome: context.read<OwnerIncomeLocalSource>(),
                         );
+
 
                         Navigator.of(context).push(
                           MaterialPageRoute(
@@ -331,6 +340,9 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
                             client: http.Client(),
                             baseUrl: kApiBase,
                           ),
+                          localAnalytics: context.read<AnalyticsLocalSource>(),
+                          localExtended: context.read<AnalyticsExtendedLocalSource>(),
+                          localIncome: context.read<OwnerIncomeLocalSource>(),
                         );
 
                         Navigator.of(context).push(
@@ -353,6 +365,9 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
                             client: http.Client(),
                             baseUrl: kApiBase,
                           ),
+                          localAnalytics: context.read<AnalyticsLocalSource>(),
+                          localExtended: context.read<AnalyticsExtendedLocalSource>(),
+                          localIncome: context.read<OwnerIncomeLocalSource>(),
                         );
 
                         Navigator.of(context).push(

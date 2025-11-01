@@ -24,7 +24,7 @@ class App : Application() {
             
             Log.d("App", "App initialized successfully")
             
-            instance = this
+            _instance = this
         } catch (e: Exception) {
             Log.e("App", "Error initializing App", e)
             throw e
@@ -33,10 +33,12 @@ class App : Application() {
     
     companion object {
         @Volatile
-        private var instance: App? = null
+        @JvmStatic
+        private var _instance: App? = null
         
+        @JvmStatic
         fun getInstance(): App {
-            return instance ?: throw IllegalStateException("App not initialized")
+            return _instance ?: throw IllegalStateException("App not initialized")
         }
         
         fun getPreferencesManager(): PreferencesManager {

@@ -89,6 +89,9 @@
             <action
                 android:id="@+id/action_account_to_vehicleMap"
                 app:destination="@id/vehicleMapFragment" />
+            <action
+                android:id="@+id/action_account_to_metrics"
+                app:destination="@id/metricsFragment" />
         </fragment>
 
         <fragment
@@ -141,5 +144,10 @@
         android:id="@+id/paymentAnalyticsFragment"
         android:name="com.example.kotlinapp.ui.payment.PaymentAnalyticsFragment"
         android:label="Payment Analytics" />
+
+    <fragment
+        android:id="@+id/metricsFragment"
+        android:name="com.example.kotlinapp.ui.metrics.MetricsFragment"
+        android:label="Métricas de Uso" />
 
 </navigation>

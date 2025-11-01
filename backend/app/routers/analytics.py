@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Query, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from sqlalchemy import func, select
 
@@ -7,6 +7,7 @@ from app.db import models
 
 from app.db import get_db
 from app.services.analytics_service import BookingReminderAnalytics 
+from app.services.feature_tracking import get_low_usage_features as get_low_usage_features_service, get_feature_usage_stats
 from app.schemas.analytics_schemas import (
     BookingReminderListResponse,
     BookingReminderStatusResponse,
@@ -23,7 +24,7 @@ router = APIRouter()
     description="Devuelve todas las reservas confirmadas que comienzan en la próxima hora"
 )
 async def get_bookings_needing_reminders(
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     analytics = BookingReminderAnalytics(db)
     bookings = await analytics.get_bookings_needing_reminder()
@@ -44,7 +45,7 @@ async def get_bookings_needing_reminders(
 async def check_booking_reminder(
     booking_id: str,
     user_id: str = Query(..., description="ID del usuario que realizó la reserva"),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     analytics = BookingReminderAnalytics(db)
     result = await analytics.check_specific_booking(booking_id, user_id)
@@ -66,7 +67,7 @@ async def get_user_upcoming_bookings(
         le=168,
         description="Horas hacia adelante para buscar reservas (1-168)"
     ),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     analytics = BookingReminderAnalytics(db)
     bookings = await analytics.get_upcoming_bookings_by_user(user_id, hours_ahead)
@@ -85,7 +86,7 @@ async def get_user_upcoming_bookings(
     description="Estadísticas generales sobre recordatorios de reservas"
 )
 async def get_reminders_summary(
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     analytics = BookingReminderAnalytics(db)
     bookings = await analytics.get_bookings_needing_reminder()
@@ -113,7 +114,7 @@ async def get_reminders_summary(
     }
 
 @router.get("/demand-peaks")
-async def get_demand_peaks(db: Session = Depends(get_db)):
+async def get_demand_peaks(db: AsyncSession = Depends(get_db)):
     stmt = (
         select(
             models.Vehicle.vehicle_id,
@@ -140,7 +141,7 @@ async def get_demand_peaks(db: Session = Depends(get_db)):
     ]
 
 @router.get("/owner-income")
-async def get_owner_income(db: Session = Depends(get_db)):
+async def get_owner_income(db: AsyncSession = Depends(get_db)):
     stmt = (
         select(
             models.Booking.host_id.label("owner_id"),
@@ -166,52 +167,105 @@ async def get_owner_income(db: Session = Depends(get_db)):
     ]
 
 @router.get("/demand-peaks-extended")
-async def get_demand_peaks_extended(db: Session = Depends(get_db)):
-    dialect = db.bind.dialect.name if hasattr(db, "bind") else "sqlite"
+async def get_demand_peaks_extended(db: AsyncSession = Depends(get_db)):
+    try:
+        print(">>> Ejecutando query /demand-peaks-extended")
 
-    if dialect == "sqlite":
-        hour_expr = func.strftime("%H", models.Booking.start_ts)
-    else:
-        hour_expr = func.date_part("hour", models.Booking.start_ts)
-
-    stmt = (
-        select(
-            func.round(models.Vehicle.lat, 1).label("lat_zone"),
-            func.round(models.Vehicle.lng, 1).label("lon_zone"),
-            hour_expr.label("hour_slot"),
-            models.Vehicle.make.label("make"),
-            models.Vehicle.year.label("year"),
-            models.Vehicle.fuel_type.label("fuel_type"),
-            models.Vehicle.transmission.label("transmission"),
-            func.count(models.Booking.booking_id).label("rentals"),
+        stmt = (
+            select(
+                func.round(models.Vehicle.lat, 1).label("lat_zone"),
+                func.round(models.Vehicle.lng, 1).label("lon_zone"),
+                func.date_trunc('hour', models.Booking.start_ts).label("hour_slot"),
+                models.Vehicle.make.label("make"),
+                models.Vehicle.year.label("year"),
+                models.Vehicle.fuel_type.label("fuel_type"),
+                models.Vehicle.transmission.label("transmission"),
+                func.count(models.Booking.booking_id).label("total_rentals"),
+            )
+            .join(models.Booking, models.Vehicle.vehicle_id == models.Booking.vehicle_id)
+            .where(models.Booking.status == models.BookingStatus.completed)
+            .group_by(
+                func.round(models.Vehicle.lat, 1),
+                func.round(models.Vehicle.lng, 1),
+                func.date_trunc('hour', models.Booking.start_ts),
+                models.Vehicle.make,
+                models.Vehicle.year,
+                models.Vehicle.fuel_type,
+                models.Vehicle.transmission,
+            )
+            .order_by(func.count(models.Booking.booking_id).desc())
         )
-        .join(models.Vehicle, models.Vehicle.vehicle_id == models.Booking.vehicle_id)
-        .where(models.Booking.status == models.BookingStatus.completed)
-        .group_by(
-            "lat_zone",
-            "lon_zone",
-            "hour_slot",
-            models.Vehicle.make,
-            models.Vehicle.year,
-            models.Vehicle.fuel_type,
-            models.Vehicle.transmission,
-        )
-        .order_by(func.count(models.Booking.booking_id).desc())
-    )
 
-    result = await db.execute(stmt)
-    results = result.all()
+        print(">>> Ejecutando statement SQL...")
+        result = await db.execute(stmt)
+        print(">>> Query ejecutada correctamente")
 
-    return [
-        {
-            "lat_zone": r.lat_zone,
-            "lon_zone": r.lon_zone,
-            "hour_slot": int(r.hour_slot) if r.hour_slot is not None else None,
-            "make": r.make,
-            "year": r.year,
-            "fuel_type": r.fuel_type,
-            "transmission": r.transmission,
-            "rentals": r.rentals,
-        }
-        for r in results
-    ]
+        results = result.all()
+        print(f">>> Se obtuvieron {len(results)} filas")
+
+        return [
+            {
+                "lat_zone": r.lat_zone,
+                "lon_zone": r.lon_zone,
+                "hour_slot": str(r.hour_slot),
+                "make": r.make,
+                "year": r.year,
+                "fuel_type": r.fuel_type,
+                "transmission": r.transmission,
+                "total_rentals": r.total_rentals,
+            }
+            for r in results
+        ]
+
+    except Exception as e:
+        import traceback
+        print("ERROR en /demand-peaks-extended")
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get(
+    "/features/low-usage",
+    summary="Funcionalidades con bajo uso",
+    description="Obtiene las funcionalidades que se usan menos de N veces por semana por usuario en promedio"
+)
+async def get_low_usage_features(
+    weeks: int = Query(default=4, ge=1, le=52, description="Número de semanas a considerar (default: 4)"),
+    threshold: float = Query(default=2.0, ge=0.1, description="Umbral mínimo de usos por semana por usuario (default: 2.0)"),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Devuelve las funcionalidades que se usan menos de 'threshold' veces por semana por usuario
+    en promedio durante las últimas 'weeks' semanas.
+    """
+    features = await get_low_usage_features_service(db, weeks=weeks, threshold=threshold)
+    
+    return {
+        "features": features,
+        "weeks": weeks,
+        "threshold": threshold,
+        "total_count": len(features)
+    }
+
+
+@router.get(
+    "/features/usage-stats",
+    summary="Estadísticas de uso de funcionalidades",
+    description="Obtiene estadísticas generales de uso de funcionalidades"
+)
+async def get_feature_usage_statistics(
+    feature_name: str = Query(default=None, description="Filtrar por nombre de funcionalidad específica"),
+    weeks: int = Query(default=4, ge=1, le=52, description="Número de semanas a considerar"),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Devuelve estadísticas de uso de funcionalidades.
+    """
+    stats = await get_feature_usage_stats(db, feature_name=feature_name, weeks=weeks)
+    
+    return {
+        "stats": stats,
+        "weeks": weeks,
+        "feature_filter": feature_name,
+        "total_features": len(stats)
+    }

@@ -5,6 +5,7 @@ import 'package:drift/native.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_app/data/database/daos/infra_dao.dart';
 import 'package:flutter_app/data/database/daos/vehicles_dao.dart';
+import 'package:flutter_app/data/database/tables/analytics_table.dart';
 import 'package:flutter_app/data/database/tables/bookings_table.dart';
 import 'package:flutter_app/data/database/tables/conversations_table.dart';
 import 'package:flutter_app/data/database/tables/infra_tables.dart';
@@ -30,6 +31,9 @@ part 'app_database.g.dart';
     Pricings,
     Bookings,
     Kvs,
+    AnalyticsDemandTable,
+    AnalyticsExtendedTable,
+    OwnerIncomeTable
   ],
   daos: [VehiclesDao, InfraDao],
 )
@@ -44,13 +48,26 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : ownerUid = 'anon', super(_open());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-    onCreate: (m) async => m.createAll(),
-    onUpgrade: (m, from, to) async {},
+    onCreate: (m) async {
+      debugPrint('[DB] Creating all tables...');
+      await m.createAll();
+    },
+    onUpgrade: (m, from, to) async {
+      debugPrint('[DB] Upgrading from v$from to v$to, recreating schema...');
+      for (final table in allTables) {
+        await m.deleteTable(table.actualTableName);
+      }
+      await m.createAll();
+    },
+    beforeOpen: (details) async {
+      debugPrint('[DB] Opening database (version ${details.versionNow})');
+    },
   );
+
 
   @override
   Future<void> close() async {
