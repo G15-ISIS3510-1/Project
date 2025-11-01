@@ -20,8 +20,8 @@ class AnalyticsExtendedViewModel extends ChangeNotifier {
     try {
       final isOnline = await Net.isOnline();
 
-      final result = await repository.getDemandPeaksExtended();
-      //final result = _mockedData();
+      //final result = await repository.getDemandPeaksExtended();
+      final result = _mockedData();
 
       if (result is List) {
         demandPeaks = result;
