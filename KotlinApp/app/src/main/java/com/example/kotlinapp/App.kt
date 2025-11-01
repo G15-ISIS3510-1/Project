@@ -2,6 +2,7 @@ package com.example.kotlinapp
 
 import android.app.Application
 import android.util.Log
+import com.example.kotlinapp.core.MessagesSyncScheduler
 import com.example.kotlinapp.core.ThemeController
 import com.example.kotlinapp.data.local.PreferencesManager
 
@@ -13,6 +14,9 @@ class App : Application() {
     lateinit var themeController: ThemeController
         private set
     
+    lateinit var messagesSyncScheduler: MessagesSyncScheduler
+        private set
+    
     override fun onCreate() {
         super.onCreate()
         
@@ -21,6 +25,9 @@ class App : Application() {
             
             themeController = ThemeController(this)
             themeController.initializeTheme()
+            
+            // Inicializar scheduler de sincronización de mensajes
+            messagesSyncScheduler = MessagesSyncScheduler(this)
             
             Log.d("App", "App initialized successfully")
             
@@ -47,6 +54,10 @@ class App : Application() {
         
         fun getThemeController(): ThemeController {
             return getInstance().themeController
+        }
+        
+        fun getMessagesSyncScheduler(): MessagesSyncScheduler {
+            return getInstance().messagesSyncScheduler
         }
     }
 }

@@ -64,12 +64,13 @@ class LoginFragment : Fragment() {
                         notifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                     }
 
-                    // Cancelar trabajos anteriores y programar el recordatorio
                     LoginReminderWorker.cancel(requireContext())
                     LoginReminderWorker.schedule(requireContext(), delayMinutes = 60L)
 
-                    // Navegar al Home (o Messages)
-                    findNavController().navigate(R.id.messagesFragment)
+                    // Iniciar sincronización automática de mensajes en background
+                    com.example.kotlinapp.App.getMessagesSyncScheduler().start()
+
+                    findNavController().navigate(R.id.action_login_to_home)
 
                     viewModel.clearState()
                 }
