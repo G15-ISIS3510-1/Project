@@ -1,29 +1,28 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_, func
-from typing import Optional, List, Dict, Any
+from sqlalchemy import select, and_
+from typing import Optional, List
 from app.db.models import VehicleAvailability, Vehicle
 from app.schemas.vehicle_availability import VehicleAvailabilityCreate, VehicleAvailabilityUpdate
 import uuid
 
-
 class VehicleAvailabilityService:
     def __init__(self, db: AsyncSession):
         self.db = db
-
+    
     async def create_availability(self, availability_data: VehicleAvailabilityCreate) -> VehicleAvailability:
         """Crear una nueva disponibilidad de vehículo"""
         # Verificar que el vehículo existe
         vehicle = await self.get_vehicle_by_id(availability_data.vehicle_id)
         if not vehicle:
             raise ValueError("El vehículo no existe")
-
+        
         # Verificar que no hay conflictos de horarios
         await self._check_schedule_conflicts(
             availability_data.vehicle_id,
             availability_data.start_ts,
             availability_data.end_ts
         )
-
+        
         # Crear disponibilidad
         availability = VehicleAvailability(
             availability_id=str(uuid.uuid4()),
@@ -33,123 +32,43 @@ class VehicleAvailabilityService:
             type=availability_data.type,
             notes=availability_data.notes
         )
-
+        
         self.db.add(availability)
         await self.db.commit()
         await self.db.refresh(availability)
         return availability
-
+    
     async def get_availability_by_id(self, availability_id: str) -> Optional[VehicleAvailability]:
         """Obtener disponibilidad por ID"""
-        result = await self.db.execute(
-            select(VehicleAvailability).where(VehicleAvailability.availability_id == availability_id)
-        )
+        result = await self.db.execute(select(VehicleAvailability).where(VehicleAvailability.availability_id == availability_id))
         return result.scalar_one_or_none()
-
-    async def get_availabilities_by_vehicle(
-        self,
-        vehicle_id: str,
-        skip: int = 0,
-        limit: int = 100
-    ) -> Dict[str, Any]:
-        """
-        Obtener disponibilidades de un vehículo específico, con paginación.
-
-        Retorna:
-        {
-          "items": [...],
-          "total": <int>,
-          "skip": <int>,
-          "limit": <int>
-        }
-        """
-        # total para ese vehículo
-        total_result = await self.db.execute(
-            select(func.count()).select_from(VehicleAvailability).where(
-                VehicleAvailability.vehicle_id == vehicle_id
-            )
-        )
-        total = total_result.scalar_one() or 0
-
-        # chunk paginado
+    
+    async def get_availabilities_by_vehicle(self, vehicle_id: str) -> List[VehicleAvailability]:
+        """Obtener todas las disponibilidades de un vehículo"""
         result = await self.db.execute(
             select(VehicleAvailability)
             .where(VehicleAvailability.vehicle_id == vehicle_id)
             .order_by(VehicleAvailability.start_ts)
-            .offset(skip)
-            .limit(limit)
         )
-        rows = result.scalars().all()
-
-        return {
-            "items": rows,
-            "total": total,
-            "skip": skip,
-            "limit": limit,
-        }
-
-    async def get_availabilities(
-        self,
-        skip: int = 0,
-        limit: int = 100
-    ) -> Dict[str, Any]:
-        """
-        Obtener lista de disponibilidades global, con paginación.
-
-        Retorna:
-        {
-          "items": [...],
-          "total": <int>,
-          "skip": <int>,
-          "limit": <int>
-        }
-        """
-        # total global
-        total_result = await self.db.execute(
-            select(func.count()).select_from(VehicleAvailability)
-        )
-        total = total_result.scalar_one() or 0
-
-        # chunk paginado
+        return result.scalars().all()
+    
+    async def get_availabilities(self, skip: int = 0, limit: int = 100) -> List[VehicleAvailability]:
+        """Obtener lista de disponibilidades con paginación"""
         result = await self.db.execute(
             select(VehicleAvailability)
-            .order_by(VehicleAvailability.start_ts)
             .offset(skip)
             .limit(limit)
+            .order_by(VehicleAvailability.start_ts)
         )
-        rows = result.scalars().all()
-
-        return {
-            "items": rows,
-            "total": total,
-            "skip": skip,
-            "limit": limit,
-        }
-
-    async def get_available_vehicles(
-        self,
-        start_ts: str,
-        end_ts: str,
-        skip: int = 0,
-        limit: int = 100
-    ) -> Dict[str, Any]:
-        """
-        Obtener disponibilidades 'available' que cubran [start_ts, end_ts],
-        con paginación.
-
-        Retorna:
-        {
-          "items": [...],
-          "total": <int>,
-          "skip": <int>,
-          "limit": <int>
-        }
-        """
+        return result.scalars().all()
+    
+    async def get_available_vehicles(self, start_ts: str, end_ts: str) -> List[VehicleAvailability]:
+        """Obtener vehículos disponibles en un rango de fechas"""
         from datetime import datetime
         start_datetime = datetime.fromisoformat(start_ts.replace('Z', '+00:00'))
         end_datetime = datetime.fromisoformat(end_ts.replace('Z', '+00:00'))
-
-        base_query = (
+        
+        result = await self.db.execute(
             select(VehicleAvailability)
             .where(
                 and_(
@@ -160,40 +79,14 @@ class VehicleAvailabilityService:
             )
             .order_by(VehicleAvailability.start_ts)
         )
-
-        # total que matchea
-        total_result = await self.db.execute(
-            select(func.count()).select_from(
-                VehicleAvailability
-            ).where(
-                and_(
-                    VehicleAvailability.type == "available",
-                    VehicleAvailability.start_ts <= start_datetime,
-                    VehicleAvailability.end_ts >= end_datetime
-                )
-            )
-        )
-        total = total_result.scalar_one() or 0
-
-        # chunk paginado
-        result = await self.db.execute(
-            base_query.offset(skip).limit(limit)
-        )
-        rows = result.scalars().all()
-
-        return {
-            "items": rows,
-            "total": total,
-            "skip": skip,
-            "limit": limit,
-        }
-
+        return result.scalars().all()
+    
     async def update_availability(self, availability_id: str, availability_update: VehicleAvailabilityUpdate) -> Optional[VehicleAvailability]:
         """Actualizar disponibilidad"""
         availability = await self.get_availability_by_id(availability_id)
         if not availability:
             return None
-
+        
         # Verificar conflictos si se actualizan las fechas
         update_data = availability_update.dict(exclude_unset=True)
         if "start_ts" in update_data or "end_ts" in update_data:
@@ -205,38 +98,38 @@ class VehicleAvailabilityService:
                 end_ts,
                 exclude_id=availability_id
             )
-
+        
         # Aplicar cambios
         for field, value in update_data.items():
             setattr(availability, field, value)
-
+        
         await self.db.commit()
         await self.db.refresh(availability)
         return availability
-
+    
     async def delete_availability(self, availability_id: str) -> bool:
         """Eliminar disponibilidad"""
         availability = await self.get_availability_by_id(availability_id)
         if not availability:
             return False
-
+        
         await self.db.delete(availability)
         await self.db.commit()
         return True
-
+    
     async def delete_availabilities_by_vehicle(self, vehicle_id: str) -> int:
         """Eliminar todas las disponibilidades de un vehículo"""
         result = await self.db.execute(
             select(VehicleAvailability).where(VehicleAvailability.vehicle_id == vehicle_id)
         )
         availabilities = result.scalars().all()
-
+        
         for availability in availabilities:
             await self.db.delete(availability)
-
+        
         await self.db.commit()
         return len(availabilities)
-
+    
     async def _check_schedule_conflicts(self, vehicle_id: str, start_ts, end_ts, exclude_id: Optional[str] = None):
         """Verificar conflictos de horarios para un vehículo"""
         query = select(VehicleAvailability).where(
@@ -246,16 +139,16 @@ class VehicleAvailabilityService:
                 VehicleAvailability.end_ts > start_ts
             )
         )
-
+        
         if exclude_id:
             query = query.where(VehicleAvailability.availability_id != exclude_id)
-
+        
         result = await self.db.execute(query)
         conflicting = result.scalars().all()
-
+        
         if conflicting:
             raise ValueError("Ya existe una disponibilidad que se superpone con el horario especificado")
-
+    
     # Método auxiliar para verificar que el vehículo existe
     async def get_vehicle_by_id(self, vehicle_id: str) -> Optional[Vehicle]:
         """Obtener vehículo por ID (método auxiliar)"""

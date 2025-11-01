@@ -16,9 +16,9 @@ class AddVehicleViewModel extends ChangeNotifier {
   double? suggested;
   String? reason;
 
-  String transmission = 'AT'; // automático
-  String fuelType = 'gas';
-  String status = 'active';
+  String transmission = 'AT'; 
+  String fuelType = 'gas'; 
+  String status = 'active'; 
 
   void setTransmission(String v) {
     transmission = v;
@@ -85,12 +85,6 @@ class AddVehicleViewModel extends ChangeNotifier {
     }
   }
 
-  /// Crea el vehículo y (si hay archivo) sube la foto usando el endpoint:
-  ///   /api/vehicles/{vehicle_id}/upload-photo
-  /// Flujo:
-  ///   1) createVehicle (con imageUrl sólo si se pasó una URL)
-  ///   2) si viene imageFile -> uploadVehiclePhoto(vehicleId, file)
-  ///   3) upsert de pricing
   Future<bool> submit({
     required String title,
     required String make,
@@ -102,18 +96,19 @@ class AddVehicleViewModel extends ChangeNotifier {
     required double lat,
     required double lng,
     required double dailyPrice,
-    String? imageUrl, // URL directa (opcional)
-    XFile? imageFile, // archivo a subir (opcional)
+    String? imageUrl,
+    XFile? imageFile,
   }) async {
     loading = true;
     notifyListeners();
-
     try {
-      // 1) Crear vehículo primero para obtener vehicleId
-      //    - Si el usuario pasó una URL directa, la enviamos en create
-      //    - Si hay archivo, NO pasamos imageUrl (la asociamos luego con upload)
-      final shouldSendUrlInCreate =
-          (imageFile == null) && (imageUrl != null && imageUrl.isNotEmpty);
+      String? finalImageUrl;
+
+      if (imageFile != null) {
+        finalImageUrl = await vehicles.uploadVehiclePhoto(file: imageFile);
+      } else if (imageUrl != null && imageUrl.isNotEmpty) {
+        finalImageUrl = imageUrl;
+      }
 
       final vehicleId = await vehicles.createVehicle(
         title: title,
@@ -129,19 +124,9 @@ class AddVehicleViewModel extends ChangeNotifier {
         status: status,
         lat: lat,
         lng: lng,
-        imageUrl: shouldSendUrlInCreate ? imageUrl : null,
+        imageUrl: finalImageUrl,
       );
 
-      // 2) Si hay archivo, subir foto al endpoint /vehicles/{vehicle_id}/upload-photo
-      if (imageFile != null) {
-        // Devuelve la URL de la foto (si la necesitas para UI, podrías guardarla)
-        await vehicles.uploadVehiclePhoto(
-          vehicleId: vehicleId,
-          file: imageFile,
-        );
-      }
-
-      // 3) Guardar pricing
       await pricing.upsertForVehicle(
         vehicleId: vehicleId,
         dailyPrice: dailyPrice,
@@ -151,8 +136,8 @@ class AddVehicleViewModel extends ChangeNotifier {
       );
 
       return true;
-    } catch (e) {
-      rethrow; // mantenemos el comportamiento original
+    } catch (_) {
+      rethrow;
     } finally {
       loading = false;
       notifyListeners();

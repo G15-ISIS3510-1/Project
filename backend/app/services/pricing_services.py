@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
-from typing import Optional, List, Dict, Any
+from sqlalchemy import select
+from typing import Optional, List
 from app.db.models import Pricing, Vehicle
 from app.schemas.pricing import PricingCreate, PricingUpdate
 import uuid
@@ -38,41 +38,18 @@ class PricingService:
     
     async def get_pricing_by_id(self, pricing_id: str) -> Optional[Pricing]:
         """Obtener pricing por ID"""
-        result = await self.db.execute(
-            select(Pricing).where(Pricing.pricing_id == pricing_id)
-        )
+        result = await self.db.execute(select(Pricing).where(Pricing.pricing_id == pricing_id))
         return result.scalar_one_or_none()
     
     async def get_pricing_by_vehicle_id(self, vehicle_id: str) -> Optional[Pricing]:
         """Obtener pricing por vehicle_id"""
-        result = await self.db.execute(
-            select(Pricing).where(Pricing.vehicle_id == vehicle_id)
-        )
+        result = await self.db.execute(select(Pricing).where(Pricing.vehicle_id == vehicle_id))
         return result.scalar_one_or_none()
     
-    async def get_pricings(self, skip: int = 0, limit: int = 100) -> Dict[str, Any]:
-        """
-        Obtener lista de pricings con paginación.
-        Devuelve { items, total, skip, limit }.
-        """
-        # total
-        total_q = await self.db.execute(
-            select(func.count(Pricing.pricing_id))
-        )
-        total = total_q.scalar() or 0
-
-        # page
-        page_q = await self.db.execute(
-            select(Pricing).offset(skip).limit(limit)
-        )
-        rows = page_q.scalars().all()
-
-        return {
-            "items": rows,
-            "total": total,
-            "skip": skip,
-            "limit": limit,
-        }
+    async def get_pricings(self, skip: int = 0, limit: int = 100) -> List[Pricing]:
+        """Obtener lista de pricings con paginación"""
+        result = await self.db.execute(select(Pricing).offset(skip).limit(limit))
+        return result.scalars().all()
     
     async def update_pricing(self, pricing_id: str, pricing_update: PricingUpdate) -> Optional[Pricing]:
         """Actualizar pricing"""
@@ -100,6 +77,7 @@ class PricingService:
         # Actualizar solo campos proporcionados
         update_data = pricing_update.dict(exclude_unset=True)
         
+        # Aplicar cambios
         for field, value in update_data.items():
             setattr(pricing, field, value)
         
@@ -130,7 +108,5 @@ class PricingService:
     # Método auxiliar para verificar que el vehículo existe
     async def get_vehicle_by_id(self, vehicle_id: str) -> Optional[Vehicle]:
         """Obtener vehículo por ID (método auxiliar)"""
-        result = await self.db.execute(
-            select(Vehicle).where(Vehicle.vehicle_id == vehicle_id)
-        )
+        result = await self.db.execute(select(Vehicle).where(Vehicle.vehicle_id == vehicle_id))
         return result.scalar_one_or_none()

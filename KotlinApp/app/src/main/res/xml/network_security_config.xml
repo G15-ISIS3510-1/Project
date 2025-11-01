@@ -7,8 +7,4 @@
     <domain includeSubdomains="true">192.168.100.27</domain>
     <domain includeSubdomains="true">localhost</domain>
 </domain-config>
-
-<domain-config cleartextTrafficPermitted="false">
-    <domain includeSubdomains="true">qovo-api-gfa6drobhq-uc.a.run.app</domain>
-</domain-config>
 </network-security-config>

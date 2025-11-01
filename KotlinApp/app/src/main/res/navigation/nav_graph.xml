@@ -89,9 +89,6 @@
             <action
                 android:id="@+id/action_account_to_vehicleMap"
                 app:destination="@id/vehicleMapFragment" />
-            <action
-                android:id="@+id/action_account_to_metrics"
-                app:destination="@id/metricsFragment" />
         </fragment>
 
         <fragment
@@ -104,29 +101,7 @@
             <action
                 android:id="@+id/action_payment_to_analytics"
                 app:destination="@id/paymentAnalyticsFragment" />
-            <!-- Dentro de paymentFragment -->
-            <action
-                android:id="@+id/action_payment_to_feedback"
-                app:destination="@id/feedbackFormFragment" />
-
-            <action
-                android:id="@+id/action_account_to_priceAnalytics"
-                app:destination="@id/priceAnalyticsFragment" />
-
         </fragment>
-
-        <fragment
-        android:id="@+id/priceAnalyticsFragment"
-        android:name="com.example.kotlinapp.ui.analytics.PriceAnalyticsFragment"
-        android:label="Análisis de Precios" />
-
-        <!-- Feedback Form Fragment -->
-        <fragment
-            android:id="@+id/feedbackFormFragment"
-            android:name="com.example.kotlinapp.ui.feedback.FeedbackFormFragment"
-            android:label="Feedback"
-            tools:layout="@layout/fragment_feedback_form" />
-
         <fragment
             android:id="@+id/visitedPlacesFragment"
             android:name="com.example.kotlinapp.ui.places.VisitedPlacesFragment"
@@ -144,10 +119,5 @@
         android:id="@+id/paymentAnalyticsFragment"
         android:name="com.example.kotlinapp.ui.payment.PaymentAnalyticsFragment"
         android:label="Payment Analytics" />
-
-    <fragment
-        android:id="@+id/metricsFragment"
-        android:name="com.example.kotlinapp.ui.metrics.MetricsFragment"
-        android:label="Métricas de Uso" />
 
 </navigation>

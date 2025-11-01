@@ -61,30 +61,14 @@ class AccountFragment : Fragment() {
             findNavController().navigate(R.id.action_account_to_payment)
         }
 
-        binding.btnPriceAnalytics.setOnClickListener {
-            Toast.makeText(requireContext(), "Price Analytics clicked", Toast.LENGTH_SHORT).show()
-            findNavController().navigate(R.id.priceAnalyticsFragment)
-        }
-
-        binding.btnMetrics.setOnClickListener {
-            findNavController().navigate(R.id.action_account_to_metrics)
-        }
-
         binding.btnSwitchAccount.setOnClickListener {
             Toast.makeText(requireContext(), "Switch Account clicked", Toast.LENGTH_SHORT).show()
             // TODO: Implement account switch
         }
 
         binding.btnSignOut.setOnClickListener {
-            // Detener sincronización automática de mensajes
-            com.example.kotlinapp.App.getMessagesSyncScheduler().stop()
-            
-            // Hacer logout
-            com.example.kotlinapp.data.repository.AuthRepository().logout()
-            
-            Toast.makeText(requireContext(), "Sesión cerrada", Toast.LENGTH_SHORT).show()
-            
-            // Navegar al login
+            Toast.makeText(requireContext(), "Sign Out clicked", Toast.LENGTH_SHORT).show()
+            // TODO: Navigate to login and clear session
             findNavController().navigate(R.id.loginFragment)
         }
 
@@ -129,7 +113,7 @@ class AccountFragment : Fragment() {
                     navController.navigate(R.id.hostFragment)
                 }
             }
-            BottomTab.Account -> {}
+            BottomTab.Account -> { }
         }
     }
 

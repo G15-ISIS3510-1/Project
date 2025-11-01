@@ -14,26 +14,21 @@ import androidx.navigation.fragment.findNavController
 import com.example.kotlinapp.R
 import com.example.kotlinapp.core.work.LoginReminderWorker
 import com.example.kotlinapp.databinding.FragmentLoginBinding
+import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputLayout
 
-/**
- * Fragmento responsable del login del usuario.
- * Implementa una estrategia de concurrencia al programar un Worker asincrónico
- * tras la autenticación exitosa.
- */
 class LoginFragment : Fragment() {
 
     private var _binding: FragmentLoginBinding? = null
     private val binding get() = _binding!!
+
     private val viewModel: LoginViewModel by viewModels()
 
-    // Permiso para notificaciones (Android 13+)
+    // Launcher para pedir permiso de notificaciones (Android 13+)
     private val notifPermissionLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-            if (!granted) {
-                Toast.makeText(requireContext(), "Notificaciones desactivadas", Toast.LENGTH_SHORT).show()
-            }
-        }
+        registerForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { /* puedes loguear el resultado si quieres */ }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -59,25 +54,28 @@ class LoginFragment : Fragment() {
                         showSuccess("¡Bienvenido ${it.name}! (${it.role})")
                     }
 
-                    // Pedir permiso para notificaciones
+                    // 1) Pedir permiso de notificaciones en Android 13+
                     if (Build.VERSION.SDK_INT >= 33) {
                         notifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                     }
 
-                    LoginReminderWorker.cancel(requireContext())
-                    LoginReminderWorker.schedule(requireContext(), delayMinutes = 60L)
+                    // 2) Programar notificación para 60 minutos después del login
+                    //    (para pruebas rápidas: usa delayMinutes = 1L)
+                    LoginReminderWorker.schedule(
+                        requireContext().applicationContext,
+                        delayMinutes = 1L
+                    )
 
-                    // Iniciar sincronización automática de mensajes en background
-                    com.example.kotlinapp.App.getMessagesSyncScheduler().start()
+                    // 3) Navegar como ya lo hacías
+                    findNavController().navigate(R.id.messagesFragment)
 
-                    findNavController().navigate(R.id.action_login_to_home)
-
+                    // 4) Limpiar el estado para evitar re-disparos al rotar o volver
                     viewModel.clearState()
                 }
                 is LoginState.Error -> {
                     showError(state.message)
                 }
-                null -> Unit
+                null -> { /* no-op */ }
             }
         }
 
@@ -101,17 +99,27 @@ class LoginFragment : Fragment() {
         clearErrors()
 
         when {
-            email.isEmpty() -> showFieldError(binding.emailInputLayout, "Email is required")
-            password.isEmpty() -> showFieldError(binding.passwordInputLayout, "Password is required")
-            else -> viewModel.login(email, password)
+            email.isEmpty() -> {
+                showFieldError(binding.emailInputLayout, "Email is required")
+            }
+            password.isEmpty() -> {
+                showFieldError(binding.passwordInputLayout, "Password is required")
+            }
+            else -> {
+                viewModel.login(email, password)
+            }
         }
     }
 
-    private fun showSuccess(message: String) =
+    private fun showSuccess(message: String) {
         Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+    }
 
-    private fun showError(message: String) =
+    private fun showError(message: String) {
+        // Puedes cambiar a Snackbar si prefieres
         Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+        // Snackbar.make(binding.root, message, Snackbar.LENGTH_LONG).show()
+    }
 
     private fun showFieldError(inputLayout: TextInputLayout, message: String) {
         inputLayout.error = message
@@ -127,4 +135,3 @@ class LoginFragment : Fragment() {
         _binding = null
     }
 }
-

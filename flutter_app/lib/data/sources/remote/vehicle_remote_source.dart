@@ -9,7 +9,7 @@
 //   static String baseUrl =
 //       const String.fromEnvironment(
 //         'API_BASE',
-//         defaultValue: 'https://qovo-api-862569067561.us-central1.run.app',
+//         defaultValue: 'https://qovo-api-gfa6drobhq-uc.a.run.app',
 //       ) +
 //       '/api';
 //   static String? token;
@@ -131,10 +131,8 @@ import 'package:http/http.dart' as http;
 import 'api_client.dart'; // Api.I()
 
 class VehicleService {
-  /// GET /api/vehicles/?skip=&limit=
-  Future<http.Response> list({int skip = 0, int limit = 100}) {
-    final q = '?skip=$skip&limit=$limit';
-    return Api.I().get('/api/vehicles/$q');
+  Future<http.Response> list() {
+    return Api.I().get('/api/vehicles/');
   }
 
   /// POST /api/vehicles/ -> retorna el vehicle_id creado (String)

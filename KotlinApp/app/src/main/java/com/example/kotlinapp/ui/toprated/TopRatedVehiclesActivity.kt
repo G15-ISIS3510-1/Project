@@ -12,7 +12,7 @@ import com.example.kotlinapp.ui.theme.AppTheme
 import com.example.kotlinapp.data.api.ApiClient
 import com.example.kotlinapp.data.repository.VehicleRatingRepository
 import com.example.kotlinapp.data.repository.AuthRepository
-import com.example.kotlinapp.data.cache.SimpleCacheManager
+import com.example.kotlinapp.data.local.PreferencesManager
 
 class TopRatedVehiclesActivity : ComponentActivity() {
     
@@ -27,13 +27,9 @@ class TopRatedVehiclesActivity : ComponentActivity() {
             return
         }
         
-        // Inicializar SimpleCacheManager para Cache-Aside Pattern
-        val cacheManager = SimpleCacheManager(this)
-        
         val viewModel = TopRatedVehiclesViewModel(
             repository = VehicleRatingRepository(
-                api = ApiClient.vehicleRatingApi,
-                cacheManager = cacheManager
+                api = ApiClient.vehicleRatingApi
             )
         )
         

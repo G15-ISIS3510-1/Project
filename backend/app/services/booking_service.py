@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
 from datetime import datetime
 
 from sqlalchemy import and_, or_, select, update, delete, func
@@ -115,7 +115,7 @@ class BookingService:
         return res.scalar_one_or_none()
 
     # ----------------------------
-    # GET (collections, paginated)
+    # GET (collections)
     # ----------------------------
     async def get_bookings(
         self,
@@ -124,100 +124,58 @@ class BookingService:
         status_filter: Optional[BookingStatus] = None,
         skip: int = 0,
         limit: int = 100,
-    ) -> Dict[str, Any]:
-        base = select(Booking)
-        count_q = select(func.count(Booking.booking_id))
+    ) -> List[Booking]:
+        q = select(Booking)
 
-        conds = []
         if for_user_id:
-            conds.append(or_(Booking.renter_id == for_user_id, Booking.host_id == for_user_id))
+            q = q.where(
+                or_(Booking.renter_id == for_user_id, Booking.host_id == for_user_id)
+            )
         if status_filter:
-            conds.append(Booking.status == status_filter)
+            q = q.where(Booking.status == status_filter)
 
-        if conds:
-            for c in conds:
-                base = base.where(c)
-                count_q = count_q.where(c)
-
-        total_res = await self.db.execute(count_q)
-        total = total_res.scalar() or 0
-
-        page_res = await self.db.execute(
-            base.order_by(Booking.created_at.desc()).offset(skip).limit(limit)
-        )
-        items = list(page_res.scalars().all())
-
-        return {
-            "items": items,
-            "total": total,
-            "skip": skip,
-            "limit": limit,
-        }
+        q = q.order_by(Booking.created_at.desc()).offset(skip).limit(limit)
+        res = await self.db.execute(q)
+        return list(res.scalars().all())
 
     async def get_bookings_by_id_vehicle(
         self, vehicle_id: str, *, skip: int = 0, limit: int = 100
-    ) -> Dict[str, Any]:
-        base = select(Booking).where(Booking.vehicle_id == vehicle_id)
-        count_q = select(func.count(Booking.booking_id)).where(Booking.vehicle_id == vehicle_id)
-
-        total_res = await self.db.execute(count_q)
-        total = total_res.scalar() or 0
-
-        page_res = await self.db.execute(
-            base.order_by(Booking.created_at.desc()).offset(skip).limit(limit)
+    ) -> List[Booking]:
+        q = (
+            select(Booking)
+            .where(Booking.vehicle_id == vehicle_id)
+            .order_by(Booking.created_at.desc())
+            .offset(skip)
+            .limit(limit)
         )
-        items = list(page_res.scalars().all())
-
-        return {
-            "items": items,
-            "total": total,
-            "skip": skip,
-            "limit": limit,
-        }
+        res = await self.db.execute(q)
+        return list(res.scalars().all())
 
     async def get_bookings_by_id_user(
         self, user_id: str, *, skip: int = 0, limit: int = 100
-    ) -> Dict[str, Any]:
-        base = select(Booking).where(or_(Booking.renter_id == user_id, Booking.host_id == user_id))
-        count_q = select(func.count(Booking.booking_id)).where(
-            or_(Booking.renter_id == user_id, Booking.host_id == user_id)
+    ) -> List[Booking]:
+        q = (
+            select(Booking)
+            .where(or_(Booking.renter_id == user_id, Booking.host_id == user_id))
+            .order_by(Booking.created_at.desc())
+            .offset(skip)
+            .limit(limit)
         )
-
-        total_res = await self.db.execute(count_q)
-        total = total_res.scalar() or 0
-
-        page_res = await self.db.execute(
-            base.order_by(Booking.created_at.desc()).offset(skip).limit(limit)
-        )
-        items = list(page_res.scalars().all())
-
-        return {
-            "items": items,
-            "total": total,
-            "skip": skip,
-            "limit": limit,
-        }
+        res = await self.db.execute(q)
+        return list(res.scalars().all())
 
     async def get_bookings_by_id_insurance_plan(
         self, insurance_plan_id: str, *, skip: int = 0, limit: int = 100
-    ) -> Dict[str, Any]:
-        base = select(Booking).where(Booking.insurance_plan_id == insurance_plan_id)
-        count_q = select(func.count(Booking.booking_id)).where(Booking.insurance_plan_id == insurance_plan_id)
-
-        total_res = await self.db.execute(count_q)
-        total = total_res.scalar() or 0
-
-        page_res = await self.db.execute(
-            base.order_by(Booking.created_at.desc()).offset(skip).limit(limit)
+    ) -> List[Booking]:
+        q = (
+            select(Booking)
+            .where(Booking.insurance_plan_id == insurance_plan_id)
+            .order_by(Booking.created_at.desc())
+            .offset(skip)
+            .limit(limit)
         )
-        items = list(page_res.scalars().all())
-
-        return {
-            "items": items,
-            "total": total,
-            "skip": skip,
-            "limit": limit,
-        }
+        res = await self.db.execute(q)
+        return list(res.scalars().all())
 
     # ----------------------------
     # UPDATE

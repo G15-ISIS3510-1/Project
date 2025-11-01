@@ -11,7 +11,5 @@ data class VehicleWithPricingResponse(
     val dailyRate: Double,
     val currency: String,
     val minDays: Int,
-    val maxDays: Int?,
-    val lat: Double? = null,
-    val lng: Double? = null
+    val maxDays: Int?
 )

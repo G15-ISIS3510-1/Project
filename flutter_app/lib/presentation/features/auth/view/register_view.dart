@@ -15,7 +15,7 @@ import 'package:provider/provider.dart';
 // class _RegisterScreenState extends State<RegisterScreen> {
 //   final String baseUrl = const String.fromEnvironment(
 //     'API_BASE',
-//     defaultValue: 'https://qovo-api-862569067561.us-central1.run.app',
+//     defaultValue: 'https://qovo-api-gfa6drobhq-uc.a.run.app',
 //   );
 
 //   final _formKey = GlobalKey<FormState>();
@@ -291,7 +291,7 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   final String baseUrl = const String.fromEnvironment(
     'API_BASE',
-    defaultValue: 'https://qovo-api-862569067561.us-central1.run.app',
+    defaultValue: 'https://qovo-api-gfa6drobhq-uc.a.run.app',
   );
 
   final _formKey = GlobalKey<FormState>();

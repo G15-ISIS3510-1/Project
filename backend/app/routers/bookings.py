@@ -3,7 +3,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import List, Optional
 from datetime import datetime
-from pydantic import BaseModel
 
 from app.db.base import get_db
 from app.db.models import User, Vehicle, InsurancePlan, BookingStatus
@@ -12,13 +11,6 @@ from app.services.booking_service import BookingService
 from app.routers.users import get_current_user_from_token
 
 router = APIRouter(tags=["bookings"])
-
-
-class PaginatedBookingResponse(BaseModel):
-    items: List[BookingResponse]
-    total: int
-    skip: int
-    limit: int
 
 # -------------------------
 # Helpers
@@ -46,11 +38,8 @@ def _validate_datetimes(start_ts: datetime, end_ts: datetime):
 # Endpoints
 # -------------------------
 
-from app.utils.feature_tracking_decorator import track_feature_usage
-
 # Root collection — POST
 @router.post("", response_model=BookingResponse, status_code=status.HTTP_201_CREATED)
-@track_feature_usage("booking_creation")
 async def create_booking(
     payload: BookingCreate,
     db: AsyncSession = Depends(get_db),
@@ -101,8 +90,7 @@ async def create_booking_alias(
     return await create_booking(payload, db, current_user)
 
 # Root collection — GET
-@router.get("", response_model=PaginatedBookingResponse)
-@track_feature_usage("bookings_list_view")
+@router.get("", response_model=List[BookingResponse])
 async def list_my_bookings(
     skip: int = 0,
     limit: int = 100,
@@ -112,25 +100,19 @@ async def list_my_bookings(
 ):
     """
     Lista las reservas donde el usuario autenticado participa (como renter o host).
-    Paginado y con filtro opcional por estado.
+    Aplica también paginación y filtro por estado.
     """
     svc = BookingService(db)
-    data = await svc.get_bookings(
+    bookings = await svc.get_bookings(
         for_user_id=current_user.user_id,
         status_filter=status_filter,
         skip=skip,
         limit=limit,
     )
-    serialized = [BookingResponse.from_orm(b) for b in data["items"]]
-    return {
-        "items": serialized,
-        "total": data["total"],
-        "skip": data["skip"],
-        "limit": data["limit"],
-    }
+    return bookings
 
 # Trailing-slash alias for GET (hidden)
-@router.get("/", response_model=PaginatedBookingResponse, include_in_schema=False)
+@router.get("/", response_model=List[BookingResponse], include_in_schema=False)
 async def list_my_bookings_alias(
     skip: int = 0,
     limit: int = 100,
@@ -140,7 +122,7 @@ async def list_my_bookings_alias(
 ):
     return await list_my_bookings(skip, limit, status_filter, db, current_user)
 
-@router.get("/vehicle/{vehicle_id}", response_model=PaginatedBookingResponse)
+@router.get("/vehicle/{vehicle_id}", response_model=List[BookingResponse])
 async def get_bookings_by_vehicle(
     vehicle_id: str,
     skip: int = 0,
@@ -149,7 +131,7 @@ async def get_bookings_by_vehicle(
     current_user: User = Depends(get_current_user_from_token),
 ):
     """
-    Listar reservas de un vehículo (paginado).
+    Listar reservas de un vehículo.
     Solo el propietario (host) puede ver todas; el renter solo ve sus reservas.
     """
     vehicle = await _get_vehicle(db, vehicle_id)
@@ -157,22 +139,13 @@ async def get_bookings_by_vehicle(
         raise HTTPException(status_code=404, detail="Vehículo no encontrado")
 
     svc = BookingService(db)
-    data = await svc.get_bookings_by_id_vehicle(vehicle_id, skip=skip, limit=limit)
+    bookings = await svc.get_bookings_by_id_vehicle(vehicle_id, skip=skip, limit=limit)
 
-    items = data["items"]
     if vehicle.owner_id != current_user.user_id:
-        items = [b for b in items if b.renter_id == current_user.user_id]
+        bookings = [b for b in bookings if b.renter_id == current_user.user_id]
+    return bookings
 
-    serialized = [BookingResponse.from_orm(b) for b in items]
-    return {
-        "items": serialized,
-        # Nota: total refleja los visibles tras el filtro de permisos
-        "total": len(items),
-        "skip": skip,
-        "limit": limit,
-    }
-
-@router.get("/user/{user_id}", response_model=PaginatedBookingResponse)
+@router.get("/user/{user_id}", response_model=List[BookingResponse])
 async def get_bookings_by_user(
     user_id: str,
     skip: int = 0,
@@ -181,30 +154,23 @@ async def get_bookings_by_user(
     current_user: User = Depends(get_current_user_from_token),
 ):
     """
-    Listar reservas asociadas a un usuario (paginado).
+    Listar reservas asociadas a un usuario.
     - Si pides las tuyas: ok.
-    - Si pides las de otro, se filtran para mostrar solo las donde seas host.
+    - Si pides las de otro y no eres host de esas reservas, se filtra para mostrar solo
+      aquellas donde seas host.
     """
     user = await _get_user(db, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
     svc = BookingService(db)
-    data = await svc.get_bookings_by_id_user(user_id, skip=skip, limit=limit)
+    bookings = await svc.get_bookings_by_id_user(user_id, skip=skip, limit=limit)
 
-    items = data["items"]
     if user_id != current_user.user_id:
-        items = [b for b in items if b.host_id == current_user.user_id]
+        bookings = [b for b in bookings if b.host_id == current_user.user_id]
+    return bookings
 
-    serialized = [BookingResponse.from_orm(b) for b in items]
-    return {
-        "items": serialized,
-        "total": len(items),
-        "skip": skip,
-        "limit": limit,
-    }
-
-@router.get("/insurance/{insurance_plan_id}", response_model=PaginatedBookingResponse)
+@router.get("/insurance/{insurance_plan_id}", response_model=List[BookingResponse])
 async def get_bookings_by_insurance(
     insurance_plan_id: str,
     skip: int = 0,
@@ -212,22 +178,16 @@ async def get_bookings_by_insurance(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user_from_token),
 ):
-    """Listar reservas por plan de seguros (paginado; útil para reportes del host/administrador)."""
+    """Listar reservas por plan de seguros (útil para reportes del host/administrador)."""
     plan = await _get_insurance(db, insurance_plan_id)
     if not plan:
         raise HTTPException(status_code=404, detail="Plan de seguro no encontrado")
 
     svc = BookingService(db)
-    data = await svc.get_bookings_by_id_insurance_plan(insurance_plan_id, skip=skip, limit=limit)
+    bookings = await svc.get_bookings_by_id_insurance_plan(insurance_plan_id, skip=skip, limit=limit)
 
-    items = [b for b in data["items"] if b.host_id == current_user.user_id]
-    serialized = [BookingResponse.from_orm(b) for b in items]
-    return {
-        "items": serialized,
-        "total": len(items),
-        "skip": skip,
-        "limit": limit,
-    }
+    bookings = [b for b in bookings if b.host_id == current_user.user_id]
+    return bookings
 
 @router.get("/{booking_id}", response_model=BookingResponse)
 async def get_booking(

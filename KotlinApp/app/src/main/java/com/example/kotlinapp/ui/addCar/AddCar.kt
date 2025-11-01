@@ -1,8 +1,7 @@
-@file:OptIn(
-    androidx.compose.material3.ExperimentalMaterial3Api::class,
-    com.google.accompanist.permissions.ExperimentalPermissionsApi::class
-)
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class,
+    com.google.accompanist.permissions.ExperimentalPermissionsApi::class)
 package com.example.kotlinapp.ui.addCar
+
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -41,6 +40,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.kotlinapp.data.remote.dto.PricingCreate
 import com.example.kotlinapp.data.remote.dto.VehicleCreate
 
+
+
 import android.net.Uri
 import android.os.Environment
 import android.widget.Toast
@@ -49,9 +50,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.MyLocation
-import androidx.compose.material.icons.filled.CloudOff
-import androidx.compose.material.icons.filled.Sync
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.FileProvider
 import coil.compose.AsyncImage
@@ -63,6 +61,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+
 import androidx.compose.ui.res.painterResource
 
 @Composable
@@ -91,16 +90,8 @@ fun AddCar(
 
     val vm: AddCarViewModel = viewModel()
     val ui by vm.ui.collectAsState()
-    val pendingCount by vm.pendingCount.collectAsState()
-    val isOffline by vm.isOffline.collectAsState()
-
     val context = LocalContext.current
     val statusValue = "active"
-    val hasRecentLocation by vm.hasRecentLocation.collectAsState()
-
-    LaunchedEffect(hasRecentLocation) {
-        android.util.Log.d("AddCarUI", "hasRecentLocation cambió a: $hasRecentLocation")
-    }
 
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture()
@@ -176,15 +167,8 @@ fun AddCar(
         }
     }
 
-
     LaunchedEffect(ui.success) {
-        if (ui.success) {
-            // Mostrar mensaje de éxito
-            ui.message?.let {
-                Toast.makeText(context, it, Toast.LENGTH_LONG).show()
-            }
-
-            // Limpiar formulario
+        if (ui.success){
             make = ""
             model = ""
             year = ""
@@ -202,8 +186,6 @@ fun AddCar(
             latValue = null
             lngValue = null
             validationError = null
-
-            // Navegar atrás si es necesario
             onDone()
         }
     }
@@ -223,74 +205,6 @@ fun AddCar(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
 
-            // ========== NUEVO: Banner de modo offline ==========
-            if (isOffline) {
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFFFFF3CD)  // Amarillo suave
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier.padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.CloudOff,
-                            contentDescription = null,
-                            tint = Color(0xFF856404)
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            text = " Offline Mode - Vehicle will be saved locally and synced when online",
-                            color = Color(0xFF856404),
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                }
-            }
-
-
-            if (pendingCount > 0) {
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(12.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.Sync,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSecondaryContainer
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            Text(
-                                text = " $pendingCount vehicle(s) waiting to sync",
-                                color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
-
-                        // Botón para sincronizar manualmente
-                        TextButton(
-                            onClick = { vm.syncPending() },
-                            enabled = !ui.loading
-                        ) {
-                            Text("Sync Now")
-                        }
-                    }
-                }
-            }
-
-
             if (ui.error != null) {
                 Card(
                     colors = CardDefaults.cardColors(
@@ -306,34 +220,6 @@ fun AddCar(
                 }
             }
 
-
-            if (ui.message != null && !ui.success) {
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier.padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.CheckCircle,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            text = ui.message!!,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                }
-            }
-
-
             if (validationError != null) {
                 Card(
                     colors = CardDefaults.cardColors(
@@ -348,7 +234,6 @@ fun AddCar(
                     )
                 }
             }
-
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -400,7 +285,6 @@ fun AddCar(
                 }
             }
 
-            // Card de UBICACIÓN
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
@@ -409,7 +293,7 @@ fun AddCar(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        "Vehicle location",
+                        "vehicle location",
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -430,57 +314,19 @@ fun AddCar(
                     }
 
                     Spacer(Modifier.height(8.dp))
-
-
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.fillMaxWidth()
+                    Button(
+                        onClick = { getLocation() },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        )
                     ) {
-                        Button(
-                            onClick = { getLocation() },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primary,
-                                contentColor = MaterialTheme.colorScheme.onPrimary
-                            ),
-                            modifier = if (hasRecentLocation) Modifier.weight(1f) else Modifier.fillMaxWidth()
-                        ) {
-                            Icon(Icons.Default.MyLocation, contentDescription = null)
-                            Spacer(Modifier.width(8.dp))
-                            Text("Get location")
-                        }
-
-
-                        if (hasRecentLocation) {
-                            OutlinedButton(
-                                onClick = {
-                                    val lastLocation = vm.getLastLocation()
-                                    android.util.Log.d("AddCarUI", "Usando última ubicación: $lastLocation")
-
-                                    if (lastLocation != null) {
-                                        latValue = lastLocation.first
-                                        lngValue = lastLocation.second
-                                        Toast.makeText(
-                                            context,
-                                            "Using saved location: ${lastLocation.first}, ${lastLocation.second}",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    } else {
-                                        Toast.makeText(
-                                            context,
-                                            "No saved location found",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
-                                },
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Text("Use Last")
-                            }
-                        }
+                        Icon(Icons.Default.MyLocation, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Get location")
                     }
                 }
             }
-
 
             OutlinedTextField(
                 value = make,
@@ -625,11 +471,9 @@ fun AddCar(
 
             Spacer(Modifier.height(24.dp))
 
-
             Button(
                 onClick = {
                     validationError = null
-                    vm.refreshConnectivity()
 
                     if (latValue == null || lngValue == null) {
                         validationError = "Debes obtener la ubicación del vehículo"
@@ -695,14 +539,12 @@ fun AddCar(
                     )
                     Spacer(Modifier.width(8.dp))
                 }
-
-                Text(if (isOffline) "Save Locally" else "Add Vehicle")
+                Text("Add Vehicle")
             }
         }
     }
 }
 
-// ========== SimpleDropdown y TopAddCar sin cambios ==========
 
 @Composable
 fun SimpleDropdown(
@@ -718,7 +560,9 @@ fun SimpleDropdown(
     ExposedDropdownMenuBox(
         expanded = expanded,
         onExpandedChange = {
+
             expanded = !expanded
+
             if (expanded) focusManager.clearFocus()
         },
         modifier = modifier
@@ -732,7 +576,7 @@ fun SimpleDropdown(
                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
             },
             modifier = Modifier
-                .menuAnchor()
+                 .menuAnchor()
                 .fillMaxWidth()
         )
 
@@ -753,6 +597,7 @@ fun SimpleDropdown(
     }
 }
 
+
 @Composable
 private fun TopAddCar() {
     Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 0.dp) {
@@ -764,5 +609,6 @@ private fun TopAddCar() {
         ) {
             Text("Add Vehicle", fontSize = 28.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.sp)
         }
+
     }
 }

@@ -206,8 +206,6 @@
 
 // lib/presentation/features/app_shell/view/app_shell.dart
 import 'package:flutter/material.dart';
-import 'package:flutter_app/data/repositories/chat_repository.dart';
-import 'package:flutter_app/data/repositories/users_repository.dart';
 import 'package:flutter_app/data/repositories/vehicle_repository.dart';
 import 'package:provider/provider.dart';
 
@@ -264,7 +262,7 @@ class _AppShellState extends State<AppShell> {
       isHost
           ? ChangeNotifierProvider(
               create: (_) => HostHomeViewModel(
-                vehiclesRepo: context.read<VehicleRepository>(),
+                vehiclesRepo: VehicleRepositoryImpl(remote: VehicleService()),
                 currentUserId: widget.currentUserId,
               )..init(),
               child: HostHomeView(currentUserId: widget.currentUserId),
@@ -276,11 +274,7 @@ class _AppShellState extends State<AppShell> {
 
       // 2: Messages
       ChangeNotifierProvider(
-        create: (ctx) => MessagesViewModel(
-          chat: ctx.read<ChatRepository>(), // cached
-          users: ctx.read<UsersRepository>(), // or cached if you built one
-          currentUserId: widget.currentUserId,
-        ),
+        create: (_) => MessagesViewModel(),
         child: MessagesView(currentUserId: widget.currentUserId),
       ),
 

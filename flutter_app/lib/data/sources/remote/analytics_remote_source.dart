@@ -9,9 +9,6 @@ abstract class AnalyticsRemoteSource {
       String userId, {
         int hoursAhead = 24,
       });
-  Future<List<dynamic>> getDemandPeaks();
-  Future<List<dynamic>> getDemandPeaksExtended();
-  Future<List<dynamic>> getOwnerIncome();
 }
 
 class AnalyticsRemoteSourceImpl implements AnalyticsRemoteSource {
@@ -53,45 +50,6 @@ class AnalyticsRemoteSourceImpl implements AnalyticsRemoteSource {
       return UpcomingBookingsListModel.fromJson(json.decode(response.body));
     } else {
       throw _handleError(response);
-    }
-  }
-
-  @override
-  Future<List<dynamic>> getDemandPeaks() async {
-    try{
-      final response = await client.get(Uri.parse('$baseUrl/api/analytics/demand-peaks'),
-        headers: {'Content-Type': 'application/json'},
-      );
-
-      if (response.statusCode == 200) {
-        return json.decode(response.body) as List<dynamic>;
-      } else {
-        throw ApiException('Failed to fetch demand peaks');
-      }
-    } catch (e) {
-      throw ApiException(e.toString());
-    }
-  }
-
-  Future<List<dynamic>> getOwnerIncome() async {
-    final url = Uri.parse('$baseUrl/api/analytics/owner-income');
-    final response = await http.get(url);
-
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body) as List<dynamic>;
-    } else {
-      throw Exception('Failed to fetch owner income: ${response.statusCode}');
-    }
-  }
-
-  Future<List<dynamic>> getDemandPeaksExtended() async {
-    final url = Uri.parse('$baseUrl/api/analytics/demand-peaks-extended');
-    final response = await http.get(url);
-
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body) as List<dynamic>;
-    } else {
-      throw Exception('Failed to fetch demand peaks extended: ${response.statusCode}');
     }
   }
 

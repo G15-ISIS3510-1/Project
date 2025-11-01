@@ -4,16 +4,10 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from pydantic import BaseModel
 
 from app.db.base import get_db
 from app.db.models import User, Payment
-from app.schemas.payment import (
-    PaymentCreate,
-    PaymentUpdate,
-    PaymentResponse,
-    PaymentMethodAnalytics,
-)
+from app.schemas.payment import PaymentCreate, PaymentUpdate, PaymentResponse, PaymentMethodAnalytics
 from app.services.payment_service import PaymentService
 from app.routers.users import get_current_user_from_token
 from sqlalchemy import select, update
@@ -24,19 +18,7 @@ from sqlalchemy import func
 router = APIRouter(prefix="/payments", tags=["payments"])
 
 
-# ---------- pagination response model ----------
-
-class PaginatedPaymentResponse(BaseModel):
-    items: List[PaymentResponse]
-    total: int
-    skip: int
-    limit: int
-
-
-from app.utils.feature_tracking_decorator import track_feature_usage
-
 @router.post("/", response_model=PaymentResponse, status_code=status.HTTP_201_CREATED)
-@track_feature_usage("payment_processing")
 async def create_payment(
     payload: PaymentCreate,
     db: AsyncSession = Depends(get_db),
@@ -44,7 +26,7 @@ async def create_payment(
 ):
     """
     Create a payment. Policy (service level): payer must be the booking's renter.
-    Additionally, enforce that the authenticated user is the payer.
+    Additionally, enforce that the authenticated user is the payer to avoid spoofing.
     """
     if payload.payer_id != current_user.user_id:
         raise HTTPException(status_code=403, detail="You can only create payments for yourself")
@@ -57,33 +39,17 @@ async def create_payment(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.get("/", response_model=PaginatedPaymentResponse)
+@router.get("/", response_model=List[PaymentResponse])
 async def list_my_payments(
     skip: int = 0,
     limit: int = 100,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user_from_token),
 ):
-    """
-    List payments of the authenticated user (as payer), paginated.
-    Returns { items, total, skip, limit }.
-    """
+    """List payments of the authenticated user (as payer)."""
     svc = PaymentService(db)
-    data = await svc.get_payments_by_id_user(
-        current_user.user_id,
-        skip=skip,
-        limit=limit
-    )
-
-    serialized = [PaymentResponse.from_orm(p) for p in data["items"]]
-
-    return {
-        "items": serialized,
-        "total": data["total"],
-        "skip": data["skip"],
-        "limit": data["limit"],
-    }
-
+    payments = await svc.get_payments_by_id_user(current_user.user_id, skip=skip, limit=limit)
+    return payments
 
 @router.get("/analytics/adoption", response_model=List[PaymentMethodAnalytics])
 async def get_payment_method_adoption(
@@ -113,14 +79,13 @@ async def get_payment_method_adoption(
     rows = q.all()
 
     return [
-        PaymentMethodAnalytics(
-            name=row.payment_method or "unknown",
-            count=row.count,
-            percentage=round((row.count / total) * 100, 2)
-        )
-        for row in rows
+    PaymentMethodAnalytics(
+        name=row.payment_method or "unknown",  # ← Manejar nulls
+        count=row.count,
+        percentage=round((row.count / total) * 100, 2)
+    )
+    for row in rows
     ]
-
 
 @router.get("/{payment_id}", response_model=PaymentResponse)
 async def get_payment(
@@ -138,7 +103,7 @@ async def get_payment(
     return payment
 
 
-@router.get("/by-booking/{booking_id}", response_model=PaginatedPaymentResponse)
+@router.get("/by-booking/{booking_id}", response_model=List[PaymentResponse])
 async def get_payments_by_booking(
     booking_id: str,
     skip: int = 0,
@@ -147,31 +112,15 @@ async def get_payments_by_booking(
     current_user: User = Depends(get_current_user_from_token),
 ):
     """
-    Payments for a booking, paginated.
-    Minimal policy: only return payments where you are the payer.
+    Payments for a booking. By default, only the payer can see them.
+    If you want hosts to see payments of their vehicles' bookings,
+    add a host-ownership check against the booking in the service/router.
     """
     svc = PaymentService(db)
-    data = await svc.get_payments_by_id_booking(
-        booking_id,
-        skip=skip,
-        limit=limit
-    )
-
-    # filter down to the caller's own payments
-    visible_items = [
-        p for p in data["items"]
-        if p.payer_id == current_user.user_id
-    ]
-
-    serialized = [PaymentResponse.from_orm(p) for p in visible_items]
-
-    # we expose the filtered count as total here
-    return {
-        "items": serialized,
-        "total": len(visible_items),
-        "skip": skip,
-        "limit": limit,
-    }
+    payments = await svc.get_payments_by_id_booking(booking_id, skip=skip, limit=limit)
+    # Minimal permission: show only if you are the payer in any of them
+    payments = [p for p in payments if p.payer_id == current_user.user_id]
+    return payments
 
 
 @router.put("/{payment_id}", response_model=PaymentResponse)
@@ -237,13 +186,9 @@ async def delete_payments_by_booking(
 ):
     # Minimal policy: only delete payments if you are the payer of those payments
     svc = PaymentService(db)
-    data = await svc.get_payments_by_id_booking(booking_id, skip=0, limit=10_000)
-    my_payments = [p for p in data["items"] if p.payer_id == current_user.user_id]
+    payments = await svc.get_payments_by_id_booking(booking_id, 0, 10_000)
+    my_payments = [p for p in payments if p.payer_id == current_user.user_id]
     if not my_payments:
         raise HTTPException(status_code=403, detail="You can only delete your own payments")
-
     count = await svc.delete_payment_by_id_booking(booking_id)
-    return {
-        "message": f"Deleted {count} payments for booking",
-        "deleted_count": count
-    }
+    return {"message": f"Deleted {count} payments for booking", "deleted_count": count}

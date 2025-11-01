@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
-from typing import Optional, List, Dict, Any
+from sqlalchemy import select
+from typing import Optional, List
 from app.db.models import Vehicle
 from app.schemas.vehicle import VehicleCreate, VehicleUpdate
 import uuid
@@ -39,74 +39,28 @@ class VehicleService:
         await self.db.refresh(vehicle)
         return vehicle 
     
-    async def get_vehicle_by_plate(self, placa: str) -> Optional[Vehicle]:
-        result = await self.db.execute(select(Vehicle).where(Vehicle.plate == placa))
-        return result.scalar_one_or_none()
-        # 1. Si la consulta no devuelve nada → retorna None.
-        # 2. Si la consulta devuelve exactamente una fila → retorna el valor escalar de esa fila (normalmente el primer campo o el objeto que pediste).
-        # 3. Si devuelve más de una fila → lanza una excepción (MultipleResultsFound), porque se espera como máximo uno.
+    
+    async def get_vehicle_by_plate(self,placa:str)->Optional[Vehicle]:
+      result = await self.db.execute(select(Vehicle).where(Vehicle.plate==placa))
+      return result.scalar_one_or_none()    
+  #   	1.	Si la consulta no devuelve nada → retorna None.
+	# 2.	Si la consulta devuelve exactamente una fila → retorna el valor escalar de esa fila (normalmente el primer campo o el objeto que pediste).
+	# 3.	Si devuelve más de una fila → lanza una excepción (MultipleResultsFound), porque se espera como máximo uno.
   
     async def get_vehicle_by_id(self, vehicle_id: str) -> Optional[Vehicle]:
         """Obtener vehículo por ID"""
         result = await self.db.execute(select(Vehicle).where(Vehicle.vehicle_id == vehicle_id))
         return result.scalar_one_or_none()
 
-    async def get_vehicles(self, skip: int = 0, limit: int = 100) -> Dict[str, Any]:
-        """
-        Obtener lista de vehículos con paginación.
-        Devuelve dict con items + metadata para que el router pueda
-        responder { items, total, skip, limit }.
-        """
-        # total de vehículos (sin paginar)
-        total_result = await self.db.execute(
-            select(func.count(Vehicle.vehicle_id))
-        )
-        total = total_result.scalar() or 0
-
-        # página solicitada
-        page_result = await self.db.execute(
-            select(Vehicle).offset(skip).limit(limit)
-        )
-        rows = page_result.scalars().all()
-
-        return {
-            "items": rows,
-            "total": total,
-            "skip": skip,
-            "limit": limit,
-        }
+    async def get_vehicles(self, skip: int = 0, limit: int = 100) -> List[Vehicle]:
+        """Obtener lista de vehículos con paginación"""
+        result = await self.db.execute(select(Vehicle).offset(skip).limit(limit))
+        return result.scalars().all()
     
-    async def get_vehicles_by_owner(
-        self,
-        owner_id: str,
-        skip: int = 0,
-        limit: int = 100
-    ) -> Dict[str, Any]:
-        """
-        Obtener vehículos de un propietario específico con paginación.
-        Devuelve dict con items + metadata.
-        """
-        # total de vehículos de este owner
-        total_result = await self.db.execute(
-            select(func.count(Vehicle.vehicle_id)).where(Vehicle.owner_id == owner_id)
-        )
-        total = total_result.scalar() or 0
-
-        # página solicitada
-        page_result = await self.db.execute(
-            select(Vehicle)
-            .where(Vehicle.owner_id == owner_id)
-            .offset(skip)
-            .limit(limit)
-        )
-        rows = page_result.scalars().all()
-
-        return {
-            "items": rows,
-            "total": total,
-            "skip": skip,
-            "limit": limit,
-        }
+    async def get_vehicles_by_owner(self, owner_id: str) -> List[Vehicle]:
+        """Obtener vehículos de un propietario específico"""
+        result = await self.db.execute(select(Vehicle).where(Vehicle.owner_id == owner_id))
+        return result.scalars().all()
     
     async def update_vehicle(self, vehicle_id: str, vehicle_update: VehicleUpdate) -> Optional[Vehicle]:
         """Actualizar vehículo"""

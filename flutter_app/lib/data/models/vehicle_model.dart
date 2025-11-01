@@ -12,7 +12,6 @@ class Vehicle {
   final String status; // "active" | ...
   final double lat;
   final double lng;
-  final String photo_url;
 
   // NUEVO: dueño y fecha de creación (que vienen en tu payload)
   final String ownerId;
@@ -39,7 +38,6 @@ class Vehicle {
     this.createdAt,
     this.pricePerDay,
     this.rating,
-    this.photo_url = '',
   });
 
   String get title => '$make $model $year';
@@ -86,8 +84,6 @@ class Vehicle {
           (j['price_per_day'] as num?)?.toDouble() ??
           (j['pricePerDay'] as num?)?.toDouble(),
       rating: (j['rating'] as num?)?.toDouble(),
-
-      photo_url: (j['photo_url'] ?? j['photoUrl'] ?? '') as String,
     );
   }
 
@@ -108,6 +104,5 @@ class Vehicle {
     if (createdAt != null) 'created_at': createdAt!.toIso8601String(),
     if (pricePerDay != null) 'price_per_day': pricePerDay,
     if (rating != null) 'rating': rating,
-    'photo_url': photo_url,
   };
 }

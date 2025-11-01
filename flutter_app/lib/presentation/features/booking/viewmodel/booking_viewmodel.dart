@@ -1,71 +1,65 @@
-// lib/presentation/features/booking/viewmodel/booking_viewmodel.dart
-import 'package:flutter/foundation.dart';
-import 'package:flutter_app/app/utils/result.dart';
-import 'package:flutter_app/app/utils/date_format.dart';
+import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:flutter_app/data/models/booking_create_model.dart';
-import 'package:flutter_app/data/models/booking_model.dart';
-import 'package:flutter_app/data/repositories/booking_repository.dart';
-import 'package:flutter_app/data/repositories/chat_repository.dart';
 
 class BookingViewModel extends ChangeNotifier {
-  final BookingsRepository bookingsRepo;
-  final ChatRepository chatRepo;
+  final String baseUrl = const String.fromEnvironment(
+    'API_BASE',
+    defaultValue: 'https://qovo-api-gfa6drobhq-uc.a.run.app',
+  );
 
-  bool isLoading = false;
-  String? errorMessage;
+  bool _loading = false;
+  bool get isLoading => _loading;
 
-  BookingViewModel({required this.bookingsRepo, required this.chatRepo});
+  String? _errorMessage;
+  String? get errorMessage => _errorMessage;
 
-  Future<bool> createBooking(BookingCreateModel data) async {
-    isLoading = true;
-    errorMessage = null;
+  void _setLoading(bool value) {
+    _loading = value;
     notifyListeners();
+  }
 
-    final res = await bookingsRepo.createBooking(data);
+  void _setErrorMessage(String? message) {
+    _errorMessage = message;
+    notifyListeners();
+  }
 
-    return res.when(
-      ok: (Booking booking) async {
-        isLoading = false;
-        notifyListeners();
+  Future<bool> createBooking(BookingCreateModel bookingData) async {
+    _setLoading(true);
+    _setErrorMessage(null);
 
-        // ---- Crear/Asegurar thread sin bloquear el éxito del booking ----
+    try {
+      final url = Uri.parse('$baseUrl/api/bookings');
+
+      final res = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(bookingData.toJson()),
+      );
+
+      _setLoading(false);
+
+      if (res.statusCode == 201) {
+        return true;
+      } else {
+        String detail = 'Error desconocido';
         try {
-          final startLocal = booking.startTs.toLocal();
-          final endLocal = booking.endTs.toLocal();
-          final initialMessage =
-              '✅ Reserva creada para el vehículo ${booking.vehicleId}\n'
-              'Del ${formatDateTime(startLocal)} al ${formatDateTime(endLocal)}\n'
-              'Total: ${booking.total.toStringAsFixed(2)} ${booking.currency}';
-
-          // intenta crear un thread con metadata de booking/vehicle
-          await chatRepo.createThread(
-            renterId: booking.renterId,
-            hostId: booking.hostId,
-            vehicleId: booking.vehicleId,
-            bookingId: booking.bookingId,
-            initialMessage: initialMessage,
-          );
-        } catch (e) {
-          // Si ya existe o falló (409/400/etc.), asegúralo directo entre usuarios
-          try {
-            // Elegimos "otro usuario" en función de quién es el renter
-            final otherUserId = data.renterId == booking.renterId
-                ? booking.hostId
-                : booking.renterId;
-            await chatRepo.ensureDirectConversation(otherUserId);
-          } catch (_) {
-            // No interrumpimos la UX; solo podrías loguearlo si quieres
-          }
+          final Map<String, dynamic> errorBody = jsonDecode(res.body);
+          detail = errorBody['detail'] ?? 'Error desconocido';
+        } catch (_) {
+          detail = res.body.isEmpty
+              ? 'Respuesta vacía o inválida del servidor.'
+              : res.body;
         }
 
-        return true;
-      },
-      err: (msg) async {
-        isLoading = false;
-        errorMessage = msg;
-        notifyListeners();
+        _setErrorMessage('Error ${res.statusCode}: $detail');
         return false;
-      },
-    );
+      }
+    } catch (e) {
+      _setLoading(false);
+      _setErrorMessage('⚠️ Error de red/conexión: $e');
+      return false;
+    }
   }
 }

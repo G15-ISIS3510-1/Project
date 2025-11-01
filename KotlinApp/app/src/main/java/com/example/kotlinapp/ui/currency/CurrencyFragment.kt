@@ -2,6 +2,7 @@ package com.example.kotlinapp.ui.currency
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.location.Geocoder
 import android.location.Location
 import android.os.Build
@@ -28,14 +29,6 @@ import java.util.Locale
 import kotlin.coroutines.resume
 import kotlin.math.roundToInt
 
-/**
- * Fragmento responsable de sugerir la moneda a usar.
- *
- * Estrategia aplicada: CACHING STRATEGY (Persistent + Time-based cache)
- *  - Se usa DataStore (a través de CurrencyPreferenceStore)
- *  - Reutiliza la última sugerencia guardada para evitar consultas repetidas.
- *  - Solo recalcula si la caché no existe o tiene más de 24 horas.
- */
 class CurrencyFragment : Fragment(R.layout.fragment_currency) {
 
     private var _binding: FragmentCurrencyBinding? = null
@@ -56,12 +49,12 @@ class CurrencyFragment : Fragment(R.layout.fragment_currency) {
         _binding = FragmentCurrencyBinding.bind(view)
         prefs = CurrencyPreferenceStore(requireContext().applicationContext)
 
-        // Cargar moneda preferida guardada y resaltarla
+        // Cargar preferida actual y resaltar
         viewLifecycleOwner.lifecycleScope.launch {
             prefs.preferredOnce()?.let { highlight(it) }
         }
 
-        // Botones manuales
+        // Clicks: guardar manualmente la preferencia
         binding.cardUSD.setOnClickListener { savePreferred("USD") }
         binding.cardEUR.setOnClickListener { savePreferred("EUR") }
         binding.cardGBP.setOnClickListener { savePreferred("GBP") }
@@ -80,58 +73,62 @@ class CurrencyFragment : Fragment(R.layout.fragment_currency) {
         viewLifecycleOwner.lifecycleScope.launch {
             fetchAndShowSuggestion(useGeo = hasPermission)
         }
-
         if (!hasPermission) requestLocationPermission.launch(locationPermission)
     }
 
-    /**
-     * Obtiene o reutiliza la moneda sugerida.
-     * Implementa una estrategia de caché persistente y validación por tiempo (24 horas).
-     */
     private suspend fun fetchAndShowSuggestion(useGeo: Boolean) {
-        // 1️⃣ Intentar leer caché
-        val lastSuggested = prefs.getLastSuggested()
-        val lastUpdated = prefs.getLastUpdated()
-        val cacheValid = lastUpdated?.let {
-            System.currentTimeMillis() - it < 24 * 60 * 60 * 1000 // 24h
-        } ?: false
-
-        if (lastSuggested != null && cacheValid) {
-            binding.tvSuggestion.text = "Última sugerencia guardada: $lastSuggested (caché)"
-            highlight(lastSuggested)
-            return
-        }
-
-        // 2️⃣ No hay caché válida → recalcular usando estrategias
         val strategies = buildList<CurrencySuggestionStrategy> {
             if (useGeo) add(GeoCurrencyStrategy)
             add(SimCardCurrencyStrategy)
             add(LocaleCurrencyStrategy)
         }
-
         val suggestion = CurrencySuggester.suggest(requireContext(), strategies)
 
-        // Guardar en caché (última sugerencia)
+        // Mostrar texto
+        binding.tvSuggestion.text = renderSuggestionText(suggestion)
+
+        // Guardar "última sugerencia" siempre
         prefs.setLastSuggested(suggestion.currencyCode)
 
-        // Mostrar en UI
-        binding.tvSuggestion.text = renderSuggestionText(suggestion)
-        highlight(suggestion.currencyCode)
-
-        // Ofrecer actualizar moneda preferida
+        // Leer preferida actual
         val currentPreferred = prefs.preferredOnce()
-        if (currentPreferred == null) {
-            prefs.setPreferred(suggestion.currencyCode)
-            Snackbar.make(
-                binding.root,
-                "Se configuró ${suggestion.currencyCode} por ${suggestion.source}.",
-                Snackbar.LENGTH_LONG
-            ).setAction("Deshacer") {
-                viewLifecycleOwner.lifecycleScope.launch {
-                    prefs.clearPreferred()
-                    highlight("___NONE___")
-                }
-            }.show()
+
+        when {
+            // 1) Si no hay preferida aún: auto-guardar sugerencia + Snackbar "Deshacer"
+            currentPreferred == null -> {
+                prefs.setPreferred(suggestion.currencyCode)
+                highlight(suggestion.currencyCode)
+                Snackbar.make(
+                    binding.root,
+                    "Se configuró ${suggestion.currencyCode} por ${suggestion.source}.",
+                    Snackbar.LENGTH_LONG
+                ).setAction("Deshacer") {
+                    viewLifecycleOwner.lifecycleScope.launch {
+                        prefs.clearPreferred()
+                        highlight("___NONE___")
+                    }
+                }.show()
+            }
+            // 2) Si ya hay preferida y es distinta: ofrecer cambiar via Snackbar "Usar"
+            currentPreferred != suggestion.currencyCode -> {
+                Snackbar.make(
+                    binding.root,
+                    "Sugerimos ${suggestion.currencyCode} (${suggestion.source}). ¿Usar ahora?",
+                    Snackbar.LENGTH_LONG
+                ).setAction("Usar") {
+                    viewLifecycleOwner.lifecycleScope.launch {
+                        prefs.setPreferred(suggestion.currencyCode)
+                        highlight(suggestion.currencyCode)
+                        Snackbar.make(
+                            binding.root,
+                            "Moneda preferida: ${suggestion.currencyCode}",
+                            Snackbar.LENGTH_SHORT
+                        ).show()
+                    }
+                }.show()
+            }
+            // 3) Si coincide, solo resaltamos
+            else -> highlight(suggestion.currencyCode)
         }
     }
 
@@ -151,9 +148,9 @@ class CurrencyFragment : Fragment(R.layout.fragment_currency) {
     private fun highlight(code: String) {
         fun sel(card: MaterialCardView, selected: Boolean) {
             val density = resources.displayMetrics.density
-            card.strokeColor = if (selected)
+            card.strokeColor = if (selected) 
                 ContextCompat.getColor(requireContext(), com.google.android.material.R.color.material_dynamic_primary80)
-            else
+            else 
                 ContextCompat.getColor(requireContext(), com.google.android.material.R.color.material_dynamic_neutral80)
             card.strokeWidth = ((if (selected) 3 else 1) * density).roundToInt()
         }
@@ -194,16 +191,13 @@ object CurrencySuggester {
     }
 }
 
-/* --- Estrategias para obtener sugerencia --- */
-
 object GeoCurrencyStrategy : CurrencySuggestionStrategy {
     override suspend fun getSuggestion(context: android.content.Context): CurrencySuggestion? {
         val fused = LocationServices.getFusedLocationProviderClient(context)
         val loc = getLastLocationSuspend(fused) ?: return null
 
         val cc = withContext(Dispatchers.IO) {
-            val geocoder = if (Build.VERSION.SDK_INT >= 33) Geocoder(context)
-            else @Suppress("DEPRECATION") Geocoder(context, Locale.getDefault())
+            val geocoder = if (Build.VERSION.SDK_INT >= 33) Geocoder(context) else @Suppress("DEPRECATION") Geocoder(context, Locale.getDefault())
             geocoder.getFromLocation(loc.latitude, loc.longitude, 1)?.firstOrNull()?.countryCode
         } ?: return null
 

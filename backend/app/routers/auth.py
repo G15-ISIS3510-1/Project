@@ -7,7 +7,6 @@ from app.db.base import get_db
 from app.db.models import User
 from app.schemas.user import UserCreate, UserResponse, Token, UserLogin
 from app.core.security import get_password_hash, verify_password, create_access_token
-from app.utils.feature_tracking_decorator import track_feature_usage
 import uuid
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
@@ -15,7 +14,6 @@ router = APIRouter(prefix="/auth", tags=["authentication"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 @router.post("/register", response_model=UserResponse)
-@track_feature_usage("user_registration", require_auth=False)
 async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
     """Registra un nuevo usuario"""
     # Verificar si el email ya existe
@@ -66,7 +64,6 @@ async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
     return existing_user
 
 @router.post("/login", response_model=Token)
-@track_feature_usage("user_login", require_auth=False)
 async def login(user_credentials: UserLogin, db: AsyncSession = Depends(get_db)):
     """Autentica un usuario y retorna un token JWT"""
     # Buscar usuario por email

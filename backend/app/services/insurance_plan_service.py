@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import uuid
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
 
-from sqlalchemy import select, update, delete, func
+from sqlalchemy import select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import InsurancePlan, Booking
@@ -43,30 +43,10 @@ class InsurancePlanService:
         res = await self.db.execute(q)
         return res.scalar_one_or_none()
 
-    async def get_insurance_plans(
-        self, *, skip: int = 0, limit: int = 100, active: Optional[bool] = None
-    ) -> Dict[str, Any]:
-        base = select(InsurancePlan)
-        count_q = select(func.count(InsurancePlan.insurance_plan_id))
-
-        if active is not None:
-            base = base.where(InsurancePlan.active == active)
-            count_q = count_q.where(InsurancePlan.active == active)
-
-        total_res = await self.db.execute(count_q)
-        total = total_res.scalar() or 0
-
-        page_q = await self.db.execute(
-            base.offset(skip).limit(limit)
-        )
-        items = list(page_q.scalars().all())
-
-        return {
-            "items": items,
-            "total": total,
-            "skip": skip,
-            "limit": limit,
-        }
+    async def get_insurance_plans(self, *, skip: int = 0, limit: int = 100) -> List[InsurancePlan]:
+        q = select(InsurancePlan).offset(skip).limit(limit)
+        res = await self.db.execute(q)
+        return list(res.scalars().all())
 
     async def get_insurance_plan_by_id_booking(self, booking_id: str) -> Optional[InsurancePlan]:
         q = (

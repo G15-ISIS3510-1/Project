@@ -61,9 +61,6 @@ class User(Base):
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
-    
-    # --- Feature Usage Tracking ---
-    feature_usage_logs = relationship("FeatureUsageLog", back_populates="user", cascade="all, delete-orphan")
 
 class Vehicle(Base):
     __tablename__ = "vehicles"
@@ -256,20 +253,4 @@ class Conversation(Base):
         UniqueConstraint("user_low_id", "user_high_id", name="uq_conversation_direct_pair"),
         Index("ix_conversations_user_pair", "user_low_id", "user_high_id"),
         Index("ix_conversations_last_message_at", "last_message_at"),
-    )
-
-class FeatureUsageLog(Base):
-    __tablename__ = "feature_usage_log"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(String, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False, index=True)
-    feature_name = Column(String(100), nullable=False, index=True)
-    timestamp = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
-    
-    # Relación opcional con User
-    user = relationship("User", back_populates="feature_usage_logs")
-    
-    __table_args__ = (
-        Index("ix_feature_usage_log_user_feature", "user_id", "feature_name"),
-        Index("ix_feature_usage_log_timestamp", "timestamp"),
     )
