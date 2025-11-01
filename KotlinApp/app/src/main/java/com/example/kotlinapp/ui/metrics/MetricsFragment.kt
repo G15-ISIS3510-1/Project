@@ -56,7 +56,7 @@ fun MetricsScreen(onBackClick: () -> Unit = {}) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Métricas de Uso") },
+                title = { Text("Usage Metrics") },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -81,7 +81,7 @@ fun MetricsScreen(onBackClick: () -> Unit = {}) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                         Spacer(Modifier.height(16.dp))
-                        Text("Cargando métricas...", color = MaterialTheme.colorScheme.onSurface)
+                        Text("Loading metrics...", color = MaterialTheme.colorScheme.onSurface)
                     }
                 }
             }
@@ -110,13 +110,13 @@ fun MetricsScreen(onBackClick: () -> Unit = {}) {
                             )
                             Spacer(Modifier.height(8.dp))
                             Text(
-                                "Error al cargar datos",
+                                "Error loading data",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary
                             )
                             Text(
-                                error ?: "Error desconocido",
+                                error ?: "Unknown error",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 textAlign = TextAlign.Center
@@ -131,7 +131,7 @@ fun MetricsScreen(onBackClick: () -> Unit = {}) {
                             ) {
                                 Icon(Icons.Default.Refresh, contentDescription = null)
                                 Spacer(Modifier.width(8.dp))
-                                Text("Reintentar")
+                                Text("Retry")
                             }
                         }
                     }
@@ -163,13 +163,13 @@ fun MetricsScreen(onBackClick: () -> Unit = {}) {
                                 )
                                 Spacer(Modifier.height(8.dp))
                                 Text(
-                                    "Funcionalidades con Bajo Uso",
+                                    "Low Usage Features",
                                     style = MaterialTheme.typography.headlineSmall,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
-                                    "Menos de 2 veces por semana por usuario",
+                                    "Less than 2 times per week per user",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                                 )
@@ -200,13 +200,13 @@ fun MetricsScreen(onBackClick: () -> Unit = {}) {
                                     )
                                     Spacer(Modifier.height(16.dp))
                                     Text(
-                                        "¡Excelente!",
+                                        "Excellent!",
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.primary
                                     )
                                     Text(
-                                        "Todas las funcionalidades se usan con frecuencia",
+                                        "All features are used frequently",
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         textAlign = TextAlign.Center
@@ -219,7 +219,7 @@ fun MetricsScreen(onBackClick: () -> Unit = {}) {
                         if (lowUsageFeatures.isNotEmpty()) {
                             item {
                                 Text(
-                                    "Funcionalidades Poco Usadas",
+                                    "Low Usage Features",
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
                                     modifier = Modifier.padding(vertical = 8.dp),
@@ -240,7 +240,7 @@ fun MetricsScreen(onBackClick: () -> Unit = {}) {
                         if (usageStats.isNotEmpty()) {
                             item {
                                 Text(
-                                    "Estadísticas Generales",
+                                    "General Statistics",
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
                                     modifier = Modifier.padding(vertical = 8.dp),
@@ -307,7 +307,7 @@ fun LowUsageFeatureCard(feature: com.example.kotlinapp.data.remote.dto.FeatureUs
                     )
                     Spacer(Modifier.width(4.dp))
                     Text(
-                        "${feature.uniqueUsers} usuarios únicos",
+                        "${feature.uniqueUsers} unique users",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -331,7 +331,7 @@ fun LowUsageFeatureCard(feature: com.example.kotlinapp.data.remote.dto.FeatureUs
                         color = MaterialTheme.colorScheme.onPrimary
                     )
                     Text(
-                        "usos/semana",
+                        "uses/week",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
                     )
@@ -368,7 +368,7 @@ fun FeatureStatCard(stat: com.example.kotlinapp.data.remote.dto.FeatureStatDto) 
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    "${stat.totalUses} usos totales • ${stat.uniqueUsers} usuarios",
+                    "${stat.totalUses} total uses • ${stat.uniqueUsers} users",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                 )
@@ -391,7 +391,7 @@ fun FeatureStatCard(stat: com.example.kotlinapp.data.remote.dto.FeatureStatDto) 
                         color = MaterialTheme.colorScheme.onPrimary
                     )
                     Text(
-                        "por semana",
+                        "per week",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
                     )
