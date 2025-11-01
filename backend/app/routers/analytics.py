@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from sqlalchemy import func, select
@@ -168,28 +168,6 @@ async def get_owner_income(db: AsyncSession = Depends(get_db)):
 
 @router.get("/demand-peaks-extended")
 async def get_demand_peaks_extended(db: AsyncSession = Depends(get_db)):
-    stmt = (
-        select(
-            func.round(models.Vehicle.lat, 1).label("lat_zone"),
-            func.round(models.Vehicle.lng, 1).label("lon_zone"),
-            func.date_part("hour", models.Booking.start_ts).label("hour_slot"),
-            models.Vehicle.make.label("make"),
-            models.Vehicle.year.label("year"),
-            models.Vehicle.fuel_type.label("fuel_type"),
-            models.Vehicle.transmission.label("transmission"),
-            func.count(models.Booking.booking_id).label("rentals"),
-        )
-        .join(models.Booking, models.Vehicle.vehicle_id == models.Booking.vehicle_id)
-        .where(models.Booking.status == models.BookingStatus.completed)
-        .group_by(
-            func.round(models.Vehicle.lat, 1),
-            func.round(models.Vehicle.lng, 1),
-            func.date_part("hour", models.Booking.start_ts),
-            models.Vehicle.make,
-            models.Vehicle.year,
-            models.Vehicle.fuel_type,
-            models.Vehicle.transmission,
-async def get_demand_peaks_extended(db: Session = Depends(get_db)):
     try:
         print(">>> Ejecutando query /demand-peaks-extended")
 
@@ -218,22 +196,32 @@ async def get_demand_peaks_extended(db: Session = Depends(get_db)):
             .order_by(func.count(models.Booking.booking_id).desc())
         )
 
-    result = await db.execute(stmt)
-    results = result.all()
+        print(">>> Ejecutando statement SQL...")
+        result = await db.execute(stmt)
+        print(">>> Query ejecutada correctamente")
 
-    return [
-        {
-            "lat_zone": r.lat_zone,
-            "lon_zone": r.lon_zone,
-            "hour_slot": int(r.hour_slot) if r.hour_slot is not None else None,
-            "make": r.make,
-            "year": r.year,
-            "fuel_type": r.fuel_type,
-            "transmission": r.transmission,
-            "rentals": r.rentals,
-        }
-        for r in results
-    ]
+        results = result.all()
+        print(f">>> Se obtuvieron {len(results)} filas")
+
+        return [
+            {
+                "lat_zone": r.lat_zone,
+                "lon_zone": r.lon_zone,
+                "hour_slot": str(r.hour_slot),
+                "make": r.make,
+                "year": r.year,
+                "fuel_type": r.fuel_type,
+                "transmission": r.transmission,
+                "total_rentals": r.total_rentals,
+            }
+            for r in results
+        ]
+
+    except Exception as e:
+        import traceback
+        print("ERROR en /demand-peaks-extended")
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get(
@@ -281,29 +269,3 @@ async def get_feature_usage_statistics(
         "feature_filter": feature_name,
         "total_features": len(stats)
     }
-        print(">>> Ejecutando statement SQL...")
-        result = await db.execute(stmt)
-        print(">>> Query ejecutada correctamente")
-
-        results = result.all()
-        print(f">>> Se obtuvieron {len(results)} filas")
-
-        return [
-            {
-                "lat_zone": r.lat_zone,
-                "lon_zone": r.lon_zone,
-                "hour_slot": str(r.hour_slot),
-                "make": r.make,
-                "year": r.year,
-                "fuel_type": r.fuel_type,
-                "transmission": r.transmission,
-                "total_rentals": r.total_rentals,
-            }
-            for r in results
-        ]
-
-    except Exception as e:
-        import traceback
-        print("ERROR en /demand-peaks-extended")
-        print(traceback.format_exc())
-        raise HTTPException(status_code=500, detail=str(e))

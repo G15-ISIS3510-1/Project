@@ -39,8 +39,8 @@ class VehicleWithPricingItem(BaseModel):
     currency: str
     minDays: int
     maxDays: Optional[int]
-    lat: float
-    lng: float
+    lat: Optional[float] = None
+    lng: Optional[float] = None
 
 
 class PaginatedVehicleWithPricingResponse(BaseModel):
