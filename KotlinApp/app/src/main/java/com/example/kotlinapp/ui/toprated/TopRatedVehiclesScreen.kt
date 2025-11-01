@@ -46,7 +46,7 @@ fun TopRatedVehiclesScreen(
         TopAppBar(
             title = {
                 Text(
-                    text = "Vehículos Top Rated",
+                    text = "Top Rated Vehicles",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )
@@ -55,7 +55,7 @@ fun TopRatedVehiclesScreen(
                 IconButton(onClick = onNavigateBack) {
                     Icon(
                         imageVector = Icons.Default.ArrowBack,
-                        contentDescription = "Volver"
+                        contentDescription = "Back"
                     )
                 }
             },
@@ -63,7 +63,7 @@ fun TopRatedVehiclesScreen(
                 IconButton(onClick = { showFilters = !showFilters }) {
                     Icon(
                         imageVector = if (showFilters) Icons.Default.FilterListOff else Icons.Default.FilterList,
-                        contentDescription = "Filtros",
+                        contentDescription = "Filters",
                         tint = MaterialTheme.colorScheme.onPrimary
                     )
                 }
@@ -169,13 +169,13 @@ private fun SearchFilters(
                 ) {
                     Icon(
                         imageVector = Icons.Default.FilterList,
-                        contentDescription = "Filtros",
+                        contentDescription = "Filters",
                         tint = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.padding(8.dp)
                     )
                 }
                 Text(
-                    text = "Filtros de Búsqueda",
+                    text = "Search Filters",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -190,12 +190,12 @@ private fun SearchFilters(
                 ) {
                     Icon(
                         imageVector = Icons.Default.LocationOn,
-                        contentDescription = "Ubicación",
+                        contentDescription = "Location",
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(20.dp)
                     )
                     Text(
-                        text = "Ubicación",
+                        text = "Location",
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -242,12 +242,12 @@ private fun SearchFilters(
                 ) {
                     Icon(
                         imageVector = Icons.Default.DateRange,
-                        contentDescription = "Fechas",
+                        contentDescription = "Dates",
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(20.dp)
                     )
                     Text(
-                        text = "Fechas de Renta",
+                        text = "Rental Dates",
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -268,7 +268,7 @@ private fun SearchFilters(
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(
-                                text = "Inicio",
+                                text = "Start",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onTertiaryContainer
                             )
@@ -291,7 +291,7 @@ private fun SearchFilters(
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(
-                                text = "Fin",
+                                text = "End",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onTertiaryContainer
                             )
@@ -314,12 +314,12 @@ private fun SearchFilters(
                 ) {
                     Icon(
                         imageVector = Icons.Default.RadioButtonChecked,
-                        contentDescription = "Radio",
+                        contentDescription = "Radius",
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(20.dp)
                     )
                     Text(
-                        text = "Radio de búsqueda: ${currentParams.radiusKm.toInt()} km",
+                        text = "Search radius: ${currentParams.radiusKm.toInt()} km",
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -383,7 +383,7 @@ private fun SearchFilters(
                         tint = MaterialTheme.colorScheme.onSecondary
                     )
                     Text(
-                        text = "Buscar Vehículos",
+                        text = "Search Vehicles",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSecondary
@@ -424,12 +424,12 @@ private fun SearchFilters(
                         showStartDatePicker = false
                     }
                 ) {
-                    Text("Confirmar")
+                    Text("Confirm")
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showStartDatePicker = false }) {
-                    Text("Cancelar")
+                    Text("Cancel")
                 }
             }
         ) {
@@ -467,12 +467,12 @@ private fun SearchFilters(
                         showEndDatePicker = false
                     }
                 ) {
-                    Text("Confirmar")
+                    Text("Confirm")
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showEndDatePicker = false }) {
-                    Text("Cancelar")
+                    Text("Cancel")
                 }
             }
         ) {
@@ -496,7 +496,7 @@ private fun LoadingContent() {
                 color = MaterialTheme.colorScheme.primary
             )
             Text(
-                text = "Buscando vehículos top-rated...",
+                text = "Searching top-rated vehicles...",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onBackground
             )
@@ -534,7 +534,7 @@ private fun ErrorContent(
                     modifier = Modifier.size(48.dp)
                 )
                 Text(
-                    text = "Error al cargar vehículos",
+                    text = "Error loading vehicles",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onErrorContainer
@@ -549,10 +549,10 @@ private fun ErrorContent(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     OutlinedButton(onClick = onDismiss) {
-                        Text("Cerrar")
+                        Text("Close")
                     }
                     Button(onClick = onRetry) {
-                        Text("Reintentar")
+                        Text("Retry")
                     }
                 }
             }
@@ -572,18 +572,18 @@ private fun EmptyContent() {
         ) {
             Icon(
                 imageVector = Icons.Default.SearchOff,
-                contentDescription = "Sin resultados",
+                contentDescription = "No results",
                 tint = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.size(64.dp)
             )
             Text(
-                text = "No se encontraron vehículos",
+                text = "No vehicles found",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground
             )
             Text(
-                text = "Intenta ajustar los filtros de búsqueda",
+                text = "Try adjusting the search filters",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onBackground,
                 textAlign = TextAlign.Center
@@ -608,7 +608,7 @@ private fun VehiclesList(
         item {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    text = "🏆 Top ${vehicles.size} Vehículos Mejor Calificados",
+                    text = "🏆 Top ${vehicles.size} Best Rated Vehicles",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -629,7 +629,7 @@ private fun VehiclesList(
                             color = MaterialTheme.colorScheme.onSecondaryContainer
                         )
                         Text(
-                            text = " Radio: ${searchParams.radiusKm.toInt()} km",
+                            text = " Radius: ${searchParams.radiusKm.toInt()} km",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSecondaryContainer
                         )
@@ -673,7 +673,7 @@ private fun VehicleCard(vehicle: TopRatedVehicle) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = "Propietario: ${vehicle.ownerText}",
+                        text = "Owner: ${vehicle.ownerText}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                     )
@@ -707,7 +707,7 @@ private fun VehicleCard(vehicle: TopRatedVehicle) {
                             )
                         }
                         Text(
-                            text = vehicle.totalRatings.toString() + " calificaciones",
+                            text = vehicle.totalRatings.toString() + " ratings",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
                         )
@@ -728,17 +728,17 @@ private fun VehicleCard(vehicle: TopRatedVehicle) {
                 ) {
                     VehicleDetailItem(
                         icon = Icons.Default.People,
-                        label = "Plazas",
+                        label = "Seats",
                         value = vehicle.seats.toString()
                     )
                     VehicleDetailItem(
                         icon = Icons.Default.Settings,
-                        label = "Transmisión",
+                        label = "Transmission",
                         value = vehicle.transmissionText
                     )
                     VehicleDetailItem(
                         icon = Icons.Default.LocalGasStation,
-                        label = "Combustible",
+                        label = "Fuel",
                         value = vehicle.fuelTypeText
                     )
                 }
@@ -752,7 +752,7 @@ private fun VehicleCard(vehicle: TopRatedVehicle) {
             ) {
                 Column {
                     Text(
-                        text = "Precio por día",
+                        text = "Price per day",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -766,7 +766,7 @@ private fun VehicleCard(vehicle: TopRatedVehicle) {
                 
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
-                        text = "Distancia",
+                        text = "Distance",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -812,7 +812,7 @@ private fun VehicleCard(vehicle: TopRatedVehicle) {
                         tint = MaterialTheme.colorScheme.onTertiary
                     )
                     Text(
-                        text = "Ver Detalles",
+                        text = "View Details",
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onTertiary

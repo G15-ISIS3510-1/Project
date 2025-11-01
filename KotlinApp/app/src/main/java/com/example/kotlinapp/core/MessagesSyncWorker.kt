@@ -191,29 +191,29 @@ class MessagesSyncWorker(
             // Enviar mensajes en paralelo usando Dispatchers.Default para procesamiento
             val sendTasks = messagesToSync.map { messageEntity ->
                 async(Dispatchers.IO) {
-                    try {
+                try {
                         // Enviar mensaje al servidor (operación de red)
-                        val response = ApiClient.messagesApi.sendMessage(
-                            MessageCreate(
-                                receiverId = messageEntity.receiverId,
-                                content = messageEntity.content,
-                                conversationId = messageEntity.conversationId,
-                                meta = null
-                            )
+                    val response = ApiClient.messagesApi.sendMessage(
+                        MessageCreate(
+                            receiverId = messageEntity.receiverId,
+                            content = messageEntity.content,
+                            conversationId = messageEntity.conversationId,
+                            meta = null
                         )
+                    )
+                    
+                    if (response.isSuccessful && response.body() != null) {
+                        val serverMessage = response.body()!!
                         
-                        if (response.isSuccessful && response.body() != null) {
-                            val serverMessage = response.body()!!
-                            
                             // Actualizar mensaje local con datos del servidor (operación de BD)
-                            localRepository.saveMessage(serverMessage)
-                            
+                        localRepository.saveMessage(serverMessage)
+                        
                             // Eliminar mensaje temporal offline
-                            localRepository.messageDao.deleteMessage(messageEntity.messageId)
-                            
+                        localRepository.messageDao.deleteMessage(messageEntity.messageId)
+                        
                             Log.d(TAG, "Mensaje sincronizado: ${serverMessage.messageId}")
                             1
-                        } else {
+                    } else {
                             Log.w(TAG, "Error enviando mensaje: ${response.code()}")
                             0
                         }
