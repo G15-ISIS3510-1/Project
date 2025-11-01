@@ -67,6 +67,9 @@ class LoginFragment : Fragment() {
                     LoginReminderWorker.cancel(requireContext())
                     LoginReminderWorker.schedule(requireContext(), delayMinutes = 60L)
 
+                    // Iniciar sincronización automática de mensajes en background
+                    com.example.kotlinapp.App.getMessagesSyncScheduler().start()
+
                     findNavController().navigate(R.id.action_login_to_home)
 
                     viewModel.clearState()

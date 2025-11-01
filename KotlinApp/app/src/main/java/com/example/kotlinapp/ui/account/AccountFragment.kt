@@ -71,8 +71,15 @@ class AccountFragment : Fragment() {
         }
 
         binding.btnSignOut.setOnClickListener {
-            Toast.makeText(requireContext(), "Sign Out clicked", Toast.LENGTH_SHORT).show()
-            // TODO: Navigate to login and clear session
+            // Detener sincronización automática de mensajes
+            com.example.kotlinapp.App.getMessagesSyncScheduler().stop()
+            
+            // Hacer logout
+            com.example.kotlinapp.data.repository.AuthRepository().logout()
+            
+            Toast.makeText(requireContext(), "Sesión cerrada", Toast.LENGTH_SHORT).show()
+            
+            // Navegar al login
             findNavController().navigate(R.id.loginFragment)
         }
 
