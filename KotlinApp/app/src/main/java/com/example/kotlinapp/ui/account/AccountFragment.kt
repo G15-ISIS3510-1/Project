@@ -65,15 +65,15 @@ class AccountFragment : Fragment() {
             Toast.makeText(requireContext(), "Price Analytics clicked", Toast.LENGTH_SHORT).show()
             findNavController().navigate(R.id.priceAnalyticsFragment)
         }
+
         binding.btnMetrics.setOnClickListener {
-                findNavController().navigate(R.id.action_account_to_metrics)
+            findNavController().navigate(R.id.action_account_to_metrics)
         }
 
-            binding.btnSwitchAccount.setOnClickListener {
-                Toast.makeText(requireContext(), "Switch Account clicked", Toast.LENGTH_SHORT)
-                    .show()
-                // TODO: Implement account switch
-            }
+        binding.btnSwitchAccount.setOnClickListener {
+            Toast.makeText(requireContext(), "Switch Account clicked", Toast.LENGTH_SHORT).show()
+            // TODO: Implement account switch
+        }
 
         binding.btnSignOut.setOnClickListener {
             // Detener sincronización automática de mensajes
@@ -88,57 +88,53 @@ class AccountFragment : Fragment() {
             findNavController().navigate(R.id.loginFragment)
         }
 
-            binding.btnGoBack.setOnClickListener {
-                findNavController().popBackStack()
-            }
-        }
-
-        private fun setupBottomBar() {
-            val composeView: ComposeView = binding.bottomBarCompose
-            composeView.setContent {
-                AppTheme {
-                    PillBottomNavBar(selectedTab = BottomTab.Account) { tab ->
-                        navigateToTab(tab)
-                    }
-                }
-            }
-        }
-
-        private fun navigateToTab(tab: BottomTab) {
-            val navController = findNavController()
-            val currentDestination = navController.currentDestination?.id
-
-            when (tab) {
-                BottomTab.Home -> {
-                    if (currentDestination != R.id.homeFragment) {
-                        navController.navigate(R.id.homeFragment)
-                    }
-                }
-
-                BottomTab.Trip -> {
-                    if (currentDestination != R.id.tripFragment) {
-                        navController.navigate(R.id.tripFragment)
-                    }
-                }
-
-                BottomTab.Messages -> {
-                    if (currentDestination != R.id.messagesFragment) {
-                        navController.navigate(R.id.messagesFragment)
-                    }
-                }
-
-                BottomTab.Host -> {
-                    if (currentDestination != R.id.hostFragment) {
-                        navController.navigate(R.id.hostFragment)
-                    }
-                }
-
-                BottomTab.Account -> {}
-            }
-        }
-
-        override fun onDestroyView() {
-            super.onDestroyView()
-            _binding = null
+        binding.btnGoBack.setOnClickListener {
+            findNavController().popBackStack()
         }
     }
+
+    private fun setupBottomBar() {
+        val composeView: ComposeView = binding.bottomBarCompose
+        composeView.setContent {
+            AppTheme {
+                PillBottomNavBar(selectedTab = BottomTab.Account) { tab ->
+                    navigateToTab(tab)
+                }
+            }
+        }
+    }
+
+    private fun navigateToTab(tab: BottomTab) {
+        val navController = findNavController()
+        val currentDestination = navController.currentDestination?.id
+
+        when (tab) {
+            BottomTab.Home -> {
+                if (currentDestination != R.id.homeFragment) {
+                    navController.navigate(R.id.homeFragment)
+                }
+            }
+            BottomTab.Trip -> {
+                if (currentDestination != R.id.tripFragment) {
+                    navController.navigate(R.id.tripFragment)
+                }
+            }
+            BottomTab.Messages -> {
+                if (currentDestination != R.id.messagesFragment) {
+                    navController.navigate(R.id.messagesFragment)
+                }
+            }
+            BottomTab.Host -> {
+                if (currentDestination != R.id.hostFragment) {
+                    navController.navigate(R.id.hostFragment)
+                }
+            }
+            BottomTab.Account -> {}
+        }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
+}
