@@ -9,15 +9,20 @@ import com.example.kotlinapp.data.local.dao.VehicleLocationDao
 import com.example.kotlinapp.data.local.entity.PendingVehicleEntity
 import com.example.kotlinapp.data.local.entity.VehicleLocationEntity
 import com.example.kotlinapp.data.local.dao.PaymentAnalyticsDao
+import com.example.kotlinapp.data.local.dao.VehicleHomeCacheDao
 import com.example.kotlinapp.data.local.entity.PaymentAnalyticsEntity
+import com.example.kotlinapp.data.local.entity.VehicleHomeEntity
+
+
 
 @Database(
     entities = [
         VehicleLocationEntity::class,
         PendingVehicleEntity::class,
-        PaymentAnalyticsEntity::class
+        PaymentAnalyticsEntity::class,
+        VehicleHomeEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -26,6 +31,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun pendingVehicleDao(): PendingVehicleDao
 
     abstract fun paymentAnalyticsDao(): PaymentAnalyticsDao
+
+    abstract fun vehicleHomeCacheDao(): VehicleHomeCacheDao
 
     companion object {
         @Volatile

@@ -72,10 +72,13 @@ import coil.compose.AsyncImage
 import com.example.kotlinapp.ui.navigation.BottomTab
 import com.example.kotlinapp.ui.navigation.PillBottomNavBar
 
+import androidx.compose.animation.*
+import androidx.compose.material.icons.filled.CloudOff
+
 
 @Composable
 fun HomeScreen(
-    viewModel: HomeViewModel = viewModel(),
+    viewModel: HomeViewModel,
     onCardClick: (VehicleItem) -> Unit = {},
     onBottomClick: (BottomTab) -> Unit = {},
     onTopRatedClick: () -> Unit = {}
@@ -117,6 +120,54 @@ fun HomeScreen(
                     selectedCategory = uiState.selectedCategory,
                     onCategoryClick = { viewModel.onCategorySelected(it) }
                 )
+            }
+
+            if (uiState.showCacheBanner) {
+                item {
+                    androidx.compose.animation.AnimatedVisibility(
+                        visible = true,
+                        enter = androidx.compose.animation.expandVertically() + androidx.compose.animation.fadeIn(),
+                        exit = androidx.compose.animation.shrinkVertically() + androidx.compose.animation.fadeOut()
+                    ) {
+                        ElevatedCard(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.elevatedCardColors(
+                                containerColor = Color(0xFFFFF3CD)
+                            ),
+                            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    Icons.Default.CloudOff,
+                                    contentDescription = null,
+                                    tint = Color(0xFF856404),
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(Modifier.width(12.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        "Primeros 20 vehículos en caché",
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF856404)
+                                    )
+                                    Text(
+                                        if (uiState.isOffline) {
+                                            "Sin conexión. Se actualizará al reconectar."
+                                        } else {
+                                            "Mostrando datos guardados."
+                                        },
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Color(0xFF856404)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
 
@@ -202,7 +253,7 @@ private fun ErrorMessage(error: String, onRetry: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "⚠️ Error",
+                text = "Error",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onErrorContainer
@@ -483,7 +534,7 @@ private fun TopRatedButton(onClick: () -> Unit) {
         ) {
             Column {
                 Text(
-                    text = "🏆 Vehículos Top Rated",
+                    text = "Vehículos Top Rated",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimaryContainer

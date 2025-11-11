@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.compose.ui.platform.ComposeView
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import com.example.kotlinapp.R
 import com.example.kotlinapp.databinding.FragmentHomeBinding
@@ -37,7 +38,20 @@ class HomeFragment : Fragment() {
         val composeView: ComposeView = view?.findViewById(R.id.homeCompose) ?: return
         composeView.setContent {
             AppTheme {
+
+                val viewModel: HomeViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
+                    factory = object : ViewModelProvider.Factory {
+                        @Suppress("UNCHECKED_CAST")
+                        override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+                            return HomeViewModel(
+                                requireActivity().application
+                            ) as T
+                        }
+                    }
+                )
+
                 HomeScreen(
+                    viewModel = viewModel,
                     onCardClick = { /* TODO: navigate to detail */ },
                     onTopRatedClick = {
                         val intent = Intent(requireContext(), TopRatedVehiclesActivity::class.java)
