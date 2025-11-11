@@ -31,12 +31,16 @@ class PaymentAnalyticsRepository(
         }
     }
 
-
+    /** Sincroniza analytics desde API usando estrategia de múltiples dispatchers anidados:
+     1. Dispatchers.IO (externo): Llamada HTTP (red)
+     2. Dispatchers.Default (anidado): Procesamiento CPU-intensivo (mapping, cálculos)
+     3. Dispatchers.IO (anidado): Escritura a Room (I/O bloqueante)
+     */
     suspend fun syncAnalytics(): Result<Unit> = withContext(Dispatchers.IO) {
         return@withContext try {
-            Log.d("PaymentRepo", " Sincronizando analytics desde API...")
+            Log.d("PaymentRepo", "[Dispatcher.IO] Sincronizando analytics desde API...")
 
-
+            // ============ PASO 1: Fetch de red en IO ============
             val resp = api.methodAdoption()
 
             if (!resp.isSuccessful) {
@@ -44,32 +48,42 @@ class PaymentAnalyticsRepository(
             }
 
             val body = resp.body() ?: throw Exception("Empty response")
-
             Log.d("PaymentRepo", "API retornó ${body.size} métodos de pago")
 
-            val total = body.sumOf { it.count }.coerceAtLeast(1)
 
-            val analytics = body.map {
-                PaymentMethodAnalytics(
-                    name = it.name,
-                    count = it.count,
-                    percentage = it.percentage ?: (it.count * 100.0 / total)
-                )
+            val entities = withContext(Dispatchers.Default) {
+                Log.d("PaymentRepo", "[Dispatcher.Default] Procesando datos (cálculos)...")
+
+
+                val total = body.sumOf { it.count }.coerceAtLeast(1)
+
+
+                val analytics = body.map {
+                    PaymentMethodAnalytics(
+                        name = it.name,
+                        count = it.count,
+                        percentage = it.percentage ?: (it.count * 100.0 / total)
+                    )
+                }
+
+                analytics.map { method ->
+                    PaymentAnalyticsEntity(
+                        methodName = method.name,
+                        transactionCount = method.count,
+                        percentage = method.percentage,
+                        cachedAt = System.currentTimeMillis()
+                    )
+                }
             }
 
-            val entities = analytics.map { method ->
-                PaymentAnalyticsEntity(
-                    methodName = method.name,
-                    transactionCount = method.count,
-                    percentage = method.percentage,
-                    cachedAt = System.currentTimeMillis()
-                )
+            Log.d("PaymentRepo", "Procesamiento completado: ${entities.size} entidades")
+
+            withContext(Dispatchers.IO) {
+                Log.d("PaymentRepo", "[Dispatcher.IO] Guardando en Room...")
+                dao.deleteAll()
+                dao.insertAll(entities)
+                Log.d("PaymentRepo", "${entities.size} métodos guardados en cache")
             }
-
-            dao.deleteAll()
-            dao.insertAll(entities)
-
-            Log.d("PaymentRepo", "${entities.size} métodos guardados en cache")
 
             Result.success(Unit)
 
