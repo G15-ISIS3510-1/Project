@@ -36,7 +36,7 @@ class TopRatedVehicleSearch(BaseModel):
     lng: float = Field(..., ge=-180, le=180, description="Longitud del usuario")
     radius_km: float = Field(50.0, ge=1.0, le=500.0, description="Radio de búsqueda en kilómetros")
     limit: int = Field(3, ge=1, le=20, description="Número máximo de vehículos a retornar")
-    min_rating: float = Field(3.0, ge=1.0, le=5.0, description="Calificación mínima requerida")
+    min_rating: float = Field(0.0, ge=0.0, le=5.0, description="Calificación mínima requerida (0.0 para incluir todos los vehículos con ratings)")
 
 class TopRatedVehicleResponse(BaseModel):
     vehicle_id: str

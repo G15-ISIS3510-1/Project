@@ -19,5 +19,8 @@ data class TopRatedVehicleSearch(
     val radiusKm: Double = 50.0,
     
     @SerializedName("limit")
-    val limit: Int = 3
+    val limit: Int = 3,
+    
+    @SerializedName("min_rating")
+    val minRating: Double = 0.0  // 0.0 para incluir todos los vehículos con ratings
 )

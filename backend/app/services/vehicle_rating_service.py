@@ -172,10 +172,22 @@ class VehicleRatingService:
         min_rating: float = 3.0
     ) -> List[dict]:
         """Obtener los vehículos con mayor calificación disponibles en fechas y ubicación específicas"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        logger.info("🔍 get_top_rated_vehicles llamado con:")
+        logger.info(f"   - start_ts: {start_ts}")
+        logger.info(f"   - end_ts: {end_ts}")
+        logger.info(f"   - lat: {lat}, lng: {lng}")
+        logger.info(f"   - radius_km: {radius_km}")
+        logger.info(f"   - limit: {limit}")
+        logger.info(f"   - min_rating: {min_rating}")
 
         # Convertir fechas
         start_datetime = datetime.fromisoformat(start_ts.replace('Z', '+00:00'))
         end_datetime = datetime.fromisoformat(end_ts.replace('Z', '+00:00'))
+        logger.info(f"   - start_datetime (parsed): {start_datetime}")
+        logger.info(f"   - end_datetime (parsed): {end_datetime}")
 
         # Subconsulta para obtener calificación promedio por vehículo
         avg_rating_subquery = (
@@ -223,12 +235,16 @@ class VehicleRatingService:
 
         result = await self.db.execute(query)
         vehicles_data = result.all()
+        
+        logger.info(f"📊 Vehículos encontrados antes de filtrar por distancia: {len(vehicles_data)}")
 
         # Filtrar por distancia y limitar resultados
         filtered_vehicles = []
         for vehicle_data in vehicles_data:
             vehicle = vehicle_data[0]
             distance = self._calculate_distance(lat, lng, vehicle.lat, vehicle.lng)
+            
+            logger.debug(f"   - {vehicle.make} {vehicle.model}: distancia={distance:.2f}km, rating={vehicle_data[4]:.2f}")
 
             if distance <= radius_km:
                 filtered_vehicles.append({
@@ -250,8 +266,12 @@ class VehicleRatingService:
                     'distance_km': round(distance, 2),
                     'owner_name': vehicle_data[1]  # owner_name
                 })
+                logger.info(f"   ✅ {vehicle.make} {vehicle.model} añadido (distancia: {distance:.2f}km)")
 
                 if len(filtered_vehicles) >= limit:
                     break
+            else:
+                logger.debug(f"   ❌ {vehicle.make} {vehicle.model} fuera del radio (distancia: {distance:.2f}km > {radius_km}km)")
 
+        logger.info(f"✅ Total vehículos después de filtrar por distancia: {len(filtered_vehicles)}")
         return filtered_vehicles

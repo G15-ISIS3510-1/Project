@@ -18,11 +18,13 @@ data class TopRatedVehiclesUiState(
 )
 
 data class SearchParams(
-    // Buscar vehículos para dentro de 7 días a las 10am UTC (horario seguro dentro de disponibilidad)
+    // Buscar vehículos dentro del rango disponible (09:00-21:00 UTC)
+    // Usar fecha dentro del rango donde hay disponibilidad (hasta 30 días en el futuro)
     val startDate: Date = run {
         val calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
-            add(Calendar.DAY_OF_YEAR, 7)  // 7 días en el futuro
-            set(Calendar.HOUR_OF_DAY, 10)  // 10:00 AM UTC
+            // Buscar para mañana a las 10:00 AM UTC (dentro del rango 09:00-21:00)
+            add(Calendar.DAY_OF_YEAR, 1)
+            set(Calendar.HOUR_OF_DAY, 10)
             set(Calendar.MINUTE, 0)
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
@@ -31,8 +33,9 @@ data class SearchParams(
     },
     val endDate: Date = run {
         val calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
-            add(Calendar.DAY_OF_YEAR, 7)  // mismo día
-            set(Calendar.HOUR_OF_DAY, 18)  // 6:00 PM UTC
+            // Mismo día a las 18:00 PM UTC (dentro del rango 09:00-21:00)
+            add(Calendar.DAY_OF_YEAR, 1)
+            set(Calendar.HOUR_OF_DAY, 18)
             set(Calendar.MINUTE, 0)
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
@@ -76,18 +79,29 @@ class TopRatedVehiclesViewModel(
             
             result.fold(
                 onSuccess = { vehicles ->
+                    android.util.Log.d("TopRatedVM", "✅ Vehículos recibidos: ${vehicles.size}")
+                    if (vehicles.isEmpty()) {
+                        android.util.Log.w("TopRatedVM", "⚠️ Lista vacía - verificar logs del repositorio")
+                    }
                     _uiState.value = _uiState.value.copy(
                         vehicles = vehicles,
                         isLoading = false,
-                        error = null
+                        error = if (vehicles.isEmpty()) "No se encontraron vehículos con los criterios especificados. Intenta ajustar los filtros de búsqueda." else null
                     )
                 },
                 onFailure = { error ->
+                    android.util.Log.e("TopRatedVM", "❌ Error al cargar vehículos: ${error.message}")
+                    
                     val errorMessage = when {
+                        error.message?.contains("422") == true -> {
+                            // Error de validación - mostrar mensaje del servidor
+                            error.message ?: "Error de validación. Verifica los parámetros de búsqueda."
+                        }
                         error.message?.contains("401") == true -> "Sesión expirada. Por favor, inicia sesión nuevamente."
                         error.message?.contains("403") == true -> "No tienes permisos para acceder a esta información."
                         error.message?.contains("404") == true -> "No se encontraron vehículos con los criterios especificados."
                         error.message?.contains("500") == true -> "Error del servidor. Intenta nuevamente más tarde."
+                        error.message?.contains("400") == true -> error.message ?: "Solicitud inválida. Verifica los parámetros."
                         error.message?.contains("timeout") == true -> "Tiempo de espera agotado. Verifica tu conexión a internet."
                         else -> error.message ?: "Error desconocido al cargar vehículos"
                     }
