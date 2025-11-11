@@ -7,6 +7,7 @@ import com.example.kotlinapp.data.remote.dto.PricingUpdate
 import com.example.kotlinapp.data.remote.dto.TokenResponse
 import com.example.kotlinapp.data.remote.dto.VehicleCreate
 import com.example.kotlinapp.data.remote.dto.VehicleListResponse
+import com.example.kotlinapp.data.remote.dto.VehicleListHomeResponse
 import com.example.kotlinapp.data.remote.dto.VehicleResponse
 import com.example.kotlinapp.data.remote.dto.VehicleWithPricingResponse
 import okhttp3.MultipartBody
@@ -23,7 +24,7 @@ interface VehiclesApiService {
 
     @GET("api/vehicles/active")
     //suspend fun getActiveVehicles(): List<VehicleResponse>
-    suspend fun getActiveVehicles(): List<VehicleResponse>
+    suspend fun getActiveVehicles(): VehicleListHomeResponse
 
     @GET("api/vehicles/active-with-pricing")
     suspend fun getActiveVehiclesWithPricing(

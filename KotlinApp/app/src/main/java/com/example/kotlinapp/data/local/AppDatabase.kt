@@ -8,19 +8,24 @@ import com.example.kotlinapp.data.local.dao.PendingVehicleDao
 import com.example.kotlinapp.data.local.dao.VehicleLocationDao
 import com.example.kotlinapp.data.local.entity.PendingVehicleEntity
 import com.example.kotlinapp.data.local.entity.VehicleLocationEntity
+import com.example.kotlinapp.data.local.dao.PaymentAnalyticsDao
+import com.example.kotlinapp.data.local.entity.PaymentAnalyticsEntity
 
 @Database(
     entities = [
         VehicleLocationEntity::class,
-        PendingVehicleEntity::class
+        PendingVehicleEntity::class,
+        PaymentAnalyticsEntity::class
     ],
-    version = 2,          
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun vehicleLocationDao(): VehicleLocationDao
     abstract fun pendingVehicleDao(): PendingVehicleDao
+
+    abstract fun paymentAnalyticsDao(): PaymentAnalyticsDao
 
     companion object {
         @Volatile

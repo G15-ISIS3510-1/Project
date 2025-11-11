@@ -62,13 +62,13 @@ class VehicleRepository(
     }
 
     suspend fun getActiveVehicles(): List<VehicleResponse> {
-        val vehicles = vehiclesApi.getActiveVehicles()
+        val vehicles = vehiclesApi.getActiveVehicles().items
 
         println("🚗 === ACTIVE VEHICLES (${vehicles.size}) ===")
         vehicles.forEachIndexed { index, vehicle ->
             println("[$index] ${vehicle.make} ${vehicle.model} - Lat: ${vehicle.lat}, Lng: ${vehicle.lng}")
         }
-        return vehiclesApi.getActiveVehicles()
+        return vehiclesApi.getActiveVehicles().items
     }
 
 
