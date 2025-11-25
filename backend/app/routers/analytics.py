@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from datetime import datetime, timedelta
+
 from sqlalchemy import func, select
 
 from app.db import models
@@ -223,6 +225,95 @@ async def get_demand_peaks_extended(db: AsyncSession = Depends(get_db)):
         print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
 
+# Sprint 4
+@router.get("/insurance/daily-costs")
+async def get_insurance_daily_costs(db: AsyncSession = Depends(get_db)):
+
+    stmt = (
+        select(
+            models.InsurancePlan.insurance_plan_id,
+            models.InsurancePlan.name,
+            models.InsurancePlan.daily_cost,
+        )
+        .where(models.InsurancePlan.active == True)
+        .order_by(models.InsurancePlan.daily_cost.desc())
+    )
+
+    result = await db.execute(stmt)
+    rows = result.all()
+
+    return [
+        {
+            "insurance_plan_id": r.insurance_plan_id,
+            "name": r.name,
+            "daily_cost": r.daily_cost,
+        }
+        for r in rows
+    ]
+
+@router.get("/vehicles/recent-price-updates")
+async def get_recent_price_updates(db: AsyncSession = Depends(get_db)):
+
+    seven_days_ago = datetime.utcnow() - timedelta(days=7)
+
+    stmt = (
+        select(
+            models.Pricing.pricing_id,
+            models.Pricing.vehicle_id,
+            models.Pricing.daily_price,
+            models.Pricing.last_updated,
+        )
+        .where(models.Pricing.last_updated >= seven_days_ago)
+        .order_by(models.Pricing.daily_price.desc())
+    )
+
+    result = await db.execute(stmt)
+    rows = result.all()
+
+    return [
+        {
+            "pricing_id": r.pricing_id,
+            "vehicle_id": r.vehicle_id,
+            "daily_price": r.daily_price,
+            "last_updated": r.last_updated,
+        }
+        for r in rows
+    ]
+
+@router.get("/bookings/fees-taxes")
+async def get_fees_and_taxes(db: AsyncSession = Depends(get_db)):
+
+    stmt = (
+        select(
+            models.Booking.booking_id,
+            models.Booking.daily_price_snapshot,
+            models.Booking.insurance_daily_cost_snapshot,
+            models.Booking.subtotal,
+            models.Booking.fees,
+            models.Booking.taxes,
+            models.Booking.total,
+            models.Booking.currency,
+        )
+        .order_by(models.Booking.total.desc())
+    )
+
+    result = await db.execute(stmt)
+    rows = result.all()
+
+    return [
+        {
+            "booking_id": r.booking_id,
+            "daily_price_snapshot": r.daily_price_snapshot,
+            "insurance_daily_cost_snapshot": r.insurance_daily_cost_snapshot,
+            "subtotal": r.subtotal,
+            "fees": r.fees,
+            "taxes": r.taxes,
+            "total": r.total,
+            "currency": r.currency,
+        }
+        for r in rows
+    ]
+#
 
 @router.get(
     "/features/low-usage",

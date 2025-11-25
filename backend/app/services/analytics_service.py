@@ -219,3 +219,56 @@ class BookingReminderAnalytics:
 
         result = await db.execute(stmt)
         return result.all()
+    
+    #Sprint 4
+    async def insurance_daily_costs(db: Session):
+        stmt = (
+            select(
+                models.InsurancePlan.insurance_plan_id,
+                models.InsurancePlan.name,
+                models.InsurancePlan.daily_cost,
+            )
+            .where(models.InsurancePlan.active == True)
+            .order_by(models.InsurancePlan.daily_cost.desc())
+        )
+
+        result = await db.execute(stmt)
+        return result.all()
+    
+    async def recent_vehicle_price_updates(db: Session):
+
+        seven_days_ago = datetime.utcnow() - timedelta(days=7)
+
+        stmt = (
+            select(
+                models.Pricing.pricing_id,
+                models.Pricing.vehicle_id,
+                models.Pricing.daily_price,
+                models.Pricing.last_updated,
+            )
+            .where(models.Pricing.last_updated >= seven_days_ago)
+            .order_by(models.Pricing.daily_price.desc())
+        )
+
+        result = await db.execute(stmt)
+        return result.all()
+
+    async def fees_and_taxes(db: Session):
+
+        stmt = (
+            select(
+                models.Booking.booking_id,
+                models.Booking.daily_price_snapshot,
+                models.Booking.insurance_daily_cost_snapshot,
+                models.Booking.subtotal,
+                models.Booking.fees,
+                models.Booking.taxes,
+                models.Booking.total,
+                models.Booking.currency,
+            )
+            .order_by(models.Booking.total.desc())
+        )
+
+        result = await db.execute(stmt)
+        return result.all()
+    #
