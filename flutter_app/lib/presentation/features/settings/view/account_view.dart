@@ -291,6 +291,7 @@
 // lib/presentation/features/settings/view/account_view.dart
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_app/presentation/features/settings/view/about_view.dart';
 import 'package:flutter_app/presentation/features/settings/view/profile_settings_view.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
@@ -583,6 +584,15 @@ class AccountView extends StatelessWidget {
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(builder: (_) => const LegalView()),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  pillButton(
+                    Icons.account_circle_rounded,
+                    'About Us',
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const AboutView()),
                     ),
                   ),
 
