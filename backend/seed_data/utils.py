@@ -26,7 +26,7 @@ _COLLECTION_BASE_PATHS = {
 # -------------------------------------------------
 # Base URL for hitting the running FastAPI/Cloud Run
 # -------------------------------------------------
-BASE_URL = os.getenv("SEED_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
+BASE_URL = os.getenv("SEED_BASE_URL", "https://qovo-api-862569067561.us-central1.run.app").rstrip("/")
 
 # cache for admin token that we can reuse everywhere
 _ADMIN_TOKEN_CACHE: Optional[str] = os.getenv("SEED_ADMIN_TOKEN")
