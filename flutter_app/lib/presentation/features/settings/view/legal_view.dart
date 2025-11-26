@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../viewmodel/legal_viewmodel.dart';
+import '../../analytics/time_analytics/data/time_tracker.dart';
+import '../../analytics/time_analytics/data/time_storage.dart';
 
 class LegalView extends StatelessWidget {
   const LegalView({super.key});
@@ -14,8 +16,26 @@ class LegalView extends StatelessWidget {
   }
 }
 
-class _LegalViewContent extends StatelessWidget {
+class _LegalViewContent extends StatefulWidget {
   const _LegalViewContent({super.key});
+
+  @override
+  State<_LegalViewContent> createState() => _LegalViewContentState();
+}
+
+class _LegalViewContentState extends State<_LegalViewContent> {
+  @override
+  void initState() {
+    super.initState();
+    TimeTracker.start("legal_view");
+  }
+
+  @override
+  void dispose() {
+    final record = TimeTracker.stop();
+    if (record != null) TimeStorage.save(record);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +66,6 @@ class _LegalViewContent extends StatelessWidget {
                           constraints: const BoxConstraints(),
                         ),
                         const SizedBox(height: 12),
-
                         Text(
                           'Terms & Conditions',
                           style: text.headlineSmall?.copyWith(
@@ -57,7 +76,6 @@ class _LegalViewContent extends StatelessWidget {
                         const SizedBox(height: 12),
                         Divider(thickness: 2, color: scheme.outlineVariant),
                         const SizedBox(height: 16),
-
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
@@ -84,12 +102,10 @@ class _LegalViewContent extends StatelessWidget {
                     ),
                   ),
                 ),
-
                 const SliverToBoxAdapter(child: SizedBox(height: 92)),
               ],
             ),
           ),
-
           if (vm.usedCache)
             Positioned(
               bottom: 0,

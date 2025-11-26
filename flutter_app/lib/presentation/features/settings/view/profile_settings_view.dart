@@ -25,6 +25,10 @@ import 'package:flutter_app/data/sources/local/analytics_local_source.dart';
 import 'package:flutter_app/data/sources/local/analytics_extended_local_source.dart';
 import 'package:flutter_app/data/sources/local/owner_income_local_source.dart';
 
+import '../../analytics/time_analytics/view/time_analytics_view.dart';
+import '../../analytics/time_analytics/viewmodel/time_analytics_viewmodel.dart';
+import '../../analytics/time_analytics/data/time_repository.dart';
+
 
 class UserProfile {
   final String id;
@@ -380,6 +384,24 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
                         );
                       },
                     ),
+                    const SizedBox(height: 16),
+                    pillButton(
+                      Icons.timer_outlined,
+                      'App Usage Analytics',
+                      onTap: () {
+                        final repository = TimeRepository();
+
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => ChangeNotifierProvider(
+                              create: (_) => TimeAnalyticsViewModel(repository)..load(),
+                              child: const TimeAnalyticsView(),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+
                     const SizedBox(height: 16),
                     pillButton(
                       Icons.access_time,

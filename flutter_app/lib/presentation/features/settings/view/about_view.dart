@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../viewmodel/about_viewmodel.dart';
+import '../../analytics/time_analytics/data/time_tracker.dart';
+import '../../analytics/time_analytics/data/time_storage.dart';
 
 class AboutView extends StatelessWidget {
   const AboutView({super.key});
@@ -14,8 +16,29 @@ class AboutView extends StatelessWidget {
   }
 }
 
-class _AboutViewContent extends StatelessWidget {
+class _AboutViewContent extends StatefulWidget {
   const _AboutViewContent({super.key});
+
+  @override
+  State<_AboutViewContent> createState() => _AboutViewContentState();
+}
+
+class _AboutViewContentState extends State<_AboutViewContent> {
+
+  // ---------- TRACKING ----------
+  @override
+  void initState() {
+    super.initState();
+    TimeTracker.start("about_view"); // Start timer
+  }
+
+  @override
+  void dispose() {
+    final record = TimeTracker.stop();
+    if (record != null) TimeStorage.save(record);
+    super.dispose();
+  }
+  // --------------------------------
 
   @override
   Widget build(BuildContext context) {
@@ -61,7 +84,7 @@ class _AboutViewContent extends StatelessWidget {
                         Divider(thickness: 2, color: scheme.outlineVariant),
                         const SizedBox(height: 16),
 
-                        // ABOUT BOX — identical structure to LegalView
+                        // ABOUT BOX
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
@@ -93,7 +116,7 @@ class _AboutViewContent extends StatelessWidget {
             ),
           ),
 
-          // CACHE BANNER (same logic as OwnerIncomeView)
+          // CACHE BANNER
           if (vm.usedCache)
             Positioned(
               bottom: 0,
