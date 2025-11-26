@@ -7,6 +7,8 @@ import '../../../../data/database/app_database.dart';
 import '../../../../data/repositories/analytics_repository.dart';
 import '../viewmodel/analytics_viewmodel.dart';
 import '/data/database/tables/analytics_table.dart';
+import '../time_analytics/data/time_tracker.dart';
+import '../time_analytics/data/time_storage.dart';
 
 class AnalyticsView extends StatefulWidget {
   final AnalyticsRepositoryImpl repository;
@@ -24,8 +26,16 @@ class _AnalyticsViewState extends State<AnalyticsView> {
   @override
   void initState() {
     super.initState();
+    TimeTracker.start("analytics_view");
     _viewModel = AnalyticsViewModel(repository: widget.repository);
     _loadAndProcessData();
+  }
+
+  @override
+  void dispose() {
+    final record = TimeTracker.stop();
+    if (record != null) TimeStorage.save(record);
+    super.dispose();
   }
 
   Future<void> _loadAndProcessData() async {

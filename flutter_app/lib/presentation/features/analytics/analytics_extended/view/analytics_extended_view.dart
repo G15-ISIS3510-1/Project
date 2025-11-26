@@ -6,6 +6,8 @@ import 'package:http/http.dart' as http;
 import 'package:fl_chart/fl_chart.dart';
 import 'package:provider/provider.dart';
 import '../viewmodel/analytics_extended_viewmodel.dart';
+import '../../time_analytics/data/time_tracker.dart';
+import '../../time_analytics/data/time_storage.dart';
 
 class AnalyticsExtendedView extends StatefulWidget {
   const AnalyticsExtendedView({super.key});
@@ -21,10 +23,18 @@ class _AnalyticsExtendedViewState extends State<AnalyticsExtendedView> {
   @override
   void initState() {
     super.initState();
+    TimeTracker.start("analytics_extended_view");
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final viewModel = context.read<AnalyticsExtendedViewModel>();
       _initialLoad = viewModel.fetchDemandPeaksExtended();
     });
+  }
+
+  @override
+  void dispose() {
+    final record = TimeTracker.stop();
+    if (record != null) TimeStorage.save(record);
+    super.dispose();
   }
 
   @override

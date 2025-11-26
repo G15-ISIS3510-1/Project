@@ -9,6 +9,9 @@ import '../viewmodel/booking_reminder_viewmodel.dart';
 
 import 'package:flutter_app/presentation/features/home/view/home_view.dart'; // 👈 ir a Home
 
+import '../../analytics/time_analytics/data/time_tracker.dart';
+import '../../analytics/time_analytics/data/time_storage.dart';
+
 class BookingRemindersView extends StatefulWidget {
   final String userId;
   const BookingRemindersView({Key? key, required this.userId})
@@ -22,11 +25,19 @@ class _BookingRemindersViewState extends State<BookingRemindersView> {
   @override
   void initState() {
     super.initState();
+    TimeTracker.start("booking_reminders_view");
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<BookingReminderViewModel>().loadUpcomingBookings(
         widget.userId,
       );
     });
+  }
+
+  @override
+  void dispose() {
+    final record = TimeTracker.stop();
+    if (record != null) TimeStorage.save(record);
+    super.dispose();
   }
 
   void _goToHomeToChooseVehicle(BuildContext context) {

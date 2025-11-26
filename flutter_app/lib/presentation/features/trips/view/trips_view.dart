@@ -8,6 +8,9 @@ import 'package:flutter_app/presentation/common_widgets/trip_filter.dart';
 import 'package:flutter_app/presentation/common_widgets/trip_card.dart';
 import 'package:flutter_app/presentation/features/trips/viewmodel/trips_viewmodel.dart';
 
+import '../../analytics/time_analytics/data/time_tracker.dart';
+import '../../analytics/time_analytics/data/time_storage.dart';
+
 class TripsView extends StatefulWidget {
   const TripsView({super.key});
 
@@ -22,7 +25,16 @@ class _TripsViewState extends State<TripsView> {
   final ScrollController _scroll = ScrollController();
 
   @override
+  void initState() {
+    super.initState();
+    TimeTracker.start("credit_cards_view");
+  }
+
+  @override
   void dispose() {
+    final record = TimeTracker.stop();
+    if (record != null) TimeStorage.save(record);
+    
     _scroll.dispose();
     super.dispose();
   }
