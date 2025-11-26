@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../viewmodel/credit_cards_viewmodel.dart';
 
+import '../../../analytics/time_analytics/data/time_tracker.dart';
+import '../../../analytics/time_analytics/data/time_storage.dart';
+
 class CreditCardsView extends StatefulWidget {
   const CreditCardsView({super.key});
 
@@ -14,6 +17,24 @@ class _CreditCardsViewState extends State<CreditCardsView> {
   final holderCtrl = TextEditingController();
   final expCtrl = TextEditingController();
   final cvvCtrl = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    TimeTracker.start("credit_cards_view");
+  }
+
+  @override
+  void dispose() {
+    final record = TimeTracker.stop();
+    if (record != null) TimeStorage.save(record);
+
+    numberCtrl.dispose();
+    holderCtrl.dispose();
+    expCtrl.dispose();
+    cvvCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +58,6 @@ class _CreditCardsViewState extends State<CreditCardsView> {
                       onPressed: () => Navigator.pop(context),
                     ),
                     const SizedBox(height: 12),
-
                     const Text(
                       "Payment Methods",
                       style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
@@ -47,8 +67,10 @@ class _CreditCardsViewState extends State<CreditCardsView> {
                     const SizedBox(height: 16),
 
                     if (vm.cards.isEmpty)
-                      const Text("No cards saved yet.",
-                          style: TextStyle(fontSize: 16, color: Colors.grey)),
+                      const Text(
+                        "No cards saved yet.",
+                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
                     const SizedBox(height: 8),
 
                     ...vm.cards.map((c) => creditCardBox(c)),
@@ -62,14 +84,11 @@ class _CreditCardsViewState extends State<CreditCardsView> {
 
                     _inputField("Card Number", numberCtrl,
                         keyboard: TextInputType.number, maxLen: 16),
-
                     const SizedBox(height: 16),
                     _inputField("Card Holder", holderCtrl),
-
                     const SizedBox(height: 16),
                     _inputField("Expiration (MM/YY)", expCtrl,
                         keyboard: TextInputType.number, maxLen: 5),
-
                     const SizedBox(height: 16),
                     _inputField("CVV", cvvCtrl,
                         keyboard: TextInputType.number, maxLen: 4),
@@ -143,17 +162,18 @@ class _CreditCardsViewState extends State<CreditCardsView> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black26, blurRadius: 10, offset: Offset(0, 6)),
+        boxShadow: const [
+          BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 6)),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(masked,
-              style: const TextStyle(
-                  fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold)),
+          Text(
+            masked,
+            style: const TextStyle(
+                fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 14),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,

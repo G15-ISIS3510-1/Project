@@ -3,8 +3,29 @@ import 'package:provider/provider.dart';
 import '../../settings/view/profile_settings_view.dart';
 import '../viewmodel/visited_places_viewmodel.dart';
 
-class VisitedPlacesView extends StatelessWidget {
+import '../../analytics/time_analytics/data/time_tracker.dart';
+import '../../analytics/time_analytics/data/time_storage.dart';
+
+class VisitedPlacesView extends StatefulWidget {
   const VisitedPlacesView({super.key});
+
+  @override
+  State<VisitedPlacesView> createState() => _VisitedPlacesViewState();
+}
+
+class _VisitedPlacesViewState extends State<VisitedPlacesView> {
+  @override
+  void initState() {
+    super.initState();
+    TimeTracker.start("visited_places_view");
+  }
+
+  @override
+  void dispose() {
+    final record = TimeTracker.stop();
+    if (record != null) TimeStorage.save(record);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,11 +66,11 @@ class VisitedPlacesView extends StatelessWidget {
             child: vm.loading
                 ? const Center(child: CircularProgressIndicator())
                 : ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              children: vm.places.map((place) {
-                return _PlaceCard(place: place);
-              }).toList(),
-            ),
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    children: vm.places.map((place) {
+                      return _PlaceCard(place: place);
+                    }).toList(),
+                  ),
           ),
           _buildBackButton(context),
         ],
@@ -125,10 +146,6 @@ class VisitedPlacesView extends StatelessWidget {
   }
 }
 
-// ----------------------------------------------------------------------
-// CARD
-// ----------------------------------------------------------------------
-
 class _PlaceCard extends StatelessWidget {
   final VisitedPlace place;
 
@@ -197,10 +214,6 @@ class _PlaceCard extends StatelessWidget {
     );
   }
 }
-
-// ----------------------------------------------------------------------
-// FILTER CHIP
-// ----------------------------------------------------------------------
 
 class _FilterChip extends StatelessWidget {
   final String label;

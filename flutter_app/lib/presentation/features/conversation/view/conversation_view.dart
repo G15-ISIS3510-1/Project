@@ -3,6 +3,8 @@ import 'package:flutter_app/data/models/message_model.dart';
 import 'package:flutter_app/data/repositories/chat_repository.dart';
 import 'package:flutter_app/presentation/features/conversation/viewmodel/conversation_viewmodel.dart';
 import 'package:provider/provider.dart';
+import '../../analytics/time_analytics/data/time_tracker.dart';
+import '../../analytics/time_analytics/data/time_storage.dart';
 
 class ConversationPage extends StatefulWidget {
   final String currentUserId;
@@ -33,11 +35,15 @@ class _ConversationPageState extends State<ConversationPage> {
   @override
   void initState() {
     super.initState();
+    TimeTracker.start("conversation_view");
     _scrollCtrl.addListener(_onScroll);
   }
 
   @override
   void dispose() {
+    final record = TimeTracker.stop();
+    if (record != null) TimeStorage.save(record);
+
     _controller.dispose();
     _scrollCtrl.removeListener(_onScroll);
     _scrollCtrl.dispose();

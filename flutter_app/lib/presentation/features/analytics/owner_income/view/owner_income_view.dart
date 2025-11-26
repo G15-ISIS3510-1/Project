@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import '../viewmodel/owner_income_viewmodel.dart';
+import '../../time_analytics/data/time_tracker.dart';
+import '../../time_analytics/data/time_storage.dart';
 
 class OwnerIncomeView extends StatefulWidget {
   const OwnerIncomeView({super.key});
@@ -16,10 +18,18 @@ class _OwnerIncomeViewState extends State<OwnerIncomeView> {
   @override
   void initState() {
     super.initState();
+    TimeTracker.start("owner_income_view");
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final viewModel = context.read<OwnerIncomeViewModel>();
       _initialLoad = viewModel.fetchOwnerIncome();
     });
+  }
+
+  @override
+  void dispose() {
+    final record = TimeTracker.stop();
+    if (record != null) TimeStorage.save(record);
+    super.dispose();
   }
 
   @override

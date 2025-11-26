@@ -12,6 +12,9 @@ import 'package:flutter_app/presentation/features/conversation/view/conversation
 import 'package:flutter_app/presentation/features/conversation/viewmodel/conversation_viewmodel.dart';
 import 'package:flutter_app/data/repositories/chat_repository.dart';
 
+import '../../analytics/time_analytics/data/time_tracker.dart';
+import '../../analytics/time_analytics/data/time_storage.dart';
+
 class MessagesView extends StatefulWidget {
   final String currentUserId;
 
@@ -37,6 +40,7 @@ class _MessagesViewState extends State<MessagesView>
   @override
   void initState() {
     super.initState();
+    TimeTracker.start("messages_view");
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -60,6 +64,10 @@ class _MessagesViewState extends State<MessagesView>
     try {
       context.read<HostModeProvider>().removeListener(_onModeChanged);
     } catch (_) {}
+
+    final record = TimeTracker.stop();
+    if (record != null) TimeStorage.save(record);
+
     _scroll.dispose();
     super.dispose();
   }
