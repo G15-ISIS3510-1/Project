@@ -30,7 +30,7 @@ class PaymentFragment : Fragment(R.layout.fragment_payment) {
         }
 
         binding.btnInsurance.setOnClickListener {
-            findNavController().navigate(R.id.insuranceFragment)
+            findNavController().navigate(R.id.action_payment_to_insurance)
         }
 
 

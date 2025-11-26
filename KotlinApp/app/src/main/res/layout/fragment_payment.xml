@@ -129,12 +129,17 @@
         
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnInsurance"
-            style="@style/Widget.Material3.Button.FilledButton"
+            style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
             android:text="Insurance Options"
+            android:layout_height="56dp"
+            android:textSize="18sp"
             android:fontFamily="@font/poppins_semibold"
-            android:layout_marginTop="16dp" />
+            app:cornerRadius="16dp"
+            app:icon="@drawable/ic_info"
+            app:iconGravity="textStart"
+            app:iconPadding="12dp"
+            app:strokeColor="#D8D6DC" />
 
 
         <com.google.android.material.button.MaterialButton

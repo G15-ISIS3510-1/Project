@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/loginFragment">
+    app:startDestination="@id/homeFragment">
 
     <!-- Login Fragment -->
     <fragment
@@ -112,6 +112,9 @@
             <action
                 android:id="@+id/action_account_to_priceAnalytics"
                 app:destination="@id/priceAnalyticsFragment" />
+            <action
+                android:id="@+id/action_payment_to_insurance"
+                app:destination="@id/insuranceFragment" />
 
         </fragment>
 
