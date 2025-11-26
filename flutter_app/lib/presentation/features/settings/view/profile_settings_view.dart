@@ -29,6 +29,9 @@ import '../../analytics/time_analytics/view/time_analytics_view.dart';
 import '../../analytics/time_analytics/viewmodel/time_analytics_viewmodel.dart';
 import '../../analytics/time_analytics/data/time_repository.dart';
 
+import '../../profile/payment/view/credit_cards_view.dart';
+import '../../profile/payment/viewmodel/credit_cards_viewmodel.dart';
+import '../../profile/payment/data/credit_card_repository.dart';
 
 class UserProfile {
   final String id;
@@ -437,7 +440,23 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
                       'Communications',
                     ),
                     const SizedBox(height: 16),
-                    pillButton(Icons.credit_card_rounded, 'Payment'),
+                    pillButton(
+                      Icons.credit_card,
+                      'Payment Methods',
+                      onTap: () {
+                        final repository = CreditCardRepository();
+
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => ChangeNotifierProvider(
+                              create: (_) => CreditCardsViewModel(),
+                              child: const CreditCardsView(),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+
                     const SizedBox(height: 16),
                     Divider(thickness: 2, color: scheme.outlineVariant),
                     const SizedBox(height: 16),
