@@ -126,6 +126,16 @@
             app:iconGravity="textStart"
             app:iconPadding="12dp"
             app:strokeColor="#D8D6DC" />
+        
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnInsurance"
+            style="@style/Widget.Material3.Button.FilledButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Insurance Options"
+            android:fontFamily="@font/poppins_semibold"
+            android:layout_marginTop="16dp" />
+
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnFeedback"

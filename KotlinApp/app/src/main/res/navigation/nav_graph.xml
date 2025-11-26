@@ -116,9 +116,16 @@
         </fragment>
 
         <fragment
-        android:id="@+id/priceAnalyticsFragment"
-        android:name="com.example.kotlinapp.ui.analytics.PriceAnalyticsFragment"
-        android:label="Análisis de Precios" />
+            android:id="@+id/priceAnalyticsFragment"
+            android:name="com.example.kotlinapp.ui.analytics.PriceAnalyticsFragment"
+            android:label="Análisis de Precios" />
+
+        <fragment
+            android:id="@+id/insuranceFragment"
+            android:name="com.example.kotlinapp.ui.insurance.InsuranceFragment"
+            android:label="Insurance"
+            tools:layout="@layout/fragment_insurance" />
+
 
         <!-- Feedback Form Fragment -->
         <fragment
