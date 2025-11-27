@@ -56,6 +56,9 @@ class UpcomingBookingsListResponse(BaseModel):
     total_count: int
 
 
+class FeesTaxesAverageResponse(BaseModel):
+    average: float = Field(..., description="Average of (fees + taxes) per booking")
+    sample_size: int = Field(..., description="Number of bookings considered")
 class FeatureUsageLogRequest(BaseModel):
     feature_name: str = Field(..., min_length=1, max_length=100)
     duration_seconds: Optional[float] = Field(None, ge=0)

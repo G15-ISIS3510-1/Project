@@ -10,6 +10,7 @@ from app.db import get_db
 from app.db.models import User
 from app.routers.users import get_current_user_from_token
 from app.services.analytics_service import BookingReminderAnalytics 
+from app.services.analytics_service import fees_taxes_average
 from app.services.feature_tracking import (
     get_low_usage_features as get_low_usage_features_service,
     get_feature_usage_stats,
@@ -20,6 +21,7 @@ from app.schemas.analytics_schemas import (
     BookingReminderListResponse,
     BookingReminderStatusResponse,
     UpcomingBookingsListResponse,
+    FeesTaxesAverageResponse
     FeatureUsageLogRequest,
     FeatureUsageLogResponse,
 )
@@ -371,6 +373,19 @@ async def get_feature_usage_statistics(
 
 
 @router.get(
+    "/fees-taxes-average",
+    response_model=FeesTaxesAverageResponse,
+    summary="Promedio de fees + taxes por booking",
+    description="Calcula el promedio de fees y taxes sumados sobre todas las reservas confirmadas/activas/completadas."
+)
+async def get_fees_taxes_average(db: AsyncSession = Depends(get_db)):
+    average, sample_size = await fees_taxes_average(db)
+    return {
+        "average": round(average, 2),
+        "sample_size": sample_size
+    }
+  
+ @router.get(
     "/features/chat-time-stats",
     summary="Estadísticas de tiempo en chat",
     description="Obtiene estadísticas detalladas del tiempo que los usuarios pasan en el chat antes de cambiar de sección."

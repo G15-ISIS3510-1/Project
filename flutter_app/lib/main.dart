@@ -29,6 +29,7 @@ import 'package:flutter_app/data/sources/local/vehicle_local_source.dart';
 import 'package:flutter_app/data/stores/booking_reminders_store.dart';
 import 'package:flutter_app/data/stores/drafts_store.dart';
 import 'package:flutter_app/data/stores/suggested_price_store.dart';
+import 'package:flutter_app/data/stores/fees_taxes_store.dart';
 
 // ===== Remote / API =====
 import 'package:flutter_app/data/sources/remote/api_client.dart';
@@ -58,6 +59,7 @@ import 'package:flutter_app/data/repositories/availability_repository_cached.dar
 import 'package:flutter_app/data/repositories/booking_repository_cached.dart';
 import 'package:flutter_app/data/repositories/pricing_repository_cached.dart';
 import 'package:flutter_app/data/repositories/chat_repository_cached.dart';
+import 'package:flutter_app/data/repositories/fees_taxes_repository.dart';
 
 // ===== UI / ViewModels =====
 import 'package:flutter_app/presentation/features/app_shell/viewmodel/host_mode_provider.dart';
@@ -77,7 +79,6 @@ import 'package:flutter_app/data/sources/local/analytics_local_source.dart';
 import 'package:flutter_app/data/sources/local/analytics_extended_local_source.dart';
 import 'package:flutter_app/data/sources/local/owner_income_local_source.dart';
 
-
 import 'app/theme/theme_controller.dart';
 
 /// Auth/session holder leído por la UI (ligero y notifica cambios).
@@ -87,7 +88,7 @@ class AuthProvider with ChangeNotifier {
   final Future<void> Function(String oldUid)? _onSignOut;
 
   AuthProvider({Future<void> Function(String oldUid)? onSignOut})
-      : _onSignOut = onSignOut;
+    : _onSignOut = onSignOut;
 
   String? get userId => _userId;
   String? get token => _token;
@@ -181,9 +182,11 @@ Future<void> main() async {
         ProxyProvider2<VehiclesDao, InfraDao, VehicleLocalSource>(
           update: (c, vDao, infra, _) => VehicleLocalSource(vDao, infra),
         ),
-        ProxyProvider2<VehicleAvailabilityDao, InfraDao, AvailabilityLocalSource>(
-          update: (c, aDao, infra, _) => AvailabilityLocalSource(aDao, infra),
-        ),
+        ProxyProvider2<
+          VehicleAvailabilityDao,
+          InfraDao,
+          AvailabilityLocalSource
+        >(update: (c, aDao, infra, _) => AvailabilityLocalSource(aDao, infra)),
         ProxyProvider2<PricingDao, InfraDao, PricingLocalSource>(
           update: (c, pDao, infra, _) => PricingLocalSource(pDao, infra),
         ),
@@ -205,6 +208,9 @@ Future<void> main() async {
         ),
         ProxyProvider<KvDao, BookingRemindersStore>(
           update: (c, kv, _) => BookingRemindersStore(kv),
+        ),
+        ProxyProvider<KvDao, FeesTaxesStore>(
+          update: (c, kv, _) => FeesTaxesStore(kv),
         ),
         Provider<LastReadPrefs>(create: (_) => LastReadPrefs()),
 
@@ -242,14 +248,16 @@ Future<void> main() async {
           create: (c) => UsersRepository(remote: c.read<UserService>()),
         ),
         Provider<VehicleRepositoryImpl>(
-          create: (c) => VehicleRepositoryImpl(remote: c.read<VehicleService>()),
+          create: (c) =>
+              VehicleRepositoryImpl(remote: c.read<VehicleService>()),
         ),
         Provider<AvailabilityRepositoryImpl>(
           create: (c) =>
               AvailabilityRepositoryImpl(remote: c.read<AvailabilityService>()),
         ),
         Provider<PricingRepositoryImpl>(
-          create: (c) => PricingRepositoryImpl(remote: c.read<PricingService>()),
+          create: (c) =>
+              PricingRepositoryImpl(remote: c.read<PricingService>()),
         ),
         Provider<BookingsRepositoryImpl>(
           create: (c) => BookingsRepositoryImpl(c.read<BookingService>()),
@@ -268,10 +276,13 @@ Future<void> main() async {
             localIncome: c.read<OwnerIncomeLocalSource>(),
           ),
         ),
-
         // ───────── cached repositories (atados a usuario/rol)
-        ProxyProvider3<VehicleRepositoryImpl, VehiclesDao, InfraDao,
-            VehicleRepository>(
+        ProxyProvider3<
+          VehicleRepositoryImpl,
+          VehiclesDao,
+          InfraDao,
+          VehicleRepository
+        >(
           update: (c, remote, vDao, infra, _) => VehicleRepositoryCached(
             remoteRepo: remote,
             vehiclesDao: vDao,
@@ -280,13 +291,20 @@ Future<void> main() async {
         ),
 
         // Availability / Pricing con cache local
-        ProxyProvider2<AvailabilityRepositoryImpl, AvailabilityLocalSource,
-            AvailabilityRepository>(
+        ProxyProvider2<
+          AvailabilityRepositoryImpl,
+          AvailabilityLocalSource,
+          AvailabilityRepository
+        >(
           update: (c, remote, local, _) =>
               AvailabilityRepositoryCached(remote: remote, local: local),
         ),
-        ProxyProvider3<PricingRepositoryImpl, PricingLocalSource,
-            SuggestedPriceStore, PricingRepository>(
+        ProxyProvider3<
+          PricingRepositoryImpl,
+          PricingLocalSource,
+          SuggestedPriceStore,
+          PricingRepository
+        >(
           update: (c, remote, local, suggest, _) => PricingRepositoryCached(
             remote: remote,
             local: local,
@@ -296,8 +314,13 @@ Future<void> main() async {
         ),
 
         // BookingsRepository: depende de usuario actual + host mode
-        ProxyProvider4<BookingsRepositoryImpl, BookingLocalSource, AuthProvider,
-            HostModeProvider, BookingsRepository>(
+        ProxyProvider4<
+          BookingsRepositoryImpl,
+          BookingLocalSource,
+          AuthProvider,
+          HostModeProvider,
+          BookingsRepository
+        >(
           update: (c, remote, local, auth, hostMode, _) =>
               BookingsRepositoryCached(
                 remote: remote,
@@ -317,6 +340,15 @@ Future<void> main() async {
             msgDao: c.read<MessagesDao>(),
             lastReadPrefs: c.read<LastReadPrefs>(),
             currentUserId: () => c.read<AuthProvider>().userId ?? '',
+          ),
+        ),
+
+        Provider<FeesTaxesRepository>(
+          create: (c) => FeesTaxesRepositoryImpl(
+            remote: c.read<AnalyticsRemoteSource>(),
+            bookingsRepo: c.read<BookingsRepository>(),
+            bookingLocal: c.read<BookingLocalSource>(),
+            store: c.read<FeesTaxesStore>(),
           ),
         ),
 
@@ -648,7 +680,7 @@ class MyApp extends StatelessWidget {
       darkTheme: _dark(),
       themeMode: themeCtrl.currentMode,
       home: const SplashScreen(),
-      showPerformanceOverlay: true, // TEMP
+      showPerformanceOverlay: false, // TEMP
     );
   }
 }

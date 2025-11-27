@@ -8,6 +8,7 @@ from app.db.models import Booking, BookingStatus, User
 from sqlalchemy.orm import Session
 from sqlalchemy import func, extract
 from app.db import models
+from typing import Optional
 
 class BookingReminderAnalytics:
     
@@ -271,4 +272,32 @@ class BookingReminderAnalytics:
 
         result = await db.execute(stmt)
         return result.all()
+
+# --- Aggregations for fees + taxes ---
+async def fees_taxes_average(db: Session, statuses: Optional[list] = None):
+    """
+    Returns a tuple (average, sample_size) for (fees + taxes) across bookings.
+    Defaults to confirmed/active/completed bookings; treats null fees/taxes as 0.
+    """
+    if statuses is None:
+        statuses = [
+            BookingStatus.confirmed,
+            BookingStatus.active,
+            BookingStatus.completed,
+        ]
+
+    total_expr = func.sum(
+        func.coalesce(models.Booking.fees, 0.0) + func.coalesce(models.Booking.taxes, 0.0)
+    ).label("total_fees_taxes")
+    count_expr = func.count(models.Booking.booking_id).label("sample_size")
+
+    stmt = select(total_expr, count_expr).where(models.Booking.status.in_(statuses))
+    result = await db.execute(stmt)
+    row = result.first()
+
+    total = row.total_fees_taxes or 0.0
+    count = row.sample_size or 0
+
+    average = (total / count) if count else 0.0
+    return average, count
     #
