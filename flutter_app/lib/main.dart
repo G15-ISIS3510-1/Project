@@ -343,12 +343,14 @@ Future<void> main() async {
           ),
         ),
 
-        Provider<FeesTaxesRepository>(
-          create: (c) => FeesTaxesRepositoryImpl(
-            remote: c.read<AnalyticsRemoteSource>(),
-            bookingsRepo: c.read<BookingsRepository>(),
-            bookingLocal: c.read<BookingLocalSource>(),
-            store: c.read<FeesTaxesStore>(),
+        ProxyProvider4<AnalyticsRemoteSource, BookingsRepository,
+            BookingLocalSource, FeesTaxesStore, FeesTaxesRepository>(
+          update: (c, remote, bookings, local, store, prev) =>
+              FeesTaxesRepositoryImpl(
+            remote: remote,
+            bookingsRepo: bookings,
+            bookingLocal: local,
+            store: store,
           ),
         ),
 
