@@ -1,7 +1,6 @@
 package com.example.kotlinapp.data.remote.dto
 import com.example.kotlinapp.ui.home.VehicleItem
 
-// VehicleCreate = VehicleBase (sin owner_id; el backend usa el del token)
 data class VehicleCreate(
     val make: String,
     val model: String,
@@ -52,3 +51,10 @@ fun VehicleResponse.toVehicleItem(): VehicleItem {
         imageUrl = photo_url
     )
 }
+
+data class PaginatedVehicleResponse(
+    val items: List<VehicleResponse>,
+    val total: Int,
+    val skip: Int,
+    val limit: Int
+)

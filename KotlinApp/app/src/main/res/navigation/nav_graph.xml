@@ -92,6 +92,10 @@
             <action
                 android:id="@+id/action_account_to_metrics"
                 app:destination="@id/metricsFragment" />
+
+            <action
+                android:id="@+id/action_account_to_vehicleSelection"
+                app:destination="@id/vehicleSelectionFragment" />
         </fragment>
 
         <fragment
@@ -115,6 +119,8 @@
             <action
                 android:id="@+id/action_payment_to_insurance"
                 app:destination="@id/insuranceFragment" />
+
+
 
         </fragment>
 
@@ -159,5 +165,30 @@
         android:id="@+id/metricsFragment"
         android:name="com.example.kotlinapp.ui.metrics.MetricsFragment"
         android:label="Métricas de Uso" />
+
+
+
+
+    <fragment
+        android:id="@+id/vehicleSelectionFragment"
+        android:name="com.example.kotlinapp.ui.vehicleSelection.VehicleSelectionFragment"
+        android:label="Select Vehicle">
+        <action
+            android:id="@+id/action_vehicleSelection_to_availabilityManagement"
+            app:destination="@id/availabilityManagementFragment" />
+    </fragment>
+
+
+    <fragment
+        android:id="@+id/availabilityManagementFragment"
+        android:name="com.example.kotlinapp.ui.ownerAvailabilityManager.AvailabilityManagementFragment"
+        android:label="Availability Management">
+        <argument
+            android:name="vehicleId"
+            app:argType="string" />
+        <argument
+            android:name="vehicleName"
+            app:argType="string" />
+    </fragment>
 
 </navigation>
