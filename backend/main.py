@@ -41,25 +41,17 @@ def _mask_pw(url: str) -> str:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("Iniciando aplicación FastAPI...")
-    print(f"Modo debug: {settings.debug}")
-    print(f"CORS origins: {settings.cors_origins}")
-    # NEW: show where DB URL came from
-    env_url = os.getenv("DATABASE_URL")
-    eff = env_url or settings.database_url
-    print(f"EFFECTIVE DATABASE_URL: {_mask_pw(eff)}")
-    yield
-    print(" Cerrando aplicación...")
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
     # Startup
     print("Iniciando aplicación FastAPI...")
     print(f"Modo debug: {settings.debug}")
     print(f"CORS origins: {settings.cors_origins}")
+    # Show where DB URL came from
+    env_url = os.getenv("DATABASE_URL")
+    eff = env_url or settings.database_url
+    print(f"EFFECTIVE DATABASE_URL: {_mask_pw(eff)}")
     yield
     # Shutdown
-    print(" Cerrando aplicación...")
+    print("Cerrando aplicación...")
 
 
 # Crear aplicación FastAPI

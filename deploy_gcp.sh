@@ -85,7 +85,10 @@ gcloud run deploy qovo-api \
   --set-cloudsql-instances "$INSTANCE_CONNECTION_NAME" \
   --service-account "$SERVICE_ACCOUNT" \
   --platform managed \
-  --port 8000
+  --port 8000 \
+  --timeout 300 \
+  --cpu 1 \
+  --memory 512Mi
 
 echo "==> Done. Fetching service URL"
 gcloud run services describe qovo-api --region "$REGION" --format='value(status.url)'

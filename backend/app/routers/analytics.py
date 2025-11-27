@@ -21,7 +21,7 @@ from app.schemas.analytics_schemas import (
     BookingReminderListResponse,
     BookingReminderStatusResponse,
     UpcomingBookingsListResponse,
-    FeesTaxesAverageResponse
+    FeesTaxesAverageResponse,
     FeatureUsageLogRequest,
     FeatureUsageLogResponse,
 )
@@ -384,8 +384,9 @@ async def get_fees_taxes_average(db: AsyncSession = Depends(get_db)):
         "average": round(average, 2),
         "sample_size": sample_size
     }
-  
- @router.get(
+
+
+@router.get(
     "/features/chat-time-stats",
     summary="Estadísticas de tiempo en chat",
     description="Obtiene estadísticas detalladas del tiempo que los usuarios pasan en el chat antes de cambiar de sección."
