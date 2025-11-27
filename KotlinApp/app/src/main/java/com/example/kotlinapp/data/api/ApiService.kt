@@ -30,7 +30,9 @@ interface VehiclesApiService {
     @GET("api/vehicles/active-with-pricing")
     suspend fun getActiveVehiclesWithPricing(
         @Query("search") search: String? = null,
-        @Query("category") category: String? = null
+        @Query("category") category: String? = null,
+        @Query("skip") skip: Int = 0,
+        @Query("limit") limit: Int = 20
     ): VehicleListResponse
 
 

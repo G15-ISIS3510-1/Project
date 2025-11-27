@@ -26,7 +26,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.FavoriteBorder
@@ -44,6 +43,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -68,7 +68,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
-
 import com.example.kotlinapp.ui.navigation.BottomTab
 import com.example.kotlinapp.ui.navigation.PillBottomNavBar
 
@@ -81,8 +80,6 @@ fun HomeScreen(
     onTopRatedClick: () -> Unit = {}
 ) {
     val categories = listOf("Cars", "SUVs", "Minivans", "Trucks", "Vans", "Luxury")
-
-
     val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
@@ -108,9 +105,11 @@ fun HomeScreen(
                     onMic = { }
                 )
             }
+
             item {
                 TopRatedButton(onClick = onTopRatedClick)
             }
+
             item {
                 CategoryChips(
                     categories = categories,
@@ -118,7 +117,6 @@ fun HomeScreen(
                     onCategoryClick = { viewModel.onCategorySelected(it) }
                 )
             }
-
 
             if (uiState.searchQuery.isNotBlank() || uiState.selectedCategory != null) {
                 item {
@@ -130,9 +128,8 @@ fun HomeScreen(
                 }
             }
 
-
             when {
-                uiState.loading -> {
+                uiState.loading && uiState.vehicles.isEmpty() -> {
                     item {
                         Box(
                             modifier = Modifier
@@ -140,11 +137,22 @@ fun HomeScreen(
                                 .height(200.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            CircularProgressIndicator()
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                CircularProgressIndicator()
+                                Text(
+                                    "Cargando vehículos...",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
                 }
-                uiState.error != null -> {
+
+                uiState.error != null && uiState.vehicles.isEmpty() -> {
                     item {
                         ErrorMessage(
                             error = uiState.error ?: "Unknown error",
@@ -152,7 +160,8 @@ fun HomeScreen(
                         )
                     }
                 }
-                uiState.vehicles.isEmpty() -> {
+
+                uiState.vehicles.isEmpty() && !uiState.loading -> {
                     item {
                         Box(
                             modifier = Modifier
@@ -160,16 +169,48 @@ fun HomeScreen(
                                 .height(200.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                "No vehicles available",
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Text(
+                                    "🚗",
+                                    fontSize = 48.sp
+                                )
+                                Text(
+                                    "No hay vehículos disponibles",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                if (uiState.searchQuery.isNotBlank() || uiState.selectedCategory != null) {
+                                    Text(
+                                        "Intenta ajustar tus filtros",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
                         }
                     }
                 }
+
                 else -> {
 
-                    items(uiState.vehicles) { vehicle ->
+                    items(uiState.vehicles.size) { index ->
+                        val vehicle = uiState.vehicles[index]
+
+
+                        if (index >= uiState.vehicles.size - 5 &&
+                            uiState.hasMorePages &&
+                            !uiState.isLoadingMore &&
+                            !uiState.loading) {
+
+                            LaunchedEffect(key1 = index) {
+                                println("Trigger: Cargando más vehículos (index=$index, total=${uiState.vehicles.size})")
+                                viewModel.loadMoreVehicles()
+                            }
+                        }
+
                         val priceText = "${vehicle.currency} ${String.format("%.2f", vehicle.dailyRate)}/día"
 
                         val vehicleItem = VehicleItem(
@@ -180,6 +221,51 @@ fun HomeScreen(
                             imageUrl = vehicle.imageUrl
                         )
                         VehicleCard(vehicleItem, onFavorite = { }) { onCardClick(vehicleItem) }
+                    }
+
+
+                    if (uiState.isLoadingMore) {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 16.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(24.dp),
+                                        strokeWidth = 2.dp
+                                    )
+                                    Text(
+                                        "Cargando más vehículos...",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+
+                    if (!uiState.hasMorePages && uiState.vehicles.isNotEmpty()) {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 16.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    "Has visto todos los vehículos disponibles",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -202,7 +288,7 @@ private fun ErrorMessage(error: String, onRetry: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "⚠️ Error",
+                text = "Error",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onErrorContainer
@@ -261,7 +347,6 @@ private fun SearchBar(
                 tint = onSurfaceVariantColor
             )
         },
-
         singleLine = true,
         shape = RoundedCornerShape(24.dp),
         colors = TextFieldDefaults.colors(
@@ -342,7 +427,6 @@ private fun VehicleCard(
                 .background(surfaceVariantColor),
             contentAlignment = Alignment.Center
         ) {
-
             if (item.imageUrl != null) {
                 AsyncImage(
                     model = item.imageUrl,
@@ -483,7 +567,7 @@ private fun TopRatedButton(onClick: () -> Unit) {
         ) {
             Column {
                 Text(
-                    text = "🏆 Vehículos Top Rated",
+                    text = "Vehículos Top Rated",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -503,7 +587,6 @@ private fun TopRatedButton(onClick: () -> Unit) {
         }
     }
 }
-
 
 @Composable
 fun PillBottomNavBar(

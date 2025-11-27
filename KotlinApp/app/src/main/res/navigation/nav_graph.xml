@@ -191,4 +191,9 @@
             app:argType="string" />
     </fragment>
 
+    <fragment
+        android:id="@+id/paginationStatsFragment"
+        android:name="com.example.kotlinapp.ui.stats.PaginationStatsFragment"
+        android:label="Vehicle Analytics" />
+
 </navigation>

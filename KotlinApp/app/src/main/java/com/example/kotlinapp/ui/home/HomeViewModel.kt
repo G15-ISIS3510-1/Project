@@ -1,6 +1,4 @@
-
 package com.example.kotlinapp.ui.home
-
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -17,7 +15,11 @@ data class HomeUiState(
     val loading: Boolean = false,
     val error: String? = null,
     val searchQuery: String = "",
-    val selectedCategory: String? = null
+    val selectedCategory: String? = null,
+    val isLoadingMore: Boolean = false,
+    val hasMorePages: Boolean = true,
+    val currentPage: Int = 0,
+    val totalVehicles: Int = 0
 )
 
 class HomeViewModel : ViewModel() {
@@ -25,19 +27,19 @@ class HomeViewModel : ViewModel() {
     val uiState: StateFlow<HomeUiState> = _uiState
 
     private var searchJob: Job? = null
+    private val pageSize = 20
 
     init {
-        loadVehicles()
+        loadVehicles(reset = true)
     }
 
     fun onSearchQueryChange(query: String) {
         _uiState.value = _uiState.value.copy(searchQuery = query)
 
-
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
-            delay(500)
-            loadVehicles()
+            delay(500) // Debounce
+            loadVehicles(reset = true)
         }
     }
 
@@ -48,34 +50,75 @@ class HomeViewModel : ViewModel() {
             category
         }
         _uiState.value = _uiState.value.copy(selectedCategory = newCategory)
-        loadVehicles()
+        loadVehicles(reset = true)
     }
 
-    fun loadVehicles() {
+
+    fun loadMoreVehicles() {
+        val currentState = _uiState.value
+
+        // No cargar si ya está cargando o no hay más páginas
+        if (currentState.isLoadingMore || currentState.loading || !currentState.hasMorePages) {
+            return
+        }
+
+        println("Cargando siguiente página...")
+        loadVehicles(reset = false)
+    }
+
+    private fun loadVehicles(reset: Boolean = false) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(loading = true, error = null)
+            val currentState = _uiState.value
+
+            // Si es reset, volver a página 0
+            val page = if (reset) 0 else currentState.currentPage
+            val skip = page * pageSize
+
+            // Actualizar estado según si es carga inicial o más páginas
+            _uiState.value = currentState.copy(
+                loading = reset,
+                isLoadingMore = !reset,
+                error = null
+            )
+
             try {
-                val search = _uiState.value.searchQuery.takeIf { it.isNotBlank() }
-                val category = _uiState.value.selectedCategory
+                val search = currentState.searchQuery.takeIf { it.isNotBlank() }
+                val category = currentState.selectedCategory
 
-                println("Buscando: query='$search', category='$category'")
+                println("Cargando vehículos: página=$page, skip=$skip, limit=$pageSize")
+                println("Filtros: query='$search', category='$category'")
 
-                val vehicles = ApiClient.vehiclesApi.getActiveVehiclesWithPricing(
+                val response = ApiClient.vehiclesApi.getActiveVehiclesWithPricing(
                     search = search,
-                    category = category
+                    category = category,
+                    skip = skip,
+                    limit = pageSize
                 )
 
-                println("ehículos encontrados: ${vehicles.items.size}")
+                println("Vehículos recibidos: ${response.items.size} de ${response.total} totales")
 
-                _uiState.value = _uiState.value.copy(
-                    vehicles = vehicles.items,
-                    loading = false
-                )
-            } catch (e: Exception) {
-                println("Error: ${e.message}")
-                e.printStackTrace()
-                _uiState.value = _uiState.value.copy(
+                // Determinar si hay más páginas
+                val hasMore = (skip + response.items.size) < response.total
+
+                // Actualizar estado
+                _uiState.value = currentState.copy(
+                    vehicles = if (reset) response.items else currentState.vehicles + response.items,
                     loading = false,
+                    isLoadingMore = false,
+                    currentPage = page + 1,
+                    hasMorePages = hasMore,
+                    totalVehicles = response.total
+                )
+
+                println("Estado actualizado: ${_uiState.value.vehicles.size} vehículos en UI")
+
+            } catch (e: Exception) {
+                println("Error cargando vehículos: ${e.message}")
+                e.printStackTrace()
+
+                _uiState.value = currentState.copy(
+                    loading = false,
+                    isLoadingMore = false,
                     error = "Error loading vehicles: ${e.message}"
                 )
             }
@@ -83,14 +126,16 @@ class HomeViewModel : ViewModel() {
     }
 
     fun retry() {
-        loadVehicles()
+        println("Reintentando cargar vehículos...")
+        loadVehicles(reset = true)
     }
 
     fun clearFilters() {
+        println("Limpiando filtros...")
         _uiState.value = _uiState.value.copy(
             searchQuery = "",
             selectedCategory = null
         )
-        loadVehicles()
+        loadVehicles(reset = true)
     }
 }
