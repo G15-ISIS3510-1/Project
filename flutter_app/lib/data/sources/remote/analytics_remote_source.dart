@@ -12,6 +12,7 @@ abstract class AnalyticsRemoteSource {
   Future<List<dynamic>> getDemandPeaks();
   Future<List<dynamic>> getDemandPeaksExtended();
   Future<List<dynamic>> getOwnerIncome();
+  Future<Map<String, dynamic>> getFeesTaxesAverage();
 }
 
 class AnalyticsRemoteSourceImpl implements AnalyticsRemoteSource {
@@ -92,6 +93,28 @@ class AnalyticsRemoteSourceImpl implements AnalyticsRemoteSource {
       return jsonDecode(response.body) as List<dynamic>;
     } else {
       throw Exception('Failed to fetch demand peaks extended: ${response.statusCode}');
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> getFeesTaxesAverage() async {
+    final url = Uri.parse('$baseUrl/api/analytics/fees-taxes-average');
+    final response = await client.get(
+      url,
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
+      }
+      if (decoded is num) {
+        return {'average': decoded.toDouble()};
+      }
+      throw Exception('Unexpected payload for fees/taxes average');
+    } else {
+      throw _handleError(response);
     }
   }
 

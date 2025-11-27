@@ -9,11 +9,13 @@ from app.db import models
 
 from app.db import get_db
 from app.services.analytics_service import BookingReminderAnalytics 
+from app.services.analytics_service import fees_taxes_average
 from app.services.feature_tracking import get_low_usage_features as get_low_usage_features_service, get_feature_usage_stats
 from app.schemas.analytics_schemas import (
     BookingReminderListResponse,
     BookingReminderStatusResponse,
-    UpcomingBookingsListResponse
+    UpcomingBookingsListResponse,
+    FeesTaxesAverageResponse
 )
 
 router = APIRouter()
@@ -359,4 +361,18 @@ async def get_feature_usage_statistics(
         "weeks": weeks,
         "feature_filter": feature_name,
         "total_features": len(stats)
+    }
+
+
+@router.get(
+    "/fees-taxes-average",
+    response_model=FeesTaxesAverageResponse,
+    summary="Promedio de fees + taxes por booking",
+    description="Calcula el promedio de fees y taxes sumados sobre todas las reservas confirmadas/activas/completadas."
+)
+async def get_fees_taxes_average(db: AsyncSession = Depends(get_db)):
+    average, sample_size = await fees_taxes_average(db)
+    return {
+        "average": round(average, 2),
+        "sample_size": sample_size
     }

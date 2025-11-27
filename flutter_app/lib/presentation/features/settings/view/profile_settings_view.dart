@@ -12,6 +12,8 @@ import 'package:flutter_app/presentation/features/analytics/analytics_extended/v
 import 'package:flutter_app/presentation/features/analytics/owner_income/view/owner_income_view.dart';
 import 'package:flutter_app/presentation/features/analytics/analytics_extended/viewmodel/analytics_extended_viewmodel.dart';
 import 'package:flutter_app/presentation/features/analytics/owner_income/viewmodel/owner_income_viewmodel.dart';
+import 'package:flutter_app/presentation/features/analytics/fees_taxes/view/fees_taxes_view.dart';
+import 'package:flutter_app/presentation/features/analytics/fees_taxes/viewmodel/fees_taxes_viewmodel.dart';
 
 import 'package:flutter_app/data/repositories/vehicle_repository.dart';
 import 'package:flutter_app/data/repositories/pricing_repository.dart';
@@ -24,6 +26,8 @@ import 'package:flutter_app/presentation/features/vehicle/view/add_vehicle_view.
 import 'package:flutter_app/data/sources/local/analytics_local_source.dart';
 import 'package:flutter_app/data/sources/local/analytics_extended_local_source.dart';
 import 'package:flutter_app/data/sources/local/owner_income_local_source.dart';
+import 'package:flutter_app/data/repositories/fees_taxes_repository.dart';
+import 'package:flutter_app/presentation/features/app_shell/viewmodel/host_mode_provider.dart';
 
 import '../../analytics/time_analytics/view/time_analytics_view.dart';
 import '../../analytics/time_analytics/viewmodel/time_analytics_viewmodel.dart';
@@ -382,6 +386,30 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
                             builder: (context) => ChangeNotifierProvider(
                               create: (_) => OwnerIncomeViewModel(repository),
                               child: const OwnerIncomeView(),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    pillButton(
+                      Icons.request_quote_outlined,
+                      'Fees & Taxes Average',
+                      onTap: () {
+                        final repo = context.read<FeesTaxesRepository>();
+                        final userId = context.read<AuthProvider>().userId ?? '';
+                        final asHost =
+                            context.read<HostModeProvider>().isHostMode;
+
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => ChangeNotifierProvider(
+                              create: (_) => FeesTaxesViewModel(
+                                repository: repo,
+                                userId: userId,
+                                asHost: asHost,
+                              )..load(),
+                              child: const FeesTaxesView(),
                             ),
                           ),
                         );

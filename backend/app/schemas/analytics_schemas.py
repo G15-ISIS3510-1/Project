@@ -54,3 +54,8 @@ class UpcomingBookingsListResponse(BaseModel):
     bookings: List[UpcomingBookingResponse]
     hours_ahead: int
     total_count: int
+
+
+class FeesTaxesAverageResponse(BaseModel):
+    average: float = Field(..., description="Average of (fees + taxes) per booking")
+    sample_size: int = Field(..., description="Number of bookings considered")
