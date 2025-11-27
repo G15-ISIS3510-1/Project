@@ -4,22 +4,22 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.work.Constraints
-import androidx.work.NetworkType
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkManager
+import androidx.work.*
 import com.example.kotlinapp.core.DatabaseModule
 import com.example.kotlinapp.core.FeedbackSyncWorker
 import com.example.kotlinapp.data.repository.FeedbackRepository
 import com.example.kotlinapp.databinding.FragmentFeedbackFormBinding
+import com.google.android.material.snackbar.Snackbar
 
 class FeedbackFormFragment : Fragment() {
 
     private var _binding: FragmentFeedbackFormBinding? = null
     private val binding get() = _binding!!
-    private lateinit var viewModel: FeedbackViewModel
+
+    private val dao by lazy { DatabaseModule.getDatabase(requireContext()).feedbackDao() }
+    private val repository by lazy { FeedbackRepository(dao) }
+    private val viewModel by lazy { FeedbackViewModel(repository) }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -27,40 +27,35 @@ class FeedbackFormFragment : Fragment() {
     ): View {
         _binding = FragmentFeedbackFormBinding.inflate(inflater, container, false)
 
-        // Inicializa Room y el ViewModel
-        val dao = DatabaseModule.getDatabase(requireContext()).feedbackDao()
-        val repository = FeedbackRepository(dao)
-        viewModel = FeedbackViewModel(repository)
-
-        // Acción del botón de enviar feedback
         binding.btnSubmit.setOnClickListener {
             val feature = binding.etFeature.text.toString().trim()
             val comment = binding.etComment.text.toString().trim()
 
             if (feature.isNotEmpty() && comment.isNotEmpty()) {
-                // Guarda el feedback localmente (Room)
-                viewModel.saveFeedback(feature, comment)
-                Toast.makeText(requireContext(), "Feedback saved locally ✅", Toast.LENGTH_SHORT).show()
-
-                // Limpia los campos del formulario
-                binding.etFeature.text.clear()
-                binding.etComment.text.clear()
-
-                // 🚀 Agenda la sincronización cuando haya Internet
-                enqueueFeedbackSyncWorker()
-
+                binding.btnSubmit.isEnabled = false
+                viewModel.saveFeedback(
+                    feature,
+                    comment,
+                    onSuccess = {
+                        binding.etFeature.text.clear()
+                        binding.etComment.text.clear()
+                        binding.btnSubmit.isEnabled = true
+                        showSnack("✅ Feedback saved locally")
+                        enqueueFeedbackSyncWorker()
+                    },
+                    onError = {
+                        binding.btnSubmit.isEnabled = true
+                        showSnack("❌ Error saving feedback: ${it.message}")
+                    }
+                )
             } else {
-                Toast.makeText(requireContext(), "Please fill all fields", Toast.LENGTH_SHORT).show()
+                showSnack("Please fill all fields")
             }
         }
 
         return binding.root
     }
 
-    /**
-     * Encola el WorkManager que envía los feedbacks pendientes al Google Form
-     * solo cuando haya conexión a Internet.
-     */
     private fun enqueueFeedbackSyncWorker() {
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
@@ -70,7 +65,15 @@ class FeedbackFormFragment : Fragment() {
             .setConstraints(constraints)
             .build()
 
-        WorkManager.getInstance(requireContext()).enqueue(syncWork)
+        WorkManager.getInstance(requireContext()).enqueueUniqueWork(
+            "FeedbackSync",
+            ExistingWorkPolicy.KEEP, // ✅ evita duplicados
+            syncWork
+        )
+    }
+
+    private fun showSnack(message: String) {
+        Snackbar.make(binding.root, message, Snackbar.LENGTH_LONG).show()
     }
 
     override fun onDestroyView() {

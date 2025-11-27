@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.kotlinapp.data.repository.FeatureUsageRepository
+import com.example.kotlinapp.data.remote.dto.ChatTimeStatsDto
 import com.example.kotlinapp.data.remote.dto.FeatureStatDto
 import com.example.kotlinapp.data.remote.dto.FeatureUsageItemDto
 import kotlinx.coroutines.async
@@ -19,6 +20,9 @@ class FeatureUsageViewModel : ViewModel() {
     
     private val _usageStats = MutableStateFlow<List<FeatureStatDto>>(emptyList())
     val usageStats: StateFlow<List<FeatureStatDto>> = _usageStats
+    
+    private val _chatTimeStats = MutableStateFlow<ChatTimeStatsDto?>(null)
+    val chatTimeStats: StateFlow<ChatTimeStatsDto?> = _chatTimeStats
     
     private val _loading = MutableStateFlow(false)
     val loading: StateFlow<Boolean> = _loading
@@ -37,7 +41,7 @@ class FeatureUsageViewModel : ViewModel() {
             
             try {
                 Log.d("FeatureUsageViewModel", "Starting to load metrics data")
-                // Intentar cargar ambas llamadas en paralelo para ser más rápido
+                // Intentar cargar todas las llamadas en paralelo para ser más rápido
                 val lowUsageDeferred = async { 
                     Log.d("FeatureUsageViewModel", "Fetching low usage features")
                     repository.getLowUsageFeatures(weeks, threshold) 
@@ -46,14 +50,20 @@ class FeatureUsageViewModel : ViewModel() {
                     Log.d("FeatureUsageViewModel", "Fetching usage stats")
                     repository.getFeatureUsageStats(null, weeks) 
                 }
+                val chatTimeStatsDeferred = async {
+                    Log.d("FeatureUsageViewModel", "Fetching chat time stats")
+                    repository.getChatTimeStats(weeks)
+                }
                 
-                // Esperar ambas respuestas
+                // Esperar todas las respuestas
                 val lowUsage = lowUsageDeferred.await()
                 val stats = statsDeferred.await()
+                val chatTimeStats = chatTimeStatsDeferred.await()
                 
-                Log.d("FeatureUsageViewModel", "Data loaded successfully: ${lowUsage.size} low usage, ${stats.size} stats")
+                Log.d("FeatureUsageViewModel", "Data loaded successfully: ${lowUsage.size} low usage, ${stats.size} stats, chatTimeStats=${chatTimeStats != null}")
                 _lowUsageFeatures.value = lowUsage
                 _usageStats.value = stats
+                _chatTimeStats.value = chatTimeStats
             } catch (e: Exception) {
                 Log.e("FeatureUsageViewModel", "Error loading data", e)
                 _error.value = e.message ?: "Error desconocido al cargar métricas"
