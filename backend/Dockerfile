@@ -18,9 +18,12 @@ RUN pip install --upgrade pip && pip install -r /app/requirements.txt
 # Copy backend source code
 COPY . /app
 
+# Make entrypoint script executable
+RUN chmod +x /app/entrypoint.sh
+
 EXPOSE 8000
 
-# Default command starts the FastAPI app
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Use entrypoint script to handle PORT variable correctly
+ENTRYPOINT ["/app/entrypoint.sh"]
 
 
