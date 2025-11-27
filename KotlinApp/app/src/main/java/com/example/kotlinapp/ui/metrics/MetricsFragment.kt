@@ -50,6 +50,7 @@ fun MetricsScreen(onBackClick: () -> Unit = {}) {
     val vm: FeatureUsageViewModel = viewModel()
     val lowUsageFeatures by vm.lowUsageFeatures.collectAsState()
     val usageStats by vm.usageStats.collectAsState()
+    val chatTimeStats by vm.chatTimeStats.collectAsState()
     val loading by vm.loading.collectAsState()
     val error by vm.error.collectAsState()
     
@@ -236,8 +237,33 @@ fun MetricsScreen(onBackClick: () -> Unit = {}) {
                             }
                         }
                         
+                        // Estadísticas de tiempo en chat
+                        val chatStats = chatTimeStats
+                        if (chatStats != null && chatStats.totalSessions > 0) {
+                            item {
+                                Text(
+                                    "Chat Time Statistics",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(vertical = 8.dp),
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                            
+                            item {
+                                ChatTimeStatCard(chatStats)
+                            }
+                            
+                            item {
+                                Spacer(Modifier.height(16.dp))
+                            }
+                        }
+                        
                         // Estadísticas generales
-                        if (usageStats.isNotEmpty()) {
+                        val otherStats = usageStats.filter { 
+                            it.featureName != "time_spent_in_chat_before_leave" 
+                        }
+                        if (otherStats.isNotEmpty()) {
                             item {
                                 Text(
                                     "General Statistics",
@@ -248,7 +274,7 @@ fun MetricsScreen(onBackClick: () -> Unit = {}) {
                                 )
                             }
                             
-                            items(usageStats.sortedByDescending { it.totalUses }) { stat ->
+                            items(otherStats.sortedByDescending { it.totalUses }) { stat ->
                                 FeatureStatCard(stat)
                             }
                             
@@ -338,6 +364,182 @@ fun LowUsageFeatureCard(feature: com.example.kotlinapp.data.remote.dto.FeatureUs
                 }
             }
         }
+    }
+}
+
+@Composable
+fun ChatTimeStatCard(stats: com.example.kotlinapp.data.remote.dto.ChatTimeStatsDto) {
+    // Formatear duración promedio
+    val avgDurationFormatted = formatDuration(stats.avgDurationSeconds)
+    val medianDurationFormatted = formatDuration(stats.medianDurationSeconds)
+    
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        ),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(20.dp)
+                .fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Message,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(32.dp)
+                    )
+                    Spacer(Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            "Time Spent in Chat",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Text(
+                            "Before switching sections",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                        )
+                    }
+                }
+            }
+            
+            Spacer(Modifier.height(24.dp))
+            
+            // Destacar la duración promedio
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        "Average Time",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        avgDurationFormatted,
+                        style = MaterialTheme.typography.displaySmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                    Text(
+                        "per session in Messages",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
+                    )
+                }
+            }
+            
+            Spacer(Modifier.height(20.dp))
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                StatItem(
+                    label = "Total Sessions",
+                    value = "${stats.totalSessions}",
+                    icon = Icons.Default.AccessTime,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                StatItem(
+                    label = "Median Time",
+                    value = medianDurationFormatted,
+                    icon = Icons.Default.TrendingUp,
+                    color = MaterialTheme.colorScheme.tertiary
+                )
+            }
+            
+            Spacer(Modifier.height(16.dp))
+            
+            Divider(
+                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.2f),
+                thickness = 1.dp
+            )
+            
+            Spacer(Modifier.height(12.dp))
+            
+            Text(
+                "This metric tracks how long users spend in the Messages section before navigating to another part of the app.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
+                lineHeight = MaterialTheme.typography.bodySmall.lineHeight * 1.2
+            )
+        }
+    }
+}
+
+fun formatDuration(seconds: Double): String {
+    return when {
+        seconds < 60 -> String.format("%.1f sec", seconds)
+        seconds < 3600 -> {
+            val minutes = (seconds / 60).toInt()
+            val remainingSeconds = (seconds % 60).toInt()
+            if (remainingSeconds == 0) {
+                "$minutes min"
+            } else {
+                "$minutes min $remainingSeconds sec"
+            }
+        }
+        else -> {
+            val hours = (seconds / 3600).toInt()
+            val remainingMinutes = ((seconds % 3600) / 60).toInt()
+            if (remainingMinutes == 0) {
+                "$hours hr"
+            } else {
+                "$hours hr $remainingMinutes min"
+            }
+        }
+    }
+}
+
+@Composable
+fun StatItem(label: String, value: String, icon: androidx.compose.ui.graphics.vector.ImageVector, color: Color) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.padding(horizontal = 8.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = color,
+            modifier = Modifier.size(24.dp)
+        )
+        Spacer(Modifier.height(8.dp))
+        Text(
+            value,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onPrimaryContainer
+        )
+        Spacer(Modifier.height(4.dp))
+        Text(
+            label,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
+            textAlign = TextAlign.Center
+        )
     }
 }
 
