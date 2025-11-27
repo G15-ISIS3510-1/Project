@@ -149,6 +149,20 @@
             app:strokeColor="#D8D6DC"
             app:cornerRadius="16dp" />
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnManageAvailability"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="12dp"
+            android:text="Manage Vehicle Availability"
+            android:textSize="18sp"
+            android:fontFamily="@font/poppins_semibold"
+            app:iconGravity="textStart"
+            app:iconPadding="12dp"
+            app:strokeColor="?attr/colorOutline"
+            app:cornerRadius="16dp" />
+
         <!-- Botón: Communications -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnCommunications"

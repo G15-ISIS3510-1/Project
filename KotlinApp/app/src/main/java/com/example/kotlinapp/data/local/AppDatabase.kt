@@ -5,22 +5,27 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.example.kotlinapp.data.local.dao.PendingVehicleDao
-import com.example.kotlinapp.data.local.dao.VehicleLocationDao
+import com.example.kotlinapp.data.local.dao.*
 import com.example.kotlinapp.data.local.entity.PendingVehicleEntity
-import com.example.kotlinapp.data.local.entity.VehicleLocationEntity
+import com.example.kotlinapp.data.local.entity.*
 
 @Database(
     entities = [
         VehicleLocationEntity::class,
-        PendingVehicleEntity::class
+        PendingVehicleEntity::class,
+        PendingAvailabilityEntity::class,
+        AvailabilityCacheEntity::class
     ],
-    version = 2,          
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun vehicleLocationDao(): VehicleLocationDao
     abstract fun pendingVehicleDao(): PendingVehicleDao
+
+    abstract fun pendingAvailabilityDao(): PendingAvailabilityDao
+    abstract fun availabilityCacheDao(): AvailabilityCacheDao
 
     companion object {
         @Volatile

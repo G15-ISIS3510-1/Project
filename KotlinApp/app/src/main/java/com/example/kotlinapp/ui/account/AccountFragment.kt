@@ -52,9 +52,14 @@ class AccountFragment : Fragment() {
             findNavController().navigate(R.id.vehicleMapFragment)
         }
 
+        binding.btnManageAvailability.setOnClickListener {
+
+            findNavController().navigate(R.id.vehicleSelectionFragment)
+        }
+
         binding.btnCommunications.setOnClickListener {
             Toast.makeText(requireContext(), "Communications clicked", Toast.LENGTH_SHORT).show()
-            // TODO: Implement communications
+
         }
 
         binding.btnPayment.setOnClickListener {
@@ -92,6 +97,19 @@ class AccountFragment : Fragment() {
             findNavController().popBackStack()
         }
     }
+
+
+    private fun navigateToAvailability(vehicleId: String, vehicleName: String) {
+        val bundle = android.os.Bundle().apply {
+            putString("vehicleId", vehicleId)
+            putString("vehicleName", vehicleName)
+        }
+        findNavController().navigate(
+            R.id.availabilityManagementFragment,
+            bundle
+        )
+    }
+
 
     private fun setupBottomBar() {
         val composeView: ComposeView = binding.bottomBarCompose

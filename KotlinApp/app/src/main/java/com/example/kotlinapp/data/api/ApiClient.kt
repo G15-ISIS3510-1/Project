@@ -45,5 +45,9 @@ object ApiClient {
     val conversationsApi: ConversationsApiService = retrofit.create(ConversationsApiService::class.java)
     val messagesApi: MessagesApiService = retrofit.create(MessagesApiService::class.java)
 
+    val availabilityApiService: AvailabilityApiService by lazy {
+        retrofit.create(AvailabilityApiService::class.java)
+    }
+
     fun <T> create(service: Class<T>): T = retrofit.create(service)
 }
