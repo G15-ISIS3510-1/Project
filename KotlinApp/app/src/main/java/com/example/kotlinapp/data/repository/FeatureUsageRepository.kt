@@ -3,6 +3,7 @@ package com.example.kotlinapp.data.repository
 import android.util.Log
 import com.example.kotlinapp.data.api.AnalyticsApiService
 import com.example.kotlinapp.data.api.BackendApis
+import com.example.kotlinapp.data.remote.dto.ChatTimeStatsDto
 import com.example.kotlinapp.data.remote.dto.FeatureUsageItemDto
 import com.example.kotlinapp.data.remote.dto.FeatureUsageLogRequest
 import com.example.kotlinapp.data.remote.dto.FeatureStatDto
@@ -86,6 +87,40 @@ class FeatureUsageRepository(
         } catch (e: Exception) {
             Log.e(TAG, "Unknown error: ${e.message}", e)
             throw Exception("Error al cargar métricas: ${e.message ?: "Error desconocido"}")
+        }
+    }
+
+    suspend fun getChatTimeStats(weeks: Int = 4): ChatTimeStatsDto? {
+        return try {
+            Log.d(TAG, "Fetching chat time stats: weeks=$weeks")
+            val response = api.getChatTimeStats(weeks)
+            
+            if (!response.isSuccessful) {
+                val errorBody = response.errorBody()?.string() ?: "Unknown error"
+                Log.e(TAG, "HTTP ${response.code()}: $errorBody")
+                null
+            }
+            
+            val body = response.body()
+            if (body == null) {
+                Log.e(TAG, "Empty response body")
+                null
+            } else {
+                Log.d(TAG, "Received chat time stats: avg=${body.avgDurationSeconds}s")
+                body
+            }
+        } catch (e: SocketTimeoutException) {
+            Log.e(TAG, "Timeout error: ${e.message}")
+            null
+        } catch (e: IOException) {
+            Log.e(TAG, "Network error: ${e.message}")
+            null
+        } catch (e: HttpException) {
+            Log.e(TAG, "HTTP error: ${e.code()}, ${e.message()}")
+            null
+        } catch (e: Exception) {
+            Log.e(TAG, "Unknown error: ${e.message}", e)
+            null
         }
     }
 

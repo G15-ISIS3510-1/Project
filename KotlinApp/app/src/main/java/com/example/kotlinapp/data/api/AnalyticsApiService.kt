@@ -1,5 +1,6 @@
 package com.example.kotlinapp.data.api
 
+import com.example.kotlinapp.data.remote.dto.ChatTimeStatsDto
 import com.example.kotlinapp.data.remote.dto.FeatureUsageLogRequest
 import com.example.kotlinapp.data.remote.dto.FeatureUsageLogResponse
 import com.example.kotlinapp.data.remote.dto.FeatureUsageStatsDto
@@ -22,6 +23,11 @@ interface AnalyticsApiService {
         @Query("feature_name") featureName: String? = null,
         @Query("weeks") weeks: Int = 4
     ): Response<FeatureUsageStatsDto>
+
+    @GET("api/analytics/features/chat-time-stats")
+    suspend fun getChatTimeStats(
+        @Query("weeks") weeks: Int = 4
+    ): Response<ChatTimeStatsDto>
 
     @POST("api/analytics/features/usage-log")
     suspend fun logFeatureUsage(

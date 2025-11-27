@@ -204,3 +204,48 @@ async def get_feature_usage_stats(
         }
         for row in rows
     ]
+
+
+async def get_chat_time_stats(
+    db: AsyncSession,
+    weeks: int = 4
+) -> Optional[dict]:
+    """
+    Obtiene estadísticas específicas del tiempo en chat, incluyendo duración promedio.
+    
+    Args:
+        db: Sesión de base de datos async
+        weeks: Número de semanas a considerar
+    
+    Returns:
+        Diccionario con estadísticas de tiempo en chat o None si no hay datos
+    """
+    cutoff_date = datetime.utcnow() - timedelta(weeks=weeks)
+    
+    query = text("""
+        SELECT 
+            COUNT(*)::int AS total_sessions,
+            COUNT(DISTINCT user_id)::int AS unique_users,
+            AVG(duration_seconds) AS avg_duration_seconds,
+            MIN(duration_seconds) AS min_duration_seconds,
+            MAX(duration_seconds) AS max_duration_seconds,
+            PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY duration_seconds) AS median_duration_seconds
+        FROM feature_usage_log
+        WHERE feature_name = 'time_spent_in_chat_before_leave'
+            AND timestamp >= :cutoff_date
+            AND duration_seconds IS NOT NULL
+    """)
+    
+    result = await db.execute(query, {"cutoff_date": cutoff_date})
+    row = result.fetchone()
+    
+    if row and row[0] > 0:  # Si hay al menos una sesión
+        return {
+            "total_sessions": int(row[0]),
+            "unique_users": int(row[1]),
+            "avg_duration_seconds": round(float(row[2]), 2) if row[2] else 0.0,
+            "min_duration_seconds": round(float(row[3]), 2) if row[3] else 0.0,
+            "max_duration_seconds": round(float(row[4]), 2) if row[4] else 0.0,
+            "median_duration_seconds": round(float(row[5]), 2) if row[5] else 0.0
+        }
+    return None

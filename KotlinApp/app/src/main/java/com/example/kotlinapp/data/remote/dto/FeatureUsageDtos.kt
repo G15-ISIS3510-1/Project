@@ -69,3 +69,19 @@ data class FeatureUsageLogResponse(
     val metadata: Map<String, Any?>?
 )
 
+data class ChatTimeStatsDto(
+    @SerializedName("total_sessions")
+    val totalSessions: Int,
+    @SerializedName("unique_users")
+    val uniqueUsers: Int,
+    @SerializedName("avg_duration_seconds")
+    val avgDurationSeconds: Double,
+    @SerializedName("min_duration_seconds")
+    val minDurationSeconds: Double,
+    @SerializedName("max_duration_seconds")
+    val maxDurationSeconds: Double,
+    @SerializedName("median_duration_seconds")
+    val medianDurationSeconds: Double,
+    val weeks: Int
+)
+

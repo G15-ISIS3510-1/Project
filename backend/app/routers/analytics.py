@@ -13,6 +13,7 @@ from app.services.analytics_service import BookingReminderAnalytics
 from app.services.feature_tracking import (
     get_low_usage_features as get_low_usage_features_service,
     get_feature_usage_stats,
+    get_chat_time_stats,
     log_feature_usage,
 )
 from app.schemas.analytics_schemas import (
@@ -367,6 +368,34 @@ async def get_feature_usage_statistics(
         "feature_filter": feature_name,
         "total_features": len(stats)
     }
+
+
+@router.get(
+    "/features/chat-time-stats",
+    summary="Estadísticas de tiempo en chat",
+    description="Obtiene estadísticas detalladas del tiempo que los usuarios pasan en el chat antes de cambiar de sección."
+)
+async def get_chat_time_statistics(
+    weeks: int = Query(default=4, ge=1, le=52, description="Número de semanas a considerar"),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Devuelve estadísticas específicas del tiempo en chat, incluyendo duración promedio, mínima, máxima y mediana.
+    """
+    stats = await get_chat_time_stats(db, weeks=weeks)
+    
+    if stats is None:
+        return {
+            "total_sessions": 0,
+            "unique_users": 0,
+            "avg_duration_seconds": 0.0,
+            "min_duration_seconds": 0.0,
+            "max_duration_seconds": 0.0,
+            "median_duration_seconds": 0.0,
+            "weeks": weeks
+        }
+    
+    return {**stats, "weeks": weeks}
 
 
 @router.post(
