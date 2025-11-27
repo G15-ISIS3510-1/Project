@@ -19,22 +19,18 @@ import com.example.kotlinapp.databinding.FragmentCurrencyBinding
 import com.google.android.gms.location.LocationServices
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.snackbar.Snackbar
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import java.util.Currency
 import java.util.Locale
 import kotlin.coroutines.resume
 import kotlin.math.roundToInt
 
 /**
- * Fragmento responsable de sugerir la moneda a usar.
- *
- * Estrategia aplicada: CACHING STRATEGY (Persistent + Time-based cache)
- *  - Se usa DataStore (a través de CurrencyPreferenceStore)
- *  - Reutiliza la última sugerencia guardada para evitar consultas repetidas.
- *  - Solo recalcula si la caché no existe o tiene más de 24 horas.
+ * Fragment responsible for suggesting which currency to use.
+ * Strategy: CACHING STRATEGY (Persistent + Time-based cache)
+ * - Uses DataStore via CurrencyPreferenceStore.
+ * - Reuses last saved suggestion to avoid repeated lookups.
+ * - Recalculates only if cache is older than 24h.
  */
 class CurrencyFragment : Fragment(R.layout.fragment_currency) {
 
@@ -43,10 +39,11 @@ class CurrencyFragment : Fragment(R.layout.fragment_currency) {
 
     private val locationPermission = Manifest.permission.ACCESS_COARSE_LOCATION
     private lateinit var prefs: CurrencyPreferenceStore
+    private var suggestionLoaded = false
 
     private val requestLocationPermission =
         registerForActivityResult(RequestPermission()) { granted ->
-            viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
                 fetchAndShowSuggestion(useGeo = granted)
             }
         }
@@ -56,12 +53,12 @@ class CurrencyFragment : Fragment(R.layout.fragment_currency) {
         _binding = FragmentCurrencyBinding.bind(view)
         prefs = CurrencyPreferenceStore(requireContext().applicationContext)
 
-        // Cargar moneda preferida guardada y resaltarla
-        viewLifecycleOwner.lifecycleScope.launch {
-            prefs.preferredOnce()?.let { highlight(it) }
+        // Load preferred currency and highlight
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+            prefs.preferredOnce()?.let { withContext(Dispatchers.Main) { highlight(it) } }
         }
 
-        // Botones manuales
+        // Manual selections
         binding.cardUSD.setOnClickListener { savePreferred("USD") }
         binding.cardEUR.setOnClickListener { savePreferred("EUR") }
         binding.cardGBP.setOnClickListener { savePreferred("GBP") }
@@ -69,7 +66,10 @@ class CurrencyFragment : Fragment(R.layout.fragment_currency) {
 
         binding.btnBack.setOnClickListener { findNavController().popBackStack() }
 
-        startSuggestion()
+        if (!suggestionLoaded) {
+            startSuggestion()
+            suggestionLoaded = true
+        }
     }
 
     private fun startSuggestion() {
@@ -77,7 +77,7 @@ class CurrencyFragment : Fragment(R.layout.fragment_currency) {
             requireContext(), locationPermission
         ) == PackageManager.PERMISSION_GRANTED
 
-        viewLifecycleOwner.lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
             fetchAndShowSuggestion(useGeo = hasPermission)
         }
 
@@ -85,24 +85,26 @@ class CurrencyFragment : Fragment(R.layout.fragment_currency) {
     }
 
     /**
-     * Obtiene o reutiliza la moneda sugerida.
-     * Implementa una estrategia de caché persistente y validación por tiempo (24 horas).
+     * Fetch or reuse cached suggestion.
+     * Implements persistent + time-based caching (24h validity).
      */
     private suspend fun fetchAndShowSuggestion(useGeo: Boolean) {
-        // 1️⃣ Intentar leer caché
+        // 1️⃣ Try cache
         val lastSuggested = prefs.getLastSuggested()
         val lastUpdated = prefs.getLastUpdated()
         val cacheValid = lastUpdated?.let {
-            System.currentTimeMillis() - it < 24 * 60 * 60 * 1000 // 24h
+            System.currentTimeMillis() - it < 24 * 60 * 60 * 1000
         } ?: false
 
         if (lastSuggested != null && cacheValid) {
-            binding.tvSuggestion.text = "Última sugerencia guardada: $lastSuggested (caché)"
-            highlight(lastSuggested)
+            withContext(Dispatchers.Main) {
+                binding.tvSuggestion.text = "Última sugerencia guardada: $lastSuggested (caché)"
+                highlight(lastSuggested)
+            }
             return
         }
 
-        // 2️⃣ No hay caché válida → recalcular usando estrategias
+        // 2️⃣ No valid cache → compute using strategies
         val strategies = buildList<CurrencySuggestionStrategy> {
             if (useGeo) add(GeoCurrencyStrategy)
             add(SimCardCurrencyStrategy)
@@ -111,34 +113,40 @@ class CurrencyFragment : Fragment(R.layout.fragment_currency) {
 
         val suggestion = CurrencySuggester.suggest(requireContext(), strategies)
 
-        // Guardar en caché (última sugerencia)
+        // Save suggestion in cache
         prefs.setLastSuggested(suggestion.currencyCode)
 
-        // Mostrar en UI
-        binding.tvSuggestion.text = renderSuggestionText(suggestion)
-        highlight(suggestion.currencyCode)
+        // UI updates
+        withContext(Dispatchers.Main) {
+            binding.tvSuggestion.text = renderSuggestionText(suggestion)
+            highlight(suggestion.currencyCode)
+        }
 
-        // Ofrecer actualizar moneda preferida
+        // Offer to update preferred currency
         val currentPreferred = prefs.preferredOnce()
         if (currentPreferred == null) {
             prefs.setPreferred(suggestion.currencyCode)
-            Snackbar.make(
-                binding.root,
-                "Se configuró ${suggestion.currencyCode} por ${suggestion.source}.",
-                Snackbar.LENGTH_LONG
-            ).setAction("Deshacer") {
-                viewLifecycleOwner.lifecycleScope.launch {
+            showSnack("Se configuró ${suggestion.currencyCode} por ${suggestion.source}.") {
+                viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
                     prefs.clearPreferred()
-                    highlight("___NONE___")
+                    withContext(Dispatchers.Main) { highlight("___NONE___") }
                 }
-            }.show()
+            }
         }
     }
 
-    private fun savePreferred(code: String) = viewLifecycleOwner.lifecycleScope.launch {
+    private fun savePreferred(code: String) = viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
         prefs.setPreferred(code)
-        highlight(code)
-        Snackbar.make(binding.root, "Moneda preferida: $code", Snackbar.LENGTH_SHORT).show()
+        withContext(Dispatchers.Main) {
+            highlight(code)
+            showSnack("Moneda preferida: $code")
+        }
+    }
+
+    private fun showSnack(message: String, undoAction: (() -> Unit)? = null) {
+        Snackbar.make(binding.root, message, Snackbar.LENGTH_LONG).apply {
+            undoAction?.let { setAction("Deshacer") { it() } }
+        }.show()
     }
 
     private fun renderSuggestionText(s: CurrencySuggestion): String {
@@ -149,14 +157,15 @@ class CurrencyFragment : Fragment(R.layout.fragment_currency) {
     }
 
     private fun highlight(code: String) {
+        val density = resources.displayMetrics.density
+        val primaryColor = ContextCompat.getColor(requireContext(), com.google.android.material.R.color.material_dynamic_primary80)
+        val neutralColor = ContextCompat.getColor(requireContext(), com.google.android.material.R.color.material_dynamic_neutral80)
+
         fun sel(card: MaterialCardView, selected: Boolean) {
-            val density = resources.displayMetrics.density
-            card.strokeColor = if (selected)
-                ContextCompat.getColor(requireContext(), com.google.android.material.R.color.material_dynamic_primary80)
-            else
-                ContextCompat.getColor(requireContext(), com.google.android.material.R.color.material_dynamic_neutral80)
+            card.strokeColor = if (selected) primaryColor else neutralColor
             card.strokeWidth = ((if (selected) 3 else 1) * density).roundToInt()
         }
+
         sel(binding.cardUSD, code == "USD")
         sel(binding.cardEUR, code == "EUR")
         sel(binding.cardGBP, code == "GBP")
@@ -185,16 +194,13 @@ object CurrencySuggester {
     suspend fun suggest(
         context: android.content.Context,
         strategies: List<CurrencySuggestionStrategy>
-    ): CurrencySuggestion {
-        for (s in strategies) {
-            val r = s.getSuggestion(context)
-            if (r != null) return r
-        }
-        return CurrencySuggestion("USD", "US", "Predeterminado")
+    ): CurrencySuggestion = coroutineScope {
+        val deferreds = strategies.map { async { it.getSuggestion(context) } }
+        deferreds.firstNotNullOfOrNull { it.await() } ?: CurrencySuggestion("USD", "US", "Default")
     }
 }
 
-/* --- Estrategias para obtener sugerencia --- */
+/* --- Strategies --- */
 
 object GeoCurrencyStrategy : CurrencySuggestionStrategy {
     override suspend fun getSuggestion(context: android.content.Context): CurrencySuggestion? {
@@ -221,21 +227,21 @@ object GeoCurrencyStrategy : CurrencySuggestionStrategy {
 }
 
 object SimCardCurrencyStrategy : CurrencySuggestionStrategy {
-    override suspend fun getSuggestion(context: android.content.Context): CurrencySuggestion? = withContext(Dispatchers.Default) {
+    override suspend fun getSuggestion(context: android.content.Context): CurrencySuggestion? {
         val tm = context.getSystemService(android.content.Context.TELEPHONY_SERVICE) as TelephonyManager
         val cc = tm.networkCountryIso?.uppercase(Locale.ROOT).orEmpty()
-        if (cc.isBlank()) return@withContext null
-        val cur = countryToCurrency(cc) ?: return@withContext null
-        CurrencySuggestion(cur, cc, "Red móvil")
+        if (cc.isBlank()) return null
+        val cur = countryToCurrency(cc) ?: return null
+        return CurrencySuggestion(cur, cc, "Red móvil")
     }
 }
 
 object LocaleCurrencyStrategy : CurrencySuggestionStrategy {
-    override suspend fun getSuggestion(context: android.content.Context): CurrencySuggestion? = withContext(Dispatchers.Default) {
+    override suspend fun getSuggestion(context: android.content.Context): CurrencySuggestion? {
         val cc = Locale.getDefault().country
-        if (cc.isBlank()) return@withContext null
-        val cur = countryToCurrency(cc) ?: return@withContext null
-        CurrencySuggestion(cur, cc, "Configuración del dispositivo")
+        if (cc.isBlank()) return null
+        val cur = countryToCurrency(cc) ?: return null
+        return CurrencySuggestion(cur, cc, "Configuración del dispositivo")
     }
 }
 
