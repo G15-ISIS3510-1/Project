@@ -4,6 +4,7 @@ import android.util.Log
 import com.example.kotlinapp.data.api.AnalyticsApiService
 import com.example.kotlinapp.data.api.BackendApis
 import com.example.kotlinapp.data.remote.dto.FeatureUsageItemDto
+import com.example.kotlinapp.data.remote.dto.FeatureUsageLogRequest
 import com.example.kotlinapp.data.remote.dto.FeatureStatDto
 import retrofit2.HttpException
 import java.io.IOException
@@ -85,6 +86,52 @@ class FeatureUsageRepository(
         } catch (e: Exception) {
             Log.e(TAG, "Unknown error: ${e.message}", e)
             throw Exception("Error al cargar métricas: ${e.message ?: "Error desconocido"}")
+        }
+    }
+
+    suspend fun logFeatureUsage(
+        featureName: String,
+        durationSeconds: Double?,
+        durationMs: Long?,
+        originRoute: String?,
+        destinationRoute: String?,
+        metadata: Map<String, Any?>? = null
+    ): Boolean {
+        return try {
+            Log.d(TAG, "📝 Creating feature usage log request: feature=$featureName, duration=${durationSeconds}s")
+            val payload = FeatureUsageLogRequest(
+                featureName = featureName,
+                durationSeconds = durationSeconds,
+                durationMs = durationMs,
+                originRoute = originRoute,
+                destinationRoute = destinationRoute,
+                metadata = metadata?.takeIf { it.isNotEmpty() }
+            )
+
+            Log.d(TAG, "🌐 Calling API: POST /api/analytics/features/usage-log")
+            val response = api.logFeatureUsage(payload)
+
+            if (!response.isSuccessful) {
+                val errorBody = response.errorBody()?.string()
+                Log.e(TAG, "❌ Failed to log feature usage: HTTP ${response.code()} $errorBody")
+                false
+            } else {
+                val responseBody = response.body()
+                Log.d(TAG, "✅ Successfully logged feature usage. Response: $responseBody")
+                true
+            }
+        } catch (e: SocketTimeoutException) {
+            Log.e(TAG, "⏱️ Timeout error logging feature usage: ${e.message}", e)
+            false
+        } catch (e: IOException) {
+            Log.e(TAG, "🔌 Network error logging feature usage: ${e.message}", e)
+            false
+        } catch (e: HttpException) {
+            Log.e(TAG, "🚫 HTTP error logging feature usage: ${e.code()}, ${e.message()}", e)
+            false
+        } catch (e: Exception) {
+            Log.e(TAG, "💥 Unexpected error logging feature usage", e)
+            false
         }
     }
 }

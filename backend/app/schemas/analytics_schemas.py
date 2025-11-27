@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 from datetime import datetime
 
 
@@ -54,3 +54,21 @@ class UpcomingBookingsListResponse(BaseModel):
     bookings: List[UpcomingBookingResponse]
     hours_ahead: int
     total_count: int
+
+
+class FeatureUsageLogRequest(BaseModel):
+    feature_name: str = Field(..., min_length=1, max_length=100)
+    duration_seconds: Optional[float] = Field(None, ge=0)
+    duration_ms: Optional[int] = Field(None, ge=0)
+    origin_route: Optional[str] = Field(None, max_length=120)
+    destination_route: Optional[str] = Field(None, max_length=120)
+    metadata: Optional[Dict[str, Any]] = None
+
+
+class FeatureUsageLogResponse(BaseModel):
+    id: int
+    feature_name: str
+    user_id: str
+    duration_seconds: Optional[float] = None
+    timestamp: datetime
+    metadata: Optional[Dict[str, Any]] = None

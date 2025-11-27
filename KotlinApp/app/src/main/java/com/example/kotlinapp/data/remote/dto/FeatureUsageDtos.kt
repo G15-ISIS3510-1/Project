@@ -43,3 +43,29 @@ data class FeatureStatDto(
     val avgUsesPerWeekPerUser: Double
 )
 
+data class FeatureUsageLogRequest(
+    @SerializedName("feature_name")
+    val featureName: String,
+    @SerializedName("duration_seconds")
+    val durationSeconds: Double?,
+    @SerializedName("duration_ms")
+    val durationMs: Long?,
+    @SerializedName("origin_route")
+    val originRoute: String?,
+    @SerializedName("destination_route")
+    val destinationRoute: String?,
+    val metadata: Map<String, Any?>?
+)
+
+data class FeatureUsageLogResponse(
+    val id: Int,
+    @SerializedName("feature_name")
+    val featureName: String,
+    @SerializedName("user_id")
+    val userId: String,
+    @SerializedName("duration_seconds")
+    val durationSeconds: Double?,
+    val timestamp: String,
+    val metadata: Map<String, Any?>?
+)
+

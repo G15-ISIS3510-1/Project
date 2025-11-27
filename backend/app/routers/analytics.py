@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query, HTTPException
+from fastapi import APIRouter, Depends, Query, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from datetime import datetime, timedelta
@@ -6,14 +6,21 @@ from datetime import datetime, timedelta
 from sqlalchemy import func, select
 
 from app.db import models
-
 from app.db import get_db
+from app.db.models import User
+from app.routers.users import get_current_user_from_token
 from app.services.analytics_service import BookingReminderAnalytics 
-from app.services.feature_tracking import get_low_usage_features as get_low_usage_features_service, get_feature_usage_stats
+from app.services.feature_tracking import (
+    get_low_usage_features as get_low_usage_features_service,
+    get_feature_usage_stats,
+    log_feature_usage,
+)
 from app.schemas.analytics_schemas import (
     BookingReminderListResponse,
     BookingReminderStatusResponse,
-    UpcomingBookingsListResponse
+    UpcomingBookingsListResponse,
+    FeatureUsageLogRequest,
+    FeatureUsageLogResponse,
 )
 
 router = APIRouter()
@@ -360,3 +367,77 @@ async def get_feature_usage_statistics(
         "feature_filter": feature_name,
         "total_features": len(stats)
     }
+
+
+@router.post(
+    "/features/usage-log",
+    response_model=FeatureUsageLogResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Registrar evento de uso de una funcionalidad",
+    description="Permite registrar eventos personalizados como el tiempo pasado en el chat."
+)
+async def create_feature_usage_log(
+    payload: FeatureUsageLogRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_from_token),
+):
+    """
+    Endpoint público para que los clientes móviles reporten métricas específicas.
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    try:
+        logger.info(f"Received feature usage log request: user_id={current_user.user_id}, feature={payload.feature_name}")
+        
+        enriched_metadata = dict(payload.metadata) if payload.metadata else {}
+        
+        if payload.duration_ms is not None:
+            enriched_metadata["duration_ms"] = payload.duration_ms
+        if payload.origin_route:
+            enriched_metadata.setdefault("origin_route", payload.origin_route)
+        if payload.destination_route:
+            enriched_metadata.setdefault("destination_route", payload.destination_route)
+        
+        # Asegurar que todos los valores en metadata sean serializables a JSON
+        serializable_metadata = {}
+        for key, value in enriched_metadata.items():
+            if value is not None:
+                # Convertir tipos que no son directamente JSON serializables
+                if isinstance(value, (int, float, str, bool, type(None))):
+                    serializable_metadata[key] = value
+                else:
+                    serializable_metadata[key] = str(value)
+        
+        usage_log = await log_feature_usage(
+            db=db,
+            user_id=current_user.user_id,
+            feature_name=payload.feature_name,
+            duration_seconds=payload.duration_seconds,
+            metadata=serializable_metadata if serializable_metadata else None
+        )
+        
+        if usage_log is None:
+            logger.error(f"Failed to create feature usage log for user {current_user.user_id}, feature {payload.feature_name}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="No se pudo registrar el evento de uso. Revisa los logs del servidor para más detalles."
+            )
+
+        logger.info(f"Successfully created feature usage log with ID: {usage_log.id}")
+        return FeatureUsageLogResponse(
+            id=usage_log.id,
+            feature_name=usage_log.feature_name,
+            user_id=usage_log.user_id,
+            duration_seconds=usage_log.duration_seconds,
+            timestamp=usage_log.timestamp,
+            metadata=usage_log.extra_metadata or {}
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in create_feature_usage_log: {type(e).__name__}: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error inesperado al registrar el evento: {str(e)}"
+        )

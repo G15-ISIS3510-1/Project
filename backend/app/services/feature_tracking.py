@@ -2,18 +2,23 @@
 Servicio para trackear el uso de funcionalidades de la aplicación.
 """
 
+import logging
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, text
+from sqlalchemy import text
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Optional, Any
 from app.db.models import FeatureUsageLog
+
+logger = logging.getLogger(__name__)
 
 
 async def log_feature_usage(
     db: AsyncSession,
     user_id: str,
-    feature_name: str
-) -> None:
+    feature_name: str,
+    duration_seconds: Optional[float] = None,
+    metadata: Optional[dict[str, Any]] = None
+) -> Optional[FeatureUsageLog]:
     """
     Registra el uso de una funcionalidad por un usuario.
     
@@ -21,19 +26,28 @@ async def log_feature_usage(
         db: Sesión de base de datos async
         user_id: ID del usuario
         feature_name: Nombre de la funcionalidad (ej: "search_filters", "chat_with_owner")
+        duration_seconds: Duración en segundos asociada al evento (opcional)
+        metadata: Datos adicionales serializables en JSON (opcional)
     """
     try:
+        logger.info(f"Logging feature usage: user_id={user_id}, feature={feature_name}, duration={duration_seconds}s, metadata={metadata}")
         usage_log = FeatureUsageLog(
             user_id=user_id,
             feature_name=feature_name,
-            timestamp=datetime.utcnow()
+            timestamp=datetime.utcnow(),
+            duration_seconds=duration_seconds,
+            extra_metadata=metadata
         )
         db.add(usage_log)
         await db.commit()
+        await db.refresh(usage_log)
+        logger.info(f"Successfully logged feature usage with ID: {usage_log.id}")
+        return usage_log
     except Exception as e:
         # Si falla el tracking, no debe afectar la operación principal
         await db.rollback()
-        # En producción, podrías loguear el error
+        logger.error(f"Error logging feature usage: {type(e).__name__}: {str(e)}", exc_info=True)
+        return None
 
 
 async def get_low_usage_features(
