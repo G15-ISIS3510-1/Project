@@ -80,26 +80,32 @@
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- Lista simple de mensajes -->
-    <ScrollView
+    <!-- OPTIMIZACIÓN: RecyclerView con ViewHolder pattern para mejor rendimiento -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/messagesRecyclerView"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:paddingTop="8dp"
         android:paddingBottom="8dp"
+        android:clipToPadding="false"
         app:layout_constraintTop_toBottomOf="@id/searchCard"
         app:layout_constraintBottom_toTopOf="@id/bottomBarCompose"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintEnd_toEndOf="parent"/>
 
-        <LinearLayout
-            android:id="@+id/messagesContainer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"/>
-
-    </ScrollView>
+    <!-- Container para estados (loading, error, empty) - se muestra cuando no hay RecyclerView visible -->
+    <LinearLayout
+        android:id="@+id/messagesContainer"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="16dp"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/searchCard"
+        app:layout_constraintBottom_toTopOf="@id/bottomBarCompose"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
 
     <!-- Compose Bottom Bar -->
     <androidx.compose.ui.platform.ComposeView

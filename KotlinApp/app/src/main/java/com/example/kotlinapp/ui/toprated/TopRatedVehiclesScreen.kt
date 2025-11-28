@@ -126,17 +126,22 @@ private fun SearchFilters(
     onParamsChanged: (SearchParams) -> Unit,
     onSearch: () -> Unit
 ) {
-    val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+    // OPTIMIZACIÓN 1: Memoizar formateador de fecha (no recrear en cada recomposición)
+    val dateFormat = remember {
+        SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+    }
     
-    // Ubicaciones predefinidas
-    val locations = listOf(
-        "Ciudad de México" to Pair(19.4326, -99.1332),
-        "Guadalajara" to Pair(20.6597, -103.3496),
-        "Monterrey" to Pair(25.6866, -100.3161),
-        "Cancún" to Pair(21.1619, -86.8515),
-        "Bogotá" to Pair(4.6097, -74.0817),
-        "Lima" to Pair(-12.0464, -77.0428)
-    )
+    // OPTIMIZACIÓN 1: Memoizar ubicaciones predefinidas (no recrear lista en cada recomposición)
+    val locations = remember {
+        listOf(
+            "Ciudad de México" to Pair(19.4326, -99.1332),
+            "Guadalajara" to Pair(20.6597, -103.3496),
+            "Monterrey" to Pair(25.6866, -100.3161),
+            "Cancún" to Pair(21.1619, -86.8515),
+            "Bogotá" to Pair(4.6097, -74.0817),
+            "Lima" to Pair(-12.0464, -77.0428)
+        )
+    }
     
     var selectedLocationIndex by remember { mutableStateOf(0) }
     var currentParams by remember { mutableStateOf(searchParams) }
@@ -598,12 +603,29 @@ private fun VehiclesList(
     searchParams: SearchParams,
     onRefresh: () -> Unit
 ) {
-    val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+    // OPTIMIZACIÓN 1: Memoizar formateador de fecha
+    val dateFormat = remember {
+        SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+    }
     
+    // OPTIMIZACIÓN 1: Memoizar strings formateados de fechas
+    val formattedStartDate = remember(searchParams.startDate) {
+        dateFormat.format(searchParams.startDate)
+    }
+    val formattedEndDate = remember(searchParams.endDate) {
+        dateFormat.format(searchParams.endDate)
+    }
+    val formattedRadius = remember(searchParams.radiusKm) {
+        "${searchParams.radiusKm.toInt()} km"
+    }
+    
+    // OPTIMIZACIÓN 2: LazyColumn optimizado con keys estables y prefetch
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        // OPTIMIZACIÓN 2: Prefetch distance optimizado para mejor scroll
+        beyondBoundsItemCount = 2
     ) {
         item {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -624,12 +646,12 @@ private fun VehiclesList(
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Text(
-                            text = " ${dateFormat.format(searchParams.startDate)} - ${dateFormat.format(searchParams.endDate)}",
+                            text = " $formattedStartDate - $formattedEndDate",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSecondaryContainer
                         )
                         Text(
-                            text = " Radius: ${searchParams.radiusKm.toInt()} km",
+                            text = " Radius: $formattedRadius",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSecondaryContainer
                         )
@@ -638,7 +660,11 @@ private fun VehiclesList(
             }
         }
         
-        items(vehicles) { vehicle ->
+        // OPTIMIZACIÓN 2: Items con keys estables para mejor rendimiento en scroll
+        items(
+            items = vehicles,
+            key = { vehicle -> vehicle.vehicleId } // Key único y estable
+        ) { vehicle ->
             VehicleCard(vehicle = vehicle)
         }
     }
@@ -646,6 +672,55 @@ private fun VehiclesList(
 
 @Composable
 private fun VehicleCard(vehicle: TopRatedVehicle) {
+    // OPTIMIZACIÓN 3: Memoizar cálculos de formato para evitar recálculos en cada recomposición
+    val displayName = remember(vehicle.make, vehicle.model, vehicle.year) {
+        "${vehicle.make} ${vehicle.model} (${vehicle.year})"
+    }
+    
+    val ratingText = remember(vehicle.averageRating, vehicle.totalRatings) {
+        String.format("%.1f ⭐ (%d calificaciones)", vehicle.averageRating, vehicle.totalRatings)
+    }
+    
+    val priceText = remember(vehicle.dailyPrice, vehicle.currency) {
+        if (vehicle.dailyPrice != null && vehicle.currency != null) {
+            "$${String.format("%.0f", vehicle.dailyPrice)} ${vehicle.currency}/día"
+        } else {
+            "Precio no disponible"
+        }
+    }
+    
+    val distanceText = remember(vehicle.distanceKm) {
+        String.format("%.1f km de distancia", vehicle.distanceKm)
+    }
+    
+    val ownerText = remember(vehicle.ownerName) {
+        "Propietario: ${vehicle.ownerName}"
+    }
+    
+    val transmissionText = remember(vehicle.transmission) {
+        when (vehicle.transmission.uppercase()) {
+            "AT" -> "Automático"
+            "MT" -> "Manual"
+            "CVT" -> "CVT"
+            "EV" -> "Eléctrico"
+            else -> vehicle.transmission
+        }
+    }
+    
+    val fuelTypeText = remember(vehicle.fuelType) {
+        when (vehicle.fuelType.lowercase()) {
+            "gas" -> "Gasolina"
+            "diesel" -> "Diésel"
+            "hybrid" -> "Híbrido"
+            "ev" -> "Eléctrico"
+            else -> vehicle.fuelType
+        }
+    }
+    
+    val totalRatingsText = remember(vehicle.totalRatings) {
+        "${vehicle.totalRatings} ratings"
+    }
+    
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -667,13 +742,13 @@ private fun VehicleCard(vehicle: TopRatedVehicle) {
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = vehicle.displayName,
+                        text = displayName,
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = "Owner: ${vehicle.ownerText}",
+                        text = ownerText,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                     )
@@ -700,14 +775,14 @@ private fun VehicleCard(vehicle: TopRatedVehicle) {
                                 modifier = Modifier.size(18.dp)
                             )
                             Text(
-                                text = vehicle.ratingText,
+                                text = ratingText,
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onPrimary
                             )
                         }
                         Text(
-                            text = vehicle.totalRatings.toString() + " ratings",
+                            text = totalRatingsText,
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
                         )
@@ -734,12 +809,12 @@ private fun VehicleCard(vehicle: TopRatedVehicle) {
                     VehicleDetailItem(
                         icon = Icons.Default.Settings,
                         label = "Transmission",
-                        value = vehicle.transmissionText
+                        value = transmissionText
                     )
                     VehicleDetailItem(
                         icon = Icons.Default.LocalGasStation,
                         label = "Fuel",
-                        value = vehicle.fuelTypeText
+                        value = fuelTypeText
                     )
                 }
             }
@@ -757,7 +832,7 @@ private fun VehicleCard(vehicle: TopRatedVehicle) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = vehicle.priceText,
+                        text = priceText,
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.secondary
@@ -781,7 +856,7 @@ private fun VehicleCard(vehicle: TopRatedVehicle) {
                             modifier = Modifier.size(16.dp)
                         )
                         Text(
-                            text = vehicle.distanceText,
+                            text = distanceText,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
