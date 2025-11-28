@@ -1,4 +1,3 @@
-// imports: NO necesitas repos/chat aquí
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_app/presentation/features/vehicle/viewmodel/vehicle_detail_viewmodel.dart';
@@ -9,7 +8,8 @@ class VehicleDetailView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final vm = context.watch<VehicleDetailViewModel>();
+    // No necesitamos escuchar cambios del VM, los datos son inmutables
+    final vm = context.read<VehicleDetailViewModel>();
     final v = vm.vehicle;
 
     return Scaffold(
@@ -30,7 +30,6 @@ class VehicleDetailView extends StatelessWidget {
                       initialVehicleId: v.vehicle_id,
                       initialHostId: v.ownerId,
                       initialDailyPrice: vm.dailyPrice,
-                      // initialRenterId: context.read<AuthProvider>().userId,
                     ),
                   ),
                 );
