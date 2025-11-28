@@ -30,6 +30,7 @@ dependencies:
   dio: ^5.9.0
   connectivity_plus: ^6.1.5
   url_launcher: ^6.3.2
+  share_plus: ^10.0.0
 
   # UI / Media
   cached_network_image: ^3.4.1
