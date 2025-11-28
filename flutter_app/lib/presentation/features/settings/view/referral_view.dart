@@ -175,7 +175,7 @@ class _ReferralViewState extends State<ReferralView> {
 
             _shareIcon(Icons.chat, "WhatsApp", () async {
               final msg = await vm.buildShareMessage();
-              Share.share(msg, subject: "Referral Code");
+              Share.share(msg, subject: msg);
             }),
 
             _shareIcon(Icons.email, "Email", () async {

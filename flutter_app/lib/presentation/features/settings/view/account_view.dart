@@ -307,6 +307,19 @@ import 'package:flutter_app/presentation/features/auth/view/register_view.dart';
 import 'package:flutter_app/main.dart' show AuthProvider;
 import 'package:flutter_app/app/theme/theme_controller.dart';
 
+import 'package:flutter_app/presentation/features/settings/data/feedback_repository.dart';
+import 'package:flutter_app/presentation/features/settings/view/about_view.dart';
+import 'package:flutter_app/presentation/features/settings/view/contact_us_view.dart';
+import 'package:flutter_app/presentation/features/settings/view/feedback_view.dart';
+import 'package:flutter_app/presentation/features/settings/view/help_view.dart';
+import 'package:flutter_app/presentation/features/settings/view/referral_view.dart';
+import 'package:flutter_app/presentation/features/settings/viewmodel/contact_us_viewmodel.dart';
+import 'package:flutter_app/presentation/features/settings/viewmodel/feedback_viewmodel.dart';
+import 'package:flutter_app/presentation/features/settings/viewmodel/help_viewmodel.dart';
+import 'package:flutter_app/presentation/features/settings/view/profile_settings_view.dart';
+import 'package:flutter_app/presentation/features/settings/viewmodel/referral_viewmodel.dart';
+
+
 class AccountView extends StatelessWidget {
   const AccountView({super.key});
 
@@ -594,6 +607,73 @@ class AccountView extends StatelessWidget {
                       context,
                       MaterialPageRoute(builder: (_) => const AboutView()),
                     ),
+                  ),
+                  const SizedBox(height: 16),
+                  pillButton(
+                    Icons.help_outline,
+                    'Help & Support',
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => ChangeNotifierProvider(
+                            create: (_) => HelpViewModel(),
+                            child: const HelpView(),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: 16),
+                  pillButton(
+                    Icons.contact_support_outlined,
+                    'Contact Us',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ChangeNotifierProvider(
+                            create: (_) => ContactUsViewModel(),
+                            child: const ContactUsView(),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  pillButton(
+                    Icons.card_giftcard,
+                    'Referral Program',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ChangeNotifierProvider(
+                            create: (_) => ReferralViewModel(),
+                            child: const ReferralView(),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: 16),
+                  pillButton(
+                    Icons.star_rate_rounded,
+                    'Rate Us',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ChangeNotifierProvider(
+                            create: (_) => FeedbackViewModel(
+                              FeedbackRepository(apiBase: ''),
+                            ),
+                            child: const FeedbackView(),
+                          ),
+                        ),
+                      );
+                    },
                   ),
 
                   const SizedBox(height: 28),
