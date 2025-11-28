@@ -15,6 +15,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -24,6 +25,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.kotlinapp.App
+import com.example.kotlinapp.R
+import com.example.kotlinapp.data.api.ApiClient
+import kotlinx.coroutines.launch
 
 class MetricsFragment : Fragment() {
     override fun onCreateView(
@@ -37,6 +42,12 @@ class MetricsFragment : Fragment() {
                 MetricsScreen(
                     onBackClick = {
                         navController.popBackStack()
+                    },
+                    onTestBatchRatingStats = { vehicleIds ->
+                        val bundle = Bundle().apply {
+                            putStringArray("vehicle_ids", vehicleIds.toTypedArray())
+                        }
+                        navController.navigate(R.id.batchRatingStatsFragment, bundle)
                     }
                 )
             }
@@ -46,13 +57,54 @@ class MetricsFragment : Fragment() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MetricsScreen(onBackClick: () -> Unit = {}) {
+fun MetricsScreen(
+    onBackClick: () -> Unit = {},
+    onTestBatchRatingStats: (List<String>) -> Unit = {}
+) {
     val vm: FeatureUsageViewModel = viewModel()
     val lowUsageFeatures by vm.lowUsageFeatures.collectAsState()
     val usageStats by vm.usageStats.collectAsState()
     val chatTimeStats by vm.chatTimeStats.collectAsState()
     val loading by vm.loading.collectAsState()
     val error by vm.error.collectAsState()
+    
+    // Estado para IDs de vehículos reales
+    // Usar los 5 vehículos que tienen ratings en la base de datos
+    val realVehicleIds = remember {
+        listOf(
+            "07da8f35-6106-465a-a57a-e567b8ac792d",  // Volkswagen - 17 ratings
+            "505e9d11-96dd-4fde-9048-2ecd87b465ff",  // Hyundai East - 9 ratings
+            "42e0b78f-1e08-43f5-b92f-f929812b141d",  // Ford Somebody - 9 ratings
+            "e3ecb219-d5b4-4739-a9d0-6887f777f0aa",  // Hyundai Country - 8 ratings
+            "3497c3b1-7e01-4823-a06a-4e9b416f04df"   // Ford Response - 8 ratings
+        )
+    }
+    var loadingVehicles by remember { mutableStateOf(false) }
+    
+    // Intentar cargar vehículos del usuario (opcional, para mostrar si el usuario tiene vehículos propios)
+    LaunchedEffect(Unit) {
+        loadingVehicles = true
+        try {
+            val userId = App.getPreferencesManager().getUserId()
+            if (userId != null) {
+                val response = ApiClient.vehiclesApi.getOwnerVehicles(userId, skip = 0, limit = 100)
+                if (response.isSuccessful) {
+                    val vehicles = response.body()?.items ?: emptyList()
+                    val userVehicleIds = vehicles.map { it.vehicle_id }
+                    android.util.Log.d("MetricsFragment", "User has ${userVehicleIds.size} vehicles: $userVehicleIds")
+                    // Nota: Seguimos usando los 5 vehículos con ratings para la prueba
+                } else {
+                    android.util.Log.w("MetricsFragment", "Failed to load user vehicles: ${response.code()}")
+                }
+            } else {
+                android.util.Log.w("MetricsFragment", "User ID is null")
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("MetricsFragment", "Error loading user vehicles", e)
+        } finally {
+            loadingVehicles = false
+        }
+    }
     
     Scaffold(
         topBar = {
@@ -280,6 +332,75 @@ fun MetricsScreen(onBackClick: () -> Unit = {}) {
                             
                             item {
                                 Spacer(Modifier.height(24.dp))
+                            }
+                        }
+                    }
+                    
+                    // Botón de prueba para Batch Rating Stats
+                    item {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer
+                            ),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .padding(20.dp)
+                                    .fillMaxWidth()
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Star,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.secondary,
+                                        modifier = Modifier.size(32.dp)
+                                    )
+                                    Spacer(Modifier.width(12.dp))
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            "Test Batch Rating Stats",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                                        )
+                                        Text(
+                                            "Probar procesamiento de estadísticas de ratings en batch",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                                        )
+                                    }
+                                }
+                                Spacer(Modifier.height(16.dp))
+                                
+                                // Mostrar información sobre vehículos con ratings
+                                Text(
+                                    "${realVehicleIds.size} vehículo(s) con ratings disponibles para prueba",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                                )
+                                Spacer(Modifier.height(8.dp))
+                                
+                                Button(
+                                    onClick = {
+                                        // Usar los 5 vehículos que tienen ratings
+                                        android.util.Log.d("MetricsFragment", "Testing with ${realVehicleIds.size} vehicle IDs: $realVehicleIds")
+                                        onTestBatchRatingStats(realVehicleIds)
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.secondary
+                                    ),
+                                    enabled = !loadingVehicles
+                                ) {
+                                    Icon(Icons.Default.PlayArrow, contentDescription = null)
+                                    Spacer(Modifier.width(8.dp))
+                                    Text("Probar con ${realVehicleIds.size} vehículo(s) con ratings")
+                                }
                             }
                         }
                     }

@@ -13,7 +13,10 @@ from app.schemas.vehicle_rating import (
     VehicleRatingUpdate,
     VehicleRatingWithDetails,
     TopRatedVehicleSearch,
-    TopRatedVehicleResponse
+    TopRatedVehicleResponse,
+    BatchRatingStatsRequest,
+    BatchRatingStatsResponse,
+    VehicleRatingStats
 )
 from app.services.vehicle_rating_service import VehicleRatingService
 from app.routers.users import get_current_user_from_token
@@ -181,6 +184,65 @@ async def get_vehicle_rating_stats(
         "model": vehicle.model,
         "year": vehicle.year
     }
+
+
+@router.post("/batch/stats", response_model=BatchRatingStatsResponse)
+@track_feature_usage("batch_rating_stats")
+async def get_batch_rating_stats(
+    request: BatchRatingStatsRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_from_token)
+):
+    """
+    Obtener estadísticas de calificación para múltiples vehículos en una sola llamada.
+    Procesa hasta 100 vehículos en paralelo en el backend.
+    """
+    rating_service = VehicleRatingService(db)
+    
+    try:
+        # Obtener estadísticas en batch
+        batch_stats = await rating_service.get_batch_rating_stats(request.vehicle_ids)
+        
+        # Convertir a formato de respuesta
+        # Nota: get_batch_rating_stats siempre retorna todos los vehicle_ids solicitados
+        # con valores por defecto si no tienen ratings, así que todos están en batch_stats
+        stats_list = []
+        successful = 0
+        failed = 0
+        
+        for vehicle_id in request.vehicle_ids:
+            vehicle_stats = batch_stats.get(vehicle_id, {
+                "average_rating": 0.0,
+                "total_ratings": 0,
+                "rating_distribution": {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
+            })
+            
+            stats_list.append(
+                VehicleRatingStats(
+                    vehicle_id=vehicle_id,
+                    average_rating=vehicle_stats["average_rating"],
+                    total_ratings=vehicle_stats["total_ratings"],
+                    rating_distribution=vehicle_stats["rating_distribution"]
+                )
+            )
+            
+            # Contar como exitoso si tiene ratings, fallido si no
+            if vehicle_stats["total_ratings"] > 0:
+                successful += 1
+            else:
+                failed += 1
+        
+        return BatchRatingStatsResponse(
+            stats=stats_list,
+            total_processed=len(request.vehicle_ids),
+            successful=successful,
+            failed=failed
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error procesando estadísticas en batch: {str(e)}"
+        )
 
 
 @router.post("/", response_model=VehicleRatingResponse)

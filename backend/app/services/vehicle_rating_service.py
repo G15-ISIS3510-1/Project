@@ -255,3 +255,87 @@ class VehicleRatingService:
                     break
 
         return filtered_vehicles
+
+    async def get_batch_rating_stats(self, vehicle_ids: List[str]) -> Dict[str, Dict[str, Any]]:
+        """
+        Obtener estadísticas de calificación para múltiples vehículos en una sola consulta.
+        
+        Args:
+            vehicle_ids: Lista de IDs de vehículos
+            
+        Returns:
+            Diccionario con vehicle_id como clave y estadísticas como valor:
+            {
+                "vehicle_id": {
+                    "average_rating": float,
+                    "total_ratings": int,
+                    "rating_distribution": {1: int, 2: int, 3: int, 4: int, 5: int}
+                }
+            }
+        """
+        if not vehicle_ids:
+            return {}
+        
+        # Obtener estadísticas agregadas por vehículo
+        stats_query = (
+            select(
+                VehicleRating.vehicle_id,
+                func.avg(VehicleRating.rating).label('avg_rating'),
+                func.count(VehicleRating.rating_id).label('total_ratings')
+            )
+            .where(VehicleRating.vehicle_id.in_(vehicle_ids))
+            .group_by(VehicleRating.vehicle_id)
+        )
+        
+        stats_result = await self.db.execute(stats_query)
+        stats_rows = stats_result.all()
+        
+        # Obtener distribución de ratings (1-5 estrellas) por vehículo
+        # Usamos ROUND para agrupar correctamente (4.5 -> 5, 3.7 -> 4, etc.)
+        distribution_query = (
+            select(
+                VehicleRating.vehicle_id,
+                func.round(VehicleRating.rating).label('rating_rounded'),
+                func.count(VehicleRating.rating_id).label('count')
+            )
+            .where(VehicleRating.vehicle_id.in_(vehicle_ids))
+            .group_by(VehicleRating.vehicle_id, func.round(VehicleRating.rating))
+        )
+        
+        distribution_result = await self.db.execute(distribution_query)
+        distribution_rows = distribution_result.all()
+        
+        # Construir diccionario de resultados
+        results = {}
+        
+        # Inicializar todos los vehículos solicitados
+        for vehicle_id in vehicle_ids:
+            results[vehicle_id] = {
+                "average_rating": 0.0,
+                "total_ratings": 0,
+                "rating_distribution": {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
+            }
+        
+        # Llenar estadísticas agregadas
+        for row in stats_rows:
+            vehicle_id = row[0]
+            avg_rating = float(row[1]) if row[1] else 0.0
+            total_ratings = int(row[2]) if row[2] else 0
+            
+            if vehicle_id in results:
+                results[vehicle_id]["average_rating"] = round(avg_rating, 2)
+                results[vehicle_id]["total_ratings"] = total_ratings
+        
+        # Llenar distribución de ratings
+        for row in distribution_rows:
+            vehicle_id = row[0]
+            rating_rounded = int(row[1]) if row[1] else 0
+            count = int(row[2]) if row[2] else 0
+            
+            # Asegurar que el rating esté en el rango 1-5
+            rating_key = max(1, min(5, rating_rounded))
+            
+            if vehicle_id in results:
+                results[vehicle_id]["rating_distribution"][rating_key] = count
+        
+        return results

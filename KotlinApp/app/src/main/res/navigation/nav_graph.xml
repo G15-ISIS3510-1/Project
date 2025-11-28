@@ -164,7 +164,16 @@
     <fragment
         android:id="@+id/metricsFragment"
         android:name="com.example.kotlinapp.ui.metrics.MetricsFragment"
-        android:label="Métricas de Uso" />
+        android:label="Métricas de Uso">
+        <action
+            android:id="@+id/action_metrics_to_batchRatingStats"
+            app:destination="@id/batchRatingStatsFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/batchRatingStatsFragment"
+        android:name="com.example.kotlinapp.ui.ratings.BatchRatingStatsFragment"
+        android:label="Rating Statistics" />
 
 
 
