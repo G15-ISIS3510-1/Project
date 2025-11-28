@@ -1,5 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_app/data/repositories/recent_price_updates_repository.dart';
+import 'package:flutter_app/presentation/features/analytics/recent_price_updates/view/recent_price_updates_view.dart';
+import 'package:flutter_app/presentation/features/analytics/recent_price_updates/viewmodel/recent_price_updates_viewmodel.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
@@ -415,6 +418,30 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
                         );
                       },
                     ),
+                    const SizedBox(height: 16),
+                      pillButton(
+                        Icons.price_change_outlined,
+                        'Recent Price Updates',
+                        onTap: () {
+                          final repository = RecentPriceUpdatesRepositoryImpl(
+                            remote: AnalyticsRemoteSourceImpl(
+                              client: http.Client(),
+                              baseUrl: kApiBase,
+                            ),
+                          );
+
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => ChangeNotifierProvider(
+                                create: (_) => RecentPriceUpdatesViewModel(repository: repository)
+                                  ..load(),
+                                child: const RecentPriceUpdatesView(),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+
                     const SizedBox(height: 16),
                     pillButton(
                       Icons.timer_outlined,
