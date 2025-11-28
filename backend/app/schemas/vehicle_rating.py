@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List, Dict
 from datetime import datetime
 
 class VehicleRatingBase(BaseModel):
@@ -56,3 +56,18 @@ class TopRatedVehicleResponse(BaseModel):
     total_ratings: int
     distance_km: float
     owner_name: str
+
+class BatchRatingStatsRequest(BaseModel):
+    vehicle_ids: List[str] = Field(..., min_items=1, max_items=100, description="Lista de IDs de vehículos (máximo 100)")
+
+class VehicleRatingStats(BaseModel):
+    vehicle_id: str
+    average_rating: float = Field(..., ge=0.0, le=5.0)
+    total_ratings: int = Field(..., ge=0)
+    rating_distribution: Dict[int, int] = Field(..., description="Distribución de ratings: {1: count, 2: count, 3: count, 4: count, 5: count}")
+
+class BatchRatingStatsResponse(BaseModel):
+    stats: List[VehicleRatingStats]
+    total_processed: int
+    successful: int
+    failed: int
