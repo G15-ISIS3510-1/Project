@@ -619,13 +619,11 @@ private fun VehiclesList(
         "${searchParams.radiusKm.toInt()} km"
     }
     
-    // OPTIMIZACIÓN 2: LazyColumn optimizado con keys estables y prefetch
+    // OPTIMIZACIÓN 2: LazyColumn optimizado con keys estables
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        // OPTIMIZACIÓN 2: Prefetch distance optimizado para mejor scroll
-        beyondBoundsItemCount = 2
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
