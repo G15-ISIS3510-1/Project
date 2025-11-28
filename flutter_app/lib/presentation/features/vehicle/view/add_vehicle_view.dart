@@ -1,8 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_app/presentation/features/vehicle/viewmodel/add_vehicle_viewmodel.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
 
 class AddVehicleView extends StatefulWidget {
   const AddVehicleView({super.key});
@@ -25,7 +26,7 @@ class _AddVehicleViewState extends State<AddVehicleView> {
   final _mileageC = TextEditingController(text: '0');
   final _latC = TextEditingController(text: '0');
   final _lngC = TextEditingController(text: '0');
-  
+
   XFile? _imageFile;
 
   @override
@@ -51,11 +52,11 @@ class _AddVehicleViewState extends State<AddVehicleView> {
   Future<void> _takePhoto() async {
     final ImagePicker picker = ImagePicker();
     final XFile? photo = await picker.pickImage(source: ImageSource.camera);
-    
+
     if (photo != null) {
       setState(() {
         _imageFile = photo;
-        _imageUrlC.clear(); 
+        _imageUrlC.clear();
       });
     }
   }
@@ -68,14 +69,14 @@ class _AddVehicleViewState extends State<AddVehicleView> {
     final lng = double.tryParse(_lngC.text);
 
     await context.read<AddVehicleViewModel>().fetchSuggestedPrice(
-      make: _makeC.text,
-      model: _modelC.text,
-      year: y,
-      seats: seats,
-      mileage: mil,
-      lat: lat,
-      lng: lng,
-    );
+          make: _makeC.text,
+          model: _modelC.text,
+          year: y,
+          seats: seats,
+          mileage: mil,
+          lat: lat,
+          lng: lng,
+        );
   }
 
   Future<void> _submit() async {
@@ -94,7 +95,8 @@ class _AddVehicleViewState extends State<AddVehicleView> {
         lat: double.parse(_latC.text.trim()),
         lng: double.parse(_lngC.text.trim()),
         dailyPrice: double.parse(_priceC.text.trim()),
-        imageUrl: _imageUrlC.text.trim().isEmpty ? null : _imageUrlC.text.trim(),
+        imageUrl:
+            _imageUrlC.text.trim().isEmpty ? null : _imageUrlC.text.trim(),
         imageFile: _imageFile,
       );
 
@@ -109,9 +111,9 @@ class _AddVehicleViewState extends State<AddVehicleView> {
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('⚠️ Error: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('⚠️ Error: $e')),
+      );
     }
   }
 
@@ -121,8 +123,7 @@ class _AddVehicleViewState extends State<AddVehicleView> {
     return InputDecoration(
       hintText: hint,
       filled: true,
-      fillColor:
-          theme.inputDecorationTheme.fillColor ??
+      fillColor: theme.inputDecorationTheme.fillColor ??
           (theme.brightness == Brightness.dark
               ? const Color(0xFF1C2230)
               : scheme.surface),
@@ -138,16 +139,20 @@ class _AddVehicleViewState extends State<AddVehicleView> {
         borderRadius: BorderRadius.circular(12.0),
         borderSide: BorderSide(color: scheme.primary, width: 1.4),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      contentPadding:
+          const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     const p = EdgeInsets.symmetric(horizontal: 24.0);
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-    final vm = context.watch<AddVehicleViewModel>();
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final text = theme.textTheme;
+
+    // Para acciones, no necesitamos escuchar cambios
+    final vm = context.read<AddVehicleViewModel>();
 
     final form = Form(
       key: _formKey,
@@ -183,7 +188,9 @@ class _AddVehicleViewState extends State<AddVehicleView> {
             onChanged: (_) => _markStale(),
             validator: (v) {
               final y = int.tryParse(v ?? '');
-              if (y == null || y < 1980 || y > DateTime.now().year + 1) {
+              if (y == null ||
+                  y < 1980 ||
+                  y > DateTime.now().year + 1) {
                 return 'Invalid year';
               }
               return null;
@@ -191,22 +198,25 @@ class _AddVehicleViewState extends State<AddVehicleView> {
           ),
           const SizedBox(height: 12),
 
+          // Transmission: sólo escucha ese campo
           DropdownButtonFormField<String>(
-            value: vm.transmission,
+            value: context.select<AddVehicleViewModel, String>(
+              (m) => m.transmission,
+            ),
             decoration: _dec(context, 'Transmission'),
             items: const [
               DropdownMenuItem(value: 'AT', child: Text('Automatic')),
               DropdownMenuItem(value: 'MT', child: Text('Manual')),
             ],
-            onChanged: (v) =>
-                context.read<AddVehicleViewModel>().setTransmission(v ?? 'AT'),
+            onChanged: (v) => vm.setTransmission(v ?? 'AT'),
           ),
           const SizedBox(height: 12),
 
           TextFormField(
             controller: _priceC,
             decoration: _dec(context, 'Price per day (USD)'),
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            keyboardType:
+                const TextInputType.numberWithOptions(decimal: true),
             validator: (v) {
               final p = double.tryParse(v ?? '');
               if (p == null || p <= 0) return 'Invalid price';
@@ -234,8 +244,11 @@ class _AddVehicleViewState extends State<AddVehicleView> {
           ),
           const SizedBox(height: 12),
 
+          // Fuel type: sólo escucha ese campo
           DropdownButtonFormField<String>(
-            value: vm.fuelType,
+            value: context.select<AddVehicleViewModel, String>(
+              (m) => m.fuelType,
+            ),
             decoration: _dec(context, 'Fuel type'),
             items: const [
               DropdownMenuItem(value: 'gas', child: Text('Gasoline')),
@@ -243,8 +256,7 @@ class _AddVehicleViewState extends State<AddVehicleView> {
               DropdownMenuItem(value: 'hybrid', child: Text('Hybrid')),
               DropdownMenuItem(value: 'ev', child: Text('Electric')),
             ],
-            onChanged: (v) =>
-                context.read<AddVehicleViewModel>().setFuelType(v ?? 'gas'),
+            onChanged: (v) => vm.setFuelType(v ?? 'gas'),
           ),
           const SizedBox(height: 12),
 
@@ -261,20 +273,26 @@ class _AddVehicleViewState extends State<AddVehicleView> {
           TextFormField(
             controller: _latC,
             decoration: _dec(context, 'Latitude'),
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            keyboardType:
+                const TextInputType.numberWithOptions(decimal: true),
             onChanged: (_) => _markStale(),
             validator: (v) =>
-                (double.tryParse(v ?? '') == null) ? 'Invalid latitude' : null,
+                (double.tryParse(v ?? '') == null)
+                    ? 'Invalid latitude'
+                    : null,
           ),
           const SizedBox(height: 12),
 
           TextFormField(
             controller: _lngC,
             decoration: _dec(context, 'Longitude'),
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            keyboardType:
+                const TextInputType.numberWithOptions(decimal: true),
             onChanged: (_) => _markStale(),
             validator: (v) =>
-                (double.tryParse(v ?? '') == null) ? 'Invalid longitude' : null,
+                (double.tryParse(v ?? '') == null)
+                    ? 'Invalid longitude'
+                    : null,
           ),
           const SizedBox(height: 12),
 
@@ -294,7 +312,9 @@ class _AddVehicleViewState extends State<AddVehicleView> {
                     color: scheme.surfaceContainerHigh,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: _imageFile != null ? scheme.primary : scheme.outlineVariant,
+                      color: _imageFile != null
+                          ? scheme.primary
+                          : scheme.outlineVariant,
                       width: 2,
                     ),
                   ),
@@ -326,42 +346,46 @@ class _AddVehicleViewState extends State<AddVehicleView> {
             onChanged: (_) => setState(() => _imageFile = null),
           ),
 
-
           const SizedBox(height: 20),
           SizedBox(
             width: double.infinity,
             height: 48,
-            child: FilledButton(
-              onPressed: vm.loading ? null : _submit,
-              child: Text(vm.loading ? 'Saving…' : 'Save vehicle'),
+            child: Consumer<AddVehicleViewModel>(
+              builder: (_, m, __) => FilledButton(
+                onPressed: m.loading ? null : _submit,
+                child:
+                    Text(m.loading ? 'Saving…' : 'Save vehicle'),
+              ),
             ),
           ),
         ],
       ),
     );
 
-    final suggestCard = _SuggestedPriceCard(
-      loading: vm.fetchingSuggest,
-      value: vm.suggested,
-      reason: vm.reason,
-      stale: vm.suggestionStale,
-      onRefresh: _fetchSuggestedPrice,
-      onApply: () {
-        if (vm.suggested != null) {
-          _priceC.text = vm.suggested!.toStringAsFixed(2);
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('AI price applied')));
-        }
-      },
+    final suggestCard = Consumer<AddVehicleViewModel>(
+      builder: (context, m, _) => _SuggestedPriceCard(
+        loading: m.fetchingSuggest,
+        value: m.suggested,
+        reason: m.reason,
+        stale: m.suggestionStale,
+        onRefresh: _fetchSuggestedPrice,
+        onApply: () {
+          if (m.suggested != null) {
+            _priceC.text = m.suggested!.toStringAsFixed(2);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('AI price applied')),
+            );
+          }
+        },
+      ),
     );
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Add Vehicle'),
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
-        foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
-        elevation: Theme.of(context).appBarTheme.elevation ?? 0,
+        backgroundColor: theme.appBarTheme.backgroundColor,
+        foregroundColor: theme.appBarTheme.foregroundColor,
+        elevation: theme.appBarTheme.elevation ?? 0,
       ),
       body: SafeArea(
         child: LayoutBuilder(
@@ -463,7 +487,9 @@ class _SuggestedPriceCard extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 'Calculating…',
-                style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+                style: text.bodySmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
               ),
             ] else if (value != null) ...[
               Row(
@@ -481,7 +507,8 @@ class _SuggestedPriceCard extends StatelessWidget {
                     onPressed: loading ? null : onRefresh,
                     icon: Icon(
                       Icons.refresh,
-                      color: stale ? scheme.primary : scheme.onSurfaceVariant,
+                      color:
+                          stale ? scheme.primary : scheme.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -512,7 +539,9 @@ class _SuggestedPriceCard extends StatelessWidget {
             ] else ...[
               Text(
                 'Get an AI price suggestion',
-                style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+                style: text.bodySmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
               ),
               const SizedBox(height: 8),
               SizedBox(
