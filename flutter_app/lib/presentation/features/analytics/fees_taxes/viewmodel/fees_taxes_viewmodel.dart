@@ -22,13 +22,19 @@ class FeesTaxesViewModel extends ChangeNotifier {
   DateTime? fetchedAt;
 
   Future<void> load({bool forceRefresh = false}) async {
+    if (loading && !forceRefresh) return; // evita cargas dobles
     loading = true;
     error = null;
     notifyListeners();
 
     try {
       if (userId.isEmpty) {
-        throw Exception('No active user session to compute bookings.');
+        average = 0;
+        sampleSize = 0;
+        usedCache = true;
+        source = 'no-user';
+        fetchedAt = DateTime.now();
+        return;
       }
 
       final result = await repository.getAverageFeesTaxes(
