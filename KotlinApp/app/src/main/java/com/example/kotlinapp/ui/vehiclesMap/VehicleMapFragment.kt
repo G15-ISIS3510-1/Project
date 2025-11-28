@@ -19,6 +19,7 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.kotlinapp.data.repository.VehicleMapItem
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.*
@@ -52,12 +53,34 @@ fun VehicleMapScreen() {
         position = CameraPosition.fromLatLngZoom(bogota, 12f)
     }
 
+    // OPTIMIZACIÓN 1: Filtrar vehiculos visibles según cámara
+    val visibleVehicles = remember(vehicles, cameraPositionState.position) {
+        filterVisibleVehicles(vehicles, cameraPositionState.position)
+    }
+
+    // OPTIMIZACIÓN 2: Clustering para muchos markers
+    val shouldCluster = visibleVehicles.size > 20
+    val displayMarkers = remember(visibleVehicles, cameraPositionState.position.zoom) {
+        if (shouldCluster) {
+            clusterVehicles(visibleVehicles, cameraPositionState.position.zoom)
+        } else {
+            visibleVehicles
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Active Vehicles") },
+                title = {
+                    Column {
+                        Text("Active Vehicles")
+                        Text(
+                            "${displayMarkers.size} visible of ${vehicles.size} total",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                },
                 actions = {
-                    // Botón de refresh con animación
                     IconButton(
                         onClick = { vm.revalidate() },
                         enabled = !isRefreshing
@@ -95,9 +118,16 @@ fun VehicleMapScreen() {
                 uiSettings = MapUiSettings(
                     zoomControlsEnabled = true,
                     myLocationButtonEnabled = true
+                ),
+                // OPTIMIZACIÓN 3: Desactivar features innecesarios
+                properties = MapProperties(
+                    isMyLocationEnabled = false,
+                    isBuildingEnabled = false,
+                    isTrafficEnabled = false
                 )
             ) {
-                vehicles.forEach { vehicle ->
+                // OPTIMIZACIÓN 4: Renderizar solo markers visibles y clusterizados
+                displayMarkers.forEach { vehicle ->
                     Marker(
                         state = MarkerState(position = LatLng(vehicle.lat, vehicle.lng)),
                         title = "${vehicle.make} ${vehicle.model}",
@@ -118,7 +148,7 @@ fun VehicleMapScreen() {
                     )
                 ) {
                     Text(
-                        text = " Sin conexión. Mostrando datos guardados.\nToca el ícono ⟳ arriba para actualizar.",
+                        text = "Sin conexión. Mostrando datos guardados.\nToca el ícono ⟳ arriba para actualizar.",
                         modifier = Modifier.padding(12.dp),
                         style = MaterialTheme.typography.bodyMedium
                     )
@@ -134,5 +164,60 @@ fun VehicleMapScreen() {
                 )
             }
         }
+    }
+}
+
+// OPTIMIZACIÓN: Filtrar vehículos dentro del viewport visible
+private fun filterVisibleVehicles(
+    vehicles: List<VehicleMapItem>,
+    cameraPosition: CameraPosition
+): List<VehicleMapItem> {
+    if (vehicles.isEmpty()) return emptyList()
+
+    // Calcular área visible basada en el zoom
+    // Zoom 12 ≈ 0.1 grados, Zoom 15 ≈ 0.01 grados
+    val latDelta = 0.2 / cameraPosition.zoom
+    val lngDelta = 0.2 / cameraPosition.zoom
+
+    val centerLat = cameraPosition.target.latitude
+    val centerLng = cameraPosition.target.longitude
+
+    val minLat = centerLat - latDelta
+    val maxLat = centerLat + latDelta
+    val minLng = centerLng - lngDelta
+    val maxLng = centerLng + lngDelta
+
+    return vehicles.filter { vehicle ->
+        vehicle.lat in minLat..maxLat && vehicle.lng in minLng..maxLng
+    }
+}
+
+// OPTIMIZACIÓN: Clustering simple de vehículos cercanos
+private fun clusterVehicles(
+    vehicles: List<VehicleMapItem>,
+    zoom: Float
+): List<VehicleMapItem> {
+    // Si hay pocos vehículos o estamos muy cerca, no agrupar
+    if (vehicles.size < 20 || zoom > 14f) return vehicles
+
+    // Tamaño de la cuadrícula para clustering (más pequeño = más zoom)
+    val gridSize = when {
+        zoom < 10f -> 0.05  // ~5km
+        zoom < 12f -> 0.02  // ~2km
+        zoom < 14f -> 0.01  // ~1km
+        else -> 0.005       // ~500m
+    }
+
+    // Agrupar vehículos en celdas de la cuadrícula
+    val clusters = vehicles.groupBy { vehicle ->
+        val gridLat = (vehicle.lat / gridSize).toInt()
+        val gridLng = (vehicle.lng / gridSize).toInt()
+        gridLat to gridLng
+    }
+
+    // Retornar un representante por cluster
+    return clusters.map { (_, group) ->
+
+        group.first()
     }
 }

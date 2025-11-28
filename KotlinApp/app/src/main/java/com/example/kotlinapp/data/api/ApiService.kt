@@ -25,7 +25,7 @@ interface VehiclesApiService {
 
     @GET("api/vehicles/active")
     //suspend fun getActiveVehicles(): List<VehicleResponse>
-    suspend fun getActiveVehicles(): List<VehicleResponse>
+    suspend fun getActiveVehicles(): PaginatedVehicleResponse
 
     @GET("api/vehicles/active-with-pricing")
     suspend fun getActiveVehiclesWithPricing(
