@@ -52,21 +52,36 @@ class FeesTaxesRepositoryImpl implements FeesTaxesRepository {
     required bool asHost,
     bool forceRefresh = false,
   }) async {
+    // Si no hay sesión, devolvemos ceros para evitar errores de canal aislado al cerrar DB.
+    if (userId.isEmpty) {
+      return FeesTaxesResult(
+        average: 0,
+        sampleSize: 0,
+        source: 'no-user',
+        usedCache: true,
+        fetchedAt: DateTime.now().toUtc(),
+      );
+    }
+
     // 1) Fresh cache (if allowed)
     if (!forceRefresh) {
-      final cached = await store.load(
-        userId: userId,
-        asHost: asHost,
-        ttl: _cacheTtl,
-      );
-      if (cached != null) {
-        return FeesTaxesResult(
-          average: cached.average,
-          sampleSize: cached.sampleSize,
-          source: 'cache',
-          usedCache: true,
-          fetchedAt: cached.savedAt,
+      try {
+        final cached = await store.load(
+          userId: userId,
+          asHost: asHost,
+          ttl: _cacheTtl,
         );
+        if (cached != null) {
+          return FeesTaxesResult(
+            average: cached.average,
+            sampleSize: cached.sampleSize,
+            source: 'cache',
+            usedCache: true,
+            fetchedAt: cached.savedAt,
+          );
+        }
+      } catch (_) {
+        // ignore cache load errors (e.g., isolate closed)
       }
     }
 
@@ -76,12 +91,14 @@ class FeesTaxesRepositoryImpl implements FeesTaxesRepository {
     if (isOnline) {
       final remoteRes = await _tryRemoteEndpoint();
       if (remoteRes != null) {
-        await store.save(
-          userId: userId,
-          asHost: asHost,
-          average: remoteRes.average,
-          sampleSize: remoteRes.sampleSize,
-        );
+        try {
+          await store.save(
+            userId: userId,
+            asHost: asHost,
+            average: remoteRes.average,
+            sampleSize: remoteRes.sampleSize,
+          );
+        } catch (_) {}
         return FeesTaxesResult(
           average: remoteRes.average,
           sampleSize: remoteRes.sampleSize,
@@ -97,12 +114,14 @@ class FeesTaxesRepositoryImpl implements FeesTaxesRepository {
       final bookingsAggregation =
           await _aggregateFromBookingsRepository(asHost: asHost);
       if (bookingsAggregation != null) {
-        await store.save(
-          userId: userId,
-          asHost: asHost,
-          average: bookingsAggregation.average,
-          sampleSize: bookingsAggregation.sampleSize,
-        );
+        try {
+          await store.save(
+            userId: userId,
+            asHost: asHost,
+            average: bookingsAggregation.average,
+            sampleSize: bookingsAggregation.sampleSize,
+          );
+        } catch (_) {}
         return FeesTaxesResult(
           average: bookingsAggregation.average,
           sampleSize: bookingsAggregation.sampleSize,
@@ -119,12 +138,14 @@ class FeesTaxesRepositoryImpl implements FeesTaxesRepository {
       asHost: asHost,
     );
     if (localAggregation != null) {
-      await store.save(
-        userId: userId,
-        asHost: asHost,
-        average: localAggregation.average,
-        sampleSize: localAggregation.sampleSize,
-      );
+      try {
+        await store.save(
+          userId: userId,
+          asHost: asHost,
+          average: localAggregation.average,
+          sampleSize: localAggregation.sampleSize,
+        );
+      } catch (_) {}
       return FeesTaxesResult(
         average: localAggregation.average,
         sampleSize: localAggregation.sampleSize,
@@ -135,22 +156,31 @@ class FeesTaxesRepositoryImpl implements FeesTaxesRepository {
     }
 
     // 5) Last-resort stale cache
-    final stale = await store.load(
-      userId: userId,
-      asHost: asHost,
-      ttl: null,
-    );
-    if (stale != null) {
-      return FeesTaxesResult(
-        average: stale.average,
-        sampleSize: stale.sampleSize,
-        source: 'stale-cache',
-        usedCache: true,
-        fetchedAt: stale.savedAt,
+    try {
+      final stale = await store.load(
+        userId: userId,
+        asHost: asHost,
+        ttl: null,
       );
-    }
+      if (stale != null) {
+        return FeesTaxesResult(
+          average: stale.average,
+          sampleSize: stale.sampleSize,
+          source: 'stale-cache',
+          usedCache: true,
+          fetchedAt: stale.savedAt,
+        );
+      }
+    } catch (_) {}
 
-    throw Exception('No data available to compute fees/taxes average.');
+    // If there's no data at all, return zeros gracefully.
+    return FeesTaxesResult(
+      average: 0,
+      sampleSize: 0,
+      source: 'empty',
+      usedCache: true,
+      fetchedAt: DateTime.now().toUtc(),
+    );
   }
 
   Future<_Aggregated?> _tryRemoteEndpoint() async {
@@ -214,7 +244,8 @@ class FeesTaxesRepositoryImpl implements FeesTaxesRepository {
       if (count == 0) return null;
       return _Aggregated(average: sum / count, sampleSize: count);
     } catch (e) {
-      if (kDebugMode) {
+      // Avoid crashing if the Drift isolate was closed (e.g., logout).
+      if (kDebugMode && !_isolateClosed(e)) {
         debugPrint('[FeesTaxesRepository] bookings aggregation failed: $e');
       }
       return null;
@@ -251,11 +282,18 @@ class FeesTaxesRepositoryImpl implements FeesTaxesRepository {
       if (count == 0) return null;
       return _Aggregated(average: sum / count, sampleSize: count);
     } catch (e) {
-      if (kDebugMode) {
+      if (kDebugMode && !_isolateClosed(e)) {
         debugPrint('[FeesTaxesRepository] local aggregation failed: $e');
       }
       return null;
     }
+  }
+
+  bool _isolateClosed(Object e) {
+    final msg = e.toString();
+    return msg.contains('connection was closed') ||
+        msg.contains('isolate channel') ||
+        msg.contains('Bad state');
   }
 }
 

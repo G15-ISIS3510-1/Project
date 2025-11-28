@@ -160,9 +160,8 @@ class _ConversationPageState extends State<ConversationPage> {
   }
 
   Widget _buildMessages(ConversationViewModel vm) {
-    // Oldest -> Newest (so newest is at the bottom)
-    final msgs = [...vm.messages]
-      ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    // Already sorted oldest -> newest in the ViewModel
+    final msgs = vm.messages;
 
     // If message count grew and we are near bottom, auto-scroll.
     final newCount = msgs.length;
