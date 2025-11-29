@@ -36,6 +36,9 @@ class VehicleRepository(
     private val pricingApi: PricingApiService = BackendApis.pricing
 ) {
 
+    companion object {
+        private const val TAG = "VehicleRepository"
+    }
 
     suspend fun createVehicleWithPricing(
         v: VehicleCreate,
@@ -50,9 +53,9 @@ class VehicleRepository(
                 val requestFile = photoFile.asRequestBody("image/jpeg".toMediaTypeOrNull())
                 val body = MultipartBody.Part.createFormData("file", photoFile.name, requestFile)
                 vehiclesApi.uploadPhoto(vehicle.vehicle_id, body)
-                Log.d("VehicleRepository", "Photo uploaded successfully")
+                Log.d(TAG, "Photo uploaded successfully")
             } catch (e: Exception) {
-                Log.e("VehicleRepository", "Failed to upload photo: ${e.message}", e)
+                Log.e(TAG, "Failed to upload photo: ${e.message}", e)
             }
         }
 
@@ -61,16 +64,35 @@ class VehicleRepository(
         return vehicle to pricing
     }
 
-    suspend fun getActiveVehicles(): List<VehicleResponse> {
-        val vehicles = vehiclesApi.getActiveVehicles()
 
-        println("🚗 === ACTIVE VEHICLES (${vehicles.size}) ===")
-        vehicles.forEachIndexed { index, vehicle ->
-            println("[$index] ${vehicle.make} ${vehicle.model} - Lat: ${vehicle.lat}, Lng: ${vehicle.lng}")
+    suspend fun getActiveVehicles(): List<VehicleResponse> = withContext(Dispatchers.IO) {
+        return@withContext try {
+            Log.d(TAG, "Fetching active vehicles from API...")
+
+
+            val response = vehiclesApi.getActiveVehicles().items
+
+
+            val vehicles = response
+
+
+
+
+            vehicles.forEachIndexed { index, vehicle ->
+                if (index < 5) {
+                    Log.d(TAG, "[$index] ${vehicle.make} ${vehicle.model} - Lat: ${vehicle.lat}, Lng: ${vehicle.lng}")
+                }
+            }
+
+
+
+            vehicles
+
+        } catch (e: Exception) {
+            Log.e(TAG, "Error fetching vehicles: ${e.message}", e)
+            throw e
         }
-        return vehiclesApi.getActiveVehicles()
     }
-
 
     private fun getDao(): VehicleLocationDao {
         return requireNotNull(context) {
@@ -80,7 +102,7 @@ class VehicleRepository(
         }
     }
 
-    // EVENTUAL CONNECTIVITY
+
 
     private val pendingDao by lazy {
         AppDatabase.getDatabase(context!!).pendingVehicleDao()
@@ -99,10 +121,10 @@ class VehicleRepository(
         val localId = java.util.UUID.randomUUID().toString()
         val now = System.currentTimeMillis()
 
-        // 1. Copiar foto a almacenamiento interno (si existe)
+
         val savedPhotoPath = photoFile?.let { savePhotoLocally(it, localId) }
 
-        // 2. Guardar en Room como PENDING
+
         val pendingEntity = PendingVehicleEntity(
             localId = localId,
             make = vehicle.make,
@@ -130,14 +152,14 @@ class VehicleRepository(
         )
 
         pendingDao.insert(pendingEntity)
-        Log.d("VehicleRepo", " Vehículo guardado localmente: $localId")
+        Log.d(TAG, "Vehículo guardado localmente: $localId")
 
-        // 3. Intentar subir si hay internet
+
         if (networkMonitor.isConnected()) {
-            Log.d("VehicleRepo", " Hay internet, intentando subir inmediatamente")
+            Log.d(TAG, "Hay internet, intentando subir inmediatamente")
             uploadPendingVehicle(localId)
         } else {
-            Log.d("VehicleRepo", " Sin internet, esperando conectividad")
+            Log.d(TAG, "Sin internet, esperando conectividad")
 
             kotlinx.coroutines.CoroutineScope(Dispatchers.IO).launch {
                 monitorAndUpload(localId)
@@ -154,7 +176,7 @@ class VehicleRepository(
         val destFile = File(photosDir, "$localId.jpg")
         sourceFile.copyTo(destFile, overwrite = true)
 
-        Log.d("VehicleRepo", " Foto guardada en: ${destFile.absolutePath}")
+        Log.d(TAG, "Foto guardada en: ${destFile.absolutePath}")
         return destFile.absolutePath
     }
 
@@ -163,9 +185,8 @@ class VehicleRepository(
             .filter { it == true }
             .take(1)
             .collect {
-                Log.d("VehicleRepo", " Internet recuperado, subiendo $localId")
+                Log.d(TAG, "Internet recuperado, subiendo $localId")
                 uploadPendingVehicle(localId)
-
             }
     }
 
@@ -173,21 +194,20 @@ class VehicleRepository(
         val pending = pendingDao.getById(localId)
 
         if (pending == null) {
-            Log.w("VehicleRepo", "Vehículo $localId no encontrado")
+            Log.w(TAG, "Vehículo $localId no encontrado")
             return@withContext Result.failure(Exception("Vehicle not found"))
         }
 
         if (pending.syncStatus == "SYNCED") {
-            Log.d("VehicleRepo", "Vehículo $localId ya está sincronizado")
+            Log.d(TAG, "Vehículo $localId ya está sincronizado")
             return@withContext Result.success(Unit)
         }
 
-        // Actualizar a UPLOADING
+
         pendingDao.updateSyncStatus(localId, "UPLOADING", null, System.currentTimeMillis())
 
         try {
-            Log.d("VehicleRepo", "Subiendo vehículo $localId...")
-
+            Log.d(TAG, "Subiendo vehículo $localId...")
 
             val vehicleDto = VehicleCreate(
                 make = pending.make,
@@ -206,18 +226,18 @@ class VehicleRepository(
             val vehicleResponse = vehiclesApi.createVehicle(vehicleDto)
             val remoteVehicleId = vehicleResponse.vehicle_id
 
-            Log.d("VehicleRepo", "Vehículo creado en backend: $remoteVehicleId")
+            Log.d(TAG, "Vehículo creado en backend: $remoteVehicleId")
 
-            // 2. POST /photo (si existe)
+
             if (pending.photoPath != null) {
                 val photoFile = File(pending.photoPath)
                 if (photoFile.exists()) {
                     uploadPhoto(remoteVehicleId, photoFile)
-                    Log.d("VehicleRepo", "Foto subida")
+                    Log.d(TAG, "Foto subida")
                 }
             }
 
-            // 3. POST /pricing
+
             val pricingDto = PricingCreate(
                 vehicle_id = remoteVehicleId,
                 daily_price = pending.dailyPrice,
@@ -227,9 +247,9 @@ class VehicleRepository(
             )
 
             pricingApi.createPricing(pricingDto)
-            Log.d("VehicleRepo", "Pricing creado")
+            Log.d(TAG, "Pricing creado")
 
-            // 4. Marcar como SYNCED y eliminar
+
             pendingDao.updateSyncStatus(
                 localId,
                 "SYNCED",
@@ -237,21 +257,20 @@ class VehicleRepository(
                 System.currentTimeMillis()
             )
 
-            // Eliminar foto local
+
             pending.photoPath?.let { File(it).delete() }
 
-            // Eliminar registro de pending
-            delay(1000)  // Pequeño delay para que la UI vea el cambio
+
+            delay(1000)
             pendingDao.delete(localId)
 
-            Log.d("VehicleRepo", "Sincronización completa de $localId")
+            Log.d(TAG, "Sincronización completa de $localId")
 
             return@withContext Result.success(Unit)
 
         } catch (e: Exception) {
-            Log.e("VehicleRepo", "Error subiendo $localId: ${e.message}")
+            Log.e(TAG, "Error subiendo $localId: ${e.message}")
 
-            // Guardar error
             pendingDao.updateWithError(
                 localId,
                 "ERROR",
@@ -259,41 +278,54 @@ class VehicleRepository(
                 System.currentTimeMillis()
             )
 
-            // Reintentar después de un delay si no excede límite
             if (pending.attempts < 5) {
-                Log.d("VehicleRepo", "Reintentando en 10 segundos (intento ${pending.attempts + 1}/5)")
-                delay(10_000)  // 10 segundos
+                Log.d(TAG, "Reintentando en 10 segundos (intento ${pending.attempts + 1}/5)")
+                delay(10_000)
                 uploadPendingVehicle(localId)
             }
-            
+
             return@withContext Result.failure(e)
         }
     }
+
 
     fun getActiveVehiclesFlow(): Flow<List<VehicleMapItem>> {
         val dao = getDao()
 
         return dao.getAllVehiclesFlow().map { entities ->
+            Log.d(TAG, "Flow emitió ${entities.size} vehículos desde Room")
             entities.map { it.toMapItem() }
         }
     }
 
-    suspend fun revalidateVehicles(): Result<Unit> {
+
+    suspend fun revalidateVehicles(): Result<Unit> = withContext(Dispatchers.IO) {
         val dao = getDao()
 
-        return try {
-            val response = getActiveVehicles()
-            val entities = response.map { it.toEntity() }
+        return@withContext try {
+            Log.d(TAG, "Revalidating vehicles...")
+
+            val startTime = System.currentTimeMillis()
+            val vehicles = getActiveVehicles()
+            val elapsed = System.currentTimeMillis() - startTime
+
+            Log.d(TAG, "API responded in ${elapsed}ms with ${vehicles.size} vehicles")
+
+            val entities = vehicles.map { it.toEntity() }
+
 
             dao.deleteAll()
             dao.insertVehicles(entities)
 
+            Log.d(TAG, "Cached ${entities.size} vehicles in Room")
+
             Result.success(Unit)
+
         } catch (e: UnknownHostException) {
-            Log.w("VehicleRepository", "No internet connection, using cache")
+            Log.w(TAG, "No internet connection, using cache")
             Result.failure(e)
         } catch (e: Exception) {
-            Log.e("VehicleRepository", "API error: ${e.message}", e)
+            Log.e(TAG, "API error: ${e.message}", e)
             Result.failure(e)
         }
     }
@@ -304,16 +336,13 @@ class VehicleRepository(
         vehiclesApi.uploadPhoto(vehicleId, body)
     }
 
-
     fun getPendingVehiclesFlow(): Flow<List<PendingVehicleEntity>> {
         return pendingDao.getAllPendingFlow()
     }
 
-
     fun getPendingCount(): Flow<Int> {
         return pendingDao.countPending()
     }
-
 
     suspend fun syncAllPending(): Result<Int> = withContext(Dispatchers.IO) {
         val pending = pendingDao.getAllPendingList()
@@ -327,18 +356,19 @@ class VehicleRepository(
         Result.success(successCount)
     }
 
-
     fun isConnected(): Boolean {
         return context?.let { networkMonitor.isConnected() } ?: false
     }
+
     fun observeConnectivity(): Flow<Boolean> {
         return networkMonitor.observeConnectivity()
     }
 
+
     private fun VehicleResponse.toEntity() = VehicleLocationEntity(
         vehicle_id = this.vehicle_id,
-        lat = this.lat,
-        lng = this.lng,
+        lat = this.lat ?: 4.7110,
+        lng = this.lng ?: -74.0721,
         make = this.make,
         model = this.model,
         year = this.year,

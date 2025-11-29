@@ -43,3 +43,45 @@ data class FeatureStatDto(
     val avgUsesPerWeekPerUser: Double
 )
 
+data class FeatureUsageLogRequest(
+    @SerializedName("feature_name")
+    val featureName: String,
+    @SerializedName("duration_seconds")
+    val durationSeconds: Double?,
+    @SerializedName("duration_ms")
+    val durationMs: Long?,
+    @SerializedName("origin_route")
+    val originRoute: String?,
+    @SerializedName("destination_route")
+    val destinationRoute: String?,
+    val metadata: Map<String, Any?>?
+)
+
+data class FeatureUsageLogResponse(
+    val id: Int,
+    @SerializedName("feature_name")
+    val featureName: String,
+    @SerializedName("user_id")
+    val userId: String,
+    @SerializedName("duration_seconds")
+    val durationSeconds: Double?,
+    val timestamp: String,
+    val metadata: Map<String, Any?>?
+)
+
+data class ChatTimeStatsDto(
+    @SerializedName("total_sessions")
+    val totalSessions: Int,
+    @SerializedName("unique_users")
+    val uniqueUsers: Int,
+    @SerializedName("avg_duration_seconds")
+    val avgDurationSeconds: Double,
+    @SerializedName("min_duration_seconds")
+    val minDurationSeconds: Double,
+    @SerializedName("max_duration_seconds")
+    val maxDurationSeconds: Double,
+    @SerializedName("median_duration_seconds")
+    val medianDurationSeconds: Double,
+    val weeks: Int
+)
+

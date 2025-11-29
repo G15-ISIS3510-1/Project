@@ -3,61 +3,109 @@ import 'package:provider/provider.dart';
 import '../../settings/view/profile_settings_view.dart';
 import '../viewmodel/visited_places_viewmodel.dart';
 
-class VisitedPlacesView extends StatelessWidget {
+import '../../analytics/time_analytics/data/time_tracker.dart';
+import '../../analytics/time_analytics/data/time_storage.dart';
+
+class VisitedPlacesView extends StatefulWidget {
   const VisitedPlacesView({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final vm = context.watch<VisitedPlacesViewModel>();
+  State<VisitedPlacesView> createState() => _VisitedPlacesViewState();
+}
 
+class _VisitedPlacesViewState extends State<VisitedPlacesView> {
+  @override
+  void initState() {
+    super.initState();
+    TimeTracker.start("visited_places_view");
+  }
+
+  @override
+  void dispose() {
+    final record = TimeTracker.stop();
+    if (record != null) TimeStorage.save(record);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Transform.scale(
-          scaleY: 0.82,
-          scaleX: 1.0,
-          child: const Text(
-            'QOVO',
-            style: TextStyle(
-              fontSize: 64,
-              fontWeight: FontWeight.w500,
-              color: Colors.black,
-              letterSpacing: -7.0,
-            ),
-          ),
-        ),
-        centerTitle: true,
-        toolbarHeight: 80,
-        backgroundColor: Colors.white,
-        elevation: 0,
-      ),
+      appBar: const _Header(),
       body: Column(
         children: [
-          _buildSearchAndFilterSection(),
-          if (vm.error != null)
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                'Error: ${vm.error!}',
-                style: const TextStyle(color: Colors.red),
-              ),
-            ),
+          const _SearchAndFilterSection(),
+
+          Selector<VisitedPlacesViewModel, String?>(
+            selector: (_, vm) => vm.error,
+            builder: (_, error, __) {
+              if (error == null) return const SizedBox.shrink();
+              return Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  'Error: $error',
+                  style: const TextStyle(color: Colors.red),
+                ),
+              );
+            },
+          ),
+
           Expanded(
-            child: vm.loading
-                ? const Center(child: CircularProgressIndicator())
-                : ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              children: vm.places.map((place) {
-                return _PlaceCard(place: place);
-              }).toList(),
+            child: Consumer<VisitedPlacesViewModel>(
+              builder: (_, vm, __) {
+                if (vm.loading) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                return ListView.builder(
+                  itemCount: vm.places.length,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemBuilder: (_, i) => _PlaceCard(place: vm.places[i]),
+                );
+              },
             ),
           ),
-          _buildBackButton(context),
+
+          const _BackButton(),
         ],
       ),
     );
   }
+}
 
-  Widget _buildSearchAndFilterSection() {
+class _Header extends StatelessWidget implements PreferredSizeWidget {
+  const _Header();
+
+  @override
+  Widget build(BuildContext context) {
+    return AppBar(
+      title: Transform.scale(
+        scaleY: 0.82,
+        child: const Text(
+          'QOVO',
+          style: TextStyle(
+            fontSize: 64,
+            fontWeight: FontWeight.w500,
+            color: Colors.black,
+            letterSpacing: -7.0,
+          ),
+        ),
+      ),
+      centerTitle: true,
+      toolbarHeight: 80,
+      backgroundColor: Colors.white,
+      elevation: 0,
+    );
+  }
+
+  @override
+  Size get preferredSize => const Size.fromHeight(80);
+}
+
+class _SearchAndFilterSection extends StatelessWidget {
+  const _SearchAndFilterSection();
+
+  @override
+  Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
       child: Column(
@@ -65,7 +113,7 @@ class VisitedPlacesView extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             decoration: BoxDecoration(
-              color: const Color(0xFFEFEFEF),
+              color: Color(0xFFEFEFEF),
               borderRadius: BorderRadius.circular(30.0),
             ),
             child: const Row(
@@ -85,49 +133,20 @@ class VisitedPlacesView extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16.0),
-          Row(
+
+          const Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _FilterChip(label: 'All', isSelected: true, onTap: () {}),
-              _FilterChip(label: 'Favorites', isSelected: false, onTap: () {}),
-              _FilterChip(label: 'Tagged', isSelected: false, onTap: () {}),
+              _FilterChip(label: 'All', isSelected: true),
+              _FilterChip(label: 'Favorites', isSelected: false),
+              _FilterChip(label: 'Tagged', isSelected: false),
             ],
           ),
         ],
       ),
     );
   }
-
-  Widget _buildBackButton(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: ElevatedButton(
-        onPressed: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => const ProfileSettingsView(),
-            ),
-          );
-        },
-        style: ElevatedButton.styleFrom(
-          minimumSize: const Size(double.infinity, 50),
-          backgroundColor: Colors.black,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10.0),
-          ),
-        ),
-        child: const Text(
-          'Back',
-          style: TextStyle(color: Colors.white, fontSize: 18),
-        ),
-      ),
-    );
-  }
 }
-
-// ----------------------------------------------------------------------
-// CARD
-// ----------------------------------------------------------------------
 
 class _PlaceCard extends StatelessWidget {
   final VisitedPlace place;
@@ -138,79 +157,77 @@ class _PlaceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final vm = context.read<VisitedPlacesViewModel>();
 
-    return GestureDetector(
-      onTap: () => vm.launchMap(place.latitude, place.longitude, place.city),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16.0),
-        padding: const EdgeInsets.all(16.0),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12.0),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.2),
-              spreadRadius: 1,
-              blurRadius: 5,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  place.city,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  place.date,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
-                  ),
-                ),
-              ],
-            ),
-            Container(
-              width: 70,
-              height: 70,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF0F0F0),
-                borderRadius: BorderRadius.circular(8.0),
+    return RepaintBoundary(
+      child: GestureDetector(
+        onTap: () => vm.launchMap(place.latitude, place.longitude, place.city),
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 16.0),
+          padding: const EdgeInsets.all(16.0),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12.0),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.2),
+                spreadRadius: 1,
+                blurRadius: 5,
+                offset: const Offset(0, 3),
               ),
-              child: const Icon(
-                Icons.location_on,
-                color: Color(0xFFC0C0C0),
-                size: 40,
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    place.city,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    place.date,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
+              Container(
+                width: 70,
+                height: 70,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0F0F0),
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                child: const Icon(
+                  Icons.location_on,
+                  color: Color(0xFFC0C0C0),
+                  size: 40,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-// ----------------------------------------------------------------------
-// FILTER CHIP
-// ----------------------------------------------------------------------
-
 class _FilterChip extends StatelessWidget {
   final String label;
   final bool isSelected;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   const _FilterChip({
     required this.label,
     required this.isSelected,
-    required this.onTap,
+    this.onTap,
   });
 
   @override
@@ -229,6 +246,31 @@ class _FilterChip extends StatelessWidget {
             color: isSelected ? Colors.white : Colors.grey[700],
             fontWeight: FontWeight.bold,
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BackButton extends StatelessWidget {
+  const _BackButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(24.0),
+      child: ElevatedButton(
+        onPressed: () => Navigator.pop(context),
+        style: ElevatedButton.styleFrom(
+          minimumSize: const Size(double.infinity, 50),
+          backgroundColor: Colors.black,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10.0),
+          ),
+        ),
+        child: const Text(
+          'Back',
+          style: TextStyle(color: Colors.white, fontSize: 18),
         ),
       ),
     );

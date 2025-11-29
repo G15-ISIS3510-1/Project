@@ -6,12 +6,16 @@ import '../../../core/exceptions/api_exception.dart';
 abstract class AnalyticsRemoteSource {
   Future<BookingReminderListModel> getBookingsNeedingReminder();
   Future<UpcomingBookingsListModel> getUserUpcomingBookings(
-      String userId, {
-        int hoursAhead = 24,
-      });
+    String userId, {
+    int hoursAhead = 24,
+  });
   Future<List<dynamic>> getDemandPeaks();
   Future<List<dynamic>> getDemandPeaksExtended();
   Future<List<dynamic>> getOwnerIncome();
+  Future<Map<String, dynamic>> getFeesTaxesAverage();
+
+  /// NEW: vehicles with recent price updates (last 7 days)
+  Future<List<dynamic>> getRecentPriceUpdates();
 }
 
 class AnalyticsRemoteSourceImpl implements AnalyticsRemoteSource {
@@ -39,9 +43,9 @@ class AnalyticsRemoteSourceImpl implements AnalyticsRemoteSource {
 
   @override
   Future<UpcomingBookingsListModel> getUserUpcomingBookings(
-      String userId, {
-        int hoursAhead = 24,
-      }) async {
+    String userId, {
+    int hoursAhead = 24,
+  }) async {
     final response = await client.get(
       Uri.parse(
         '$baseUrl/api/analytics/users/$userId/upcoming-bookings?hours_ahead=$hoursAhead',
@@ -58,8 +62,9 @@ class AnalyticsRemoteSourceImpl implements AnalyticsRemoteSource {
 
   @override
   Future<List<dynamic>> getDemandPeaks() async {
-    try{
-      final response = await client.get(Uri.parse('$baseUrl/api/analytics/demand-peaks'),
+    try {
+      final response = await client.get(
+        Uri.parse('$baseUrl/api/analytics/demand-peaks'),
         headers: {'Content-Type': 'application/json'},
       );
 
@@ -73,6 +78,7 @@ class AnalyticsRemoteSourceImpl implements AnalyticsRemoteSource {
     }
   }
 
+  @override
   Future<List<dynamic>> getOwnerIncome() async {
     final url = Uri.parse('$baseUrl/api/analytics/owner-income');
     final response = await http.get(url);
@@ -84,6 +90,7 @@ class AnalyticsRemoteSourceImpl implements AnalyticsRemoteSource {
     }
   }
 
+  @override
   Future<List<dynamic>> getDemandPeaksExtended() async {
     final url = Uri.parse('$baseUrl/api/analytics/demand-peaks-extended');
     final response = await http.get(url);
@@ -92,6 +99,45 @@ class AnalyticsRemoteSourceImpl implements AnalyticsRemoteSource {
       return jsonDecode(response.body) as List<dynamic>;
     } else {
       throw Exception('Failed to fetch demand peaks extended: ${response.statusCode}');
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> getFeesTaxesAverage() async {
+    final url = Uri.parse('$baseUrl/api/analytics/fees-taxes-average');
+    final response = await client.get(
+      url,
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
+      }
+      if (decoded is num) {
+        return {'average': decoded.toDouble()};
+      }
+      throw Exception('Unexpected payload for fees/taxes average');
+    } else {
+      throw _handleError(response);
+    }
+  }
+
+  /// NEW: vehicles with recent price updates (last 7 days)
+  @override
+  Future<List<dynamic>> getRecentPriceUpdates() async {
+    final url =
+        Uri.parse('$baseUrl/api/analytics/vehicles/recent-price-updates');
+    final response = await client.get(
+      url,
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as List<dynamic>;
+    } else {
+      throw _handleError(response);
     }
   }
 

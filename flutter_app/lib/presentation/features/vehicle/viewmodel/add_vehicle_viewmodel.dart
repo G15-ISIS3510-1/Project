@@ -53,6 +53,9 @@ class AddVehicleViewModel extends ChangeNotifier {
     double? lat,
     double? lng,
   }) async {
+    // Evita spam de llamadas si ya se está calculando
+    if (fetchingSuggest) return;
+
     final form = <String, dynamic>{};
     void putIf(String k, Object? v) {
       if (v == null) return;
@@ -134,7 +137,6 @@ class AddVehicleViewModel extends ChangeNotifier {
 
       // 2) Si hay archivo, subir foto al endpoint /vehicles/{vehicle_id}/upload-photo
       if (imageFile != null) {
-        // Devuelve la URL de la foto (si la necesitas para UI, podrías guardarla)
         await vehicles.uploadVehiclePhoto(
           vehicleId: vehicleId,
           file: imageFile,
@@ -152,7 +154,7 @@ class AddVehicleViewModel extends ChangeNotifier {
 
       return true;
     } catch (e) {
-      rethrow; // mantenemos el comportamiento original
+      rethrow;
     } finally {
       loading = false;
       notifyListeners();

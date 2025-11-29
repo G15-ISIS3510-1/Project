@@ -1,14 +1,11 @@
 package com.example.kotlinapp.data.local
 
-import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.Query
-import androidx.room.Update
+import androidx.room.*
 
 @Dao
 interface FeedbackDao {
 
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertFeedback(feedback: FeedbackEntity)
 
     @Query("SELECT * FROM feedback ORDER BY timestamp DESC")

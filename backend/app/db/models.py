@@ -265,6 +265,11 @@ class FeatureUsageLog(Base):
     user_id = Column(String, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False, index=True)
     feature_name = Column(String(100), nullable=False, index=True)
     timestamp = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
+    duration_seconds = Column(Float, nullable=True)
+    # Nota: el atributo 'metadata' está reservado en SQLAlchemy, por eso
+    # usamos 'extra_metadata' como nombre de atributo pero mantenemos
+    # el nombre de columna 'metadata' en la base de datos.
+    extra_metadata = Column("metadata", JSON, nullable=True)
     
     # Relación opcional con User
     user = relationship("User", back_populates="feature_usage_logs")

@@ -8,6 +8,7 @@ from app.db.models import Booking, BookingStatus, User
 from sqlalchemy.orm import Session
 from sqlalchemy import func, extract
 from app.db import models
+from typing import Optional
 
 class BookingReminderAnalytics:
     
@@ -219,3 +220,84 @@ class BookingReminderAnalytics:
 
         result = await db.execute(stmt)
         return result.all()
+    
+    #Sprint 4
+    async def insurance_daily_costs(db: Session):
+        stmt = (
+            select(
+                models.InsurancePlan.insurance_plan_id,
+                models.InsurancePlan.name,
+                models.InsurancePlan.daily_cost,
+            )
+            .where(models.InsurancePlan.active == True)
+            .order_by(models.InsurancePlan.daily_cost.desc())
+        )
+
+        result = await db.execute(stmt)
+        return result.all()
+    
+    async def recent_vehicle_price_updates(db: Session):
+
+        seven_days_ago = datetime.utcnow() - timedelta(days=7)
+
+        stmt = (
+            select(
+                models.Pricing.pricing_id,
+                models.Pricing.vehicle_id,
+                models.Pricing.daily_price,
+                models.Pricing.last_updated,
+            )
+            .where(models.Pricing.last_updated >= seven_days_ago)
+            .order_by(models.Pricing.daily_price.desc())
+        )
+
+        result = await db.execute(stmt)
+        return result.all()
+
+    async def fees_and_taxes(db: Session):
+
+        stmt = (
+            select(
+                models.Booking.booking_id,
+                models.Booking.daily_price_snapshot,
+                models.Booking.insurance_daily_cost_snapshot,
+                models.Booking.subtotal,
+                models.Booking.fees,
+                models.Booking.taxes,
+                models.Booking.total,
+                models.Booking.currency,
+            )
+            .order_by(models.Booking.total.desc())
+        )
+
+        result = await db.execute(stmt)
+        return result.all()
+
+# --- Aggregations for fees + taxes ---
+async def fees_taxes_average(db: Session, statuses: Optional[list] = None):
+    """
+    Returns a tuple (average, sample_size) for (fees + taxes) across bookings.
+    Defaults to confirmed/active/completed bookings; treats null fees/taxes as 0.
+    """
+    if statuses is None:
+        statuses = [
+            BookingStatus.confirmed,
+            BookingStatus.active,
+            BookingStatus.completed,
+        ]
+
+    total_expr = func.sum(
+        func.coalesce(models.Booking.fees, 0.0) + func.coalesce(models.Booking.taxes, 0.0)
+    ).label("total_fees_taxes")
+    count_expr = func.count(models.Booking.booking_id).label("sample_size")
+
+    stmt = select(total_expr, count_expr).where(models.Booking.status.in_(statuses))
+    result = await db.execute(stmt)
+    row = result.first()
+
+    total = row.total_fees_taxes or 0.0
+    count = row.sample_size or 0
+
+    average = (total / count) if count else 0.0
+    return average, count
+    #

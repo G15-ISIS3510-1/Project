@@ -6,9 +6,20 @@ import com.example.kotlinapp.data.repository.FeedbackRepository
 import kotlinx.coroutines.launch
 
 class FeedbackViewModel(private val repository: FeedbackRepository) : ViewModel() {
-    fun saveFeedback(feature: String, comment: String) {
+
+    fun saveFeedback(
+        feature: String,
+        comment: String,
+        onSuccess: (() -> Unit)? = null,
+        onError: ((Throwable) -> Unit)? = null
+    ) {
         viewModelScope.launch {
-            repository.saveFeedback(feature, comment)
+            try {
+                repository.saveFeedback(feature, comment)
+                onSuccess?.invoke()
+            } catch (e: Exception) {
+                onError?.invoke(e)
+            }
         }
     }
 }

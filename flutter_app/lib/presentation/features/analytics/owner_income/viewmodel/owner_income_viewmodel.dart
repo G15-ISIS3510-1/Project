@@ -20,8 +20,8 @@ class OwnerIncomeViewModel extends ChangeNotifier {
     try {
       final isOnline = await Net.isOnline();
 
-      final result = await repository.getOwnerIncome();
-      //final result = _mockedData();
+      //final result = await repository.getOwnerIncome();
+      final result = _mockedData();
 
       if (result is List) {
         ownerIncome = result;

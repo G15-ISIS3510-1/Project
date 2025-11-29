@@ -512,6 +512,9 @@ import 'package:flutter_app/presentation/features/vehicle/view/add_vehicle_view.
 import 'package:flutter_app/presentation/features/host_home/viewmodel/host_home_viewmodel.dart';
 import 'package:flutter_app/data/models/pricing_model.dart';
 
+import '../../analytics/time_analytics/data/time_tracker.dart';
+import '../../analytics/time_analytics/data/time_storage.dart';
+
 class HostHomeView extends StatefulWidget {
   final String currentUserId;
   const HostHomeView({super.key, required this.currentUserId});
@@ -530,11 +533,19 @@ class _HostHomeViewState extends State<HostHomeView>
   @override
   void initState() {
     super.initState();
+    TimeTracker.start("host_home_view");
     // Inicializa el VM una sola vez
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       context.read<HostHomeViewModel>().init();
     });
+  }
+
+  @override
+  void dispose() {
+    final record = TimeTracker.stop();
+    if (record != null) TimeStorage.save(record);
+    super.dispose();
   }
 
   @override

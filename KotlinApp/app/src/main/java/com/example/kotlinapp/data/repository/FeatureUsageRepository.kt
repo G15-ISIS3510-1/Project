@@ -3,7 +3,9 @@ package com.example.kotlinapp.data.repository
 import android.util.Log
 import com.example.kotlinapp.data.api.AnalyticsApiService
 import com.example.kotlinapp.data.api.BackendApis
+import com.example.kotlinapp.data.remote.dto.ChatTimeStatsDto
 import com.example.kotlinapp.data.remote.dto.FeatureUsageItemDto
+import com.example.kotlinapp.data.remote.dto.FeatureUsageLogRequest
 import com.example.kotlinapp.data.remote.dto.FeatureStatDto
 import retrofit2.HttpException
 import java.io.IOException
@@ -85,6 +87,86 @@ class FeatureUsageRepository(
         } catch (e: Exception) {
             Log.e(TAG, "Unknown error: ${e.message}", e)
             throw Exception("Error al cargar métricas: ${e.message ?: "Error desconocido"}")
+        }
+    }
+
+    suspend fun getChatTimeStats(weeks: Int = 4): ChatTimeStatsDto? {
+        return try {
+            Log.d(TAG, "Fetching chat time stats: weeks=$weeks")
+            val response = api.getChatTimeStats(weeks)
+            
+            if (!response.isSuccessful) {
+                val errorBody = response.errorBody()?.string() ?: "Unknown error"
+                Log.e(TAG, "HTTP ${response.code()}: $errorBody")
+                null
+            }
+            
+            val body = response.body()
+            if (body == null) {
+                Log.e(TAG, "Empty response body")
+                null
+            } else {
+                Log.d(TAG, "Received chat time stats: avg=${body.avgDurationSeconds}s")
+                body
+            }
+        } catch (e: SocketTimeoutException) {
+            Log.e(TAG, "Timeout error: ${e.message}")
+            null
+        } catch (e: IOException) {
+            Log.e(TAG, "Network error: ${e.message}")
+            null
+        } catch (e: HttpException) {
+            Log.e(TAG, "HTTP error: ${e.code()}, ${e.message()}")
+            null
+        } catch (e: Exception) {
+            Log.e(TAG, "Unknown error: ${e.message}", e)
+            null
+        }
+    }
+
+    suspend fun logFeatureUsage(
+        featureName: String,
+        durationSeconds: Double?,
+        durationMs: Long?,
+        originRoute: String?,
+        destinationRoute: String?,
+        metadata: Map<String, Any?>? = null
+    ): Boolean {
+        return try {
+            Log.d(TAG, "📝 Creating feature usage log request: feature=$featureName, duration=${durationSeconds}s")
+            val payload = FeatureUsageLogRequest(
+                featureName = featureName,
+                durationSeconds = durationSeconds,
+                durationMs = durationMs,
+                originRoute = originRoute,
+                destinationRoute = destinationRoute,
+                metadata = metadata?.takeIf { it.isNotEmpty() }
+            )
+
+            Log.d(TAG, "🌐 Calling API: POST /api/analytics/features/usage-log")
+            val response = api.logFeatureUsage(payload)
+
+            if (!response.isSuccessful) {
+                val errorBody = response.errorBody()?.string()
+                Log.e(TAG, "❌ Failed to log feature usage: HTTP ${response.code()} $errorBody")
+                false
+            } else {
+                val responseBody = response.body()
+                Log.d(TAG, "✅ Successfully logged feature usage. Response: $responseBody")
+                true
+            }
+        } catch (e: SocketTimeoutException) {
+            Log.e(TAG, "⏱️ Timeout error logging feature usage: ${e.message}", e)
+            false
+        } catch (e: IOException) {
+            Log.e(TAG, "🔌 Network error logging feature usage: ${e.message}", e)
+            false
+        } catch (e: HttpException) {
+            Log.e(TAG, "🚫 HTTP error logging feature usage: ${e.code()}, ${e.message()}", e)
+            false
+        } catch (e: Exception) {
+            Log.e(TAG, "💥 Unexpected error logging feature usage", e)
+            false
         }
     }
 }

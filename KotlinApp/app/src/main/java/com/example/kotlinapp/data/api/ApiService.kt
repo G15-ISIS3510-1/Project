@@ -1,6 +1,7 @@
 package com.example.kotlinapp.data.api
 
 import com.example.kotlinapp.data.remote.dto.LoginRequest
+import com.example.kotlinapp.data.remote.dto.PaginatedVehicleResponse
 import com.example.kotlinapp.data.remote.dto.PricingCreate
 import com.example.kotlinapp.data.remote.dto.PricingResponse
 import com.example.kotlinapp.data.remote.dto.PricingUpdate
@@ -18,17 +19,20 @@ import retrofit2.http.PUT
 import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
+import retrofit2.Response
 
 interface VehiclesApiService {
 
     @GET("api/vehicles/active")
     //suspend fun getActiveVehicles(): List<VehicleResponse>
-    suspend fun getActiveVehicles(): List<VehicleResponse>
+    suspend fun getActiveVehicles(): PaginatedVehicleResponse
 
     @GET("api/vehicles/active-with-pricing")
     suspend fun getActiveVehiclesWithPricing(
         @Query("search") search: String? = null,
-        @Query("category") category: String? = null
+        @Query("category") category: String? = null,
+        @Query("skip") skip: Int = 0,
+        @Query("limit") limit: Int = 20
     ): VehicleListResponse
 
 
@@ -41,6 +45,13 @@ interface VehiclesApiService {
         @Path("vehicleId") vehicleId: String,
         @Part file: MultipartBody.Part
     ): PhotoUploadResponse
+
+    @GET("api/vehicles/owner/{owner_id}")
+    suspend fun getOwnerVehicles(
+        @Path("owner_id") ownerId: String,
+        @Query("skip") skip: Int = 0,
+        @Query("limit") limit: Int = 100
+    ): Response<PaginatedVehicleResponse>
 }
 
 interface PricingApiService {

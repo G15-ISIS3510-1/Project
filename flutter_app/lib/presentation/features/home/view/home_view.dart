@@ -11,6 +11,9 @@ import 'package:flutter_app/presentation/common_widgets/search_bar.dart'
 import 'package:flutter_app/data/models/pricing_model.dart';
 import 'package:flutter_app/presentation/features/home/viewmodel/home_viewmodel.dart';
 
+import '../../analytics/time_analytics/data/time_tracker.dart';
+import '../../analytics/time_analytics/data/time_storage.dart';
+
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
   @override
@@ -35,9 +38,17 @@ class _HomeViewState extends State<HomeView>
   @override
   void initState() {
     super.initState();
+    TimeTracker.start("home_view");
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<HomeViewModel>().init();
     });
+  }
+
+  @override
+  void dispose() {
+    final record = TimeTracker.stop();
+    if (record != null) TimeStorage.save(record);
+    super.dispose();
   }
 
   @override

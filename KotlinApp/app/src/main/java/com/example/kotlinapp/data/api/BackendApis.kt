@@ -7,4 +7,7 @@ object BackendApis {
     val conversations: ConversationsApiService by lazy { ApiClient.create(ConversationsApiService::class.java) }
     val messages: MessagesApiService by lazy { ApiClient.create(MessagesApiService::class.java) }
     val analytics: AnalyticsApiService by lazy { ApiClient.create(AnalyticsApiService::class.java) }
+    val availability: AvailabilityApiService by lazy {
+        ApiClient.availabilityApiService
+    }
 }

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../analytics/time_analytics/data/time_tracker.dart';
+import '../../analytics/time_analytics/data/time_storage.dart';
 
 class CurrencyView extends StatefulWidget {
   const CurrencyView({super.key});
@@ -9,18 +11,26 @@ class CurrencyView extends StatefulWidget {
 
 class _CurrencyViewState extends State<CurrencyView> {
   final _currencies = const [
-    _Currency(
-      flag: '🇺🇸',
-      name: 'United States Dollar',
-      code: 'USD',
-      symbol: r'$',
-    ),
+    _Currency(flag: '🇺🇸', name: 'United States Dollar', code: 'USD', symbol: r'$'),
     _Currency(flag: '🇪🇺', name: 'Euro', code: 'EUR', symbol: '€'),
     _Currency(flag: '🇬🇧', name: 'British Pound', code: 'GBP', symbol: '£'),
     _Currency(flag: '🇨🇴', name: 'Colombian Peso', code: 'COP', symbol: r'$'),
   ];
 
-  int selected = 0; // USD preselected
+  int selected = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    TimeTracker.start("currency_view");
+  }
+
+  @override
+  void dispose() {
+    final record = TimeTracker.stop();
+    if (record != null) TimeStorage.save(record);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,20 +41,20 @@ class _CurrencyViewState extends State<CurrencyView> {
     final text = theme.textTheme;
 
     Widget symbolPill(String symbol) => Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: scheme.surface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: scheme.outlineVariant),
-      ),
-      child: Text(
-        symbol,
-        style: text.bodyLarge?.copyWith(
-          fontWeight: FontWeight.w600,
-          color: scheme.onSurface,
-        ),
-      ),
-    );
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: scheme.surface,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: scheme.outlineVariant),
+          ),
+          child: Text(
+            symbol,
+            style: text.bodyLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: scheme.onSurface,
+            ),
+          ),
+        );
 
     Widget currencyButton(int i, _Currency c) {
       final bool isSelected = i == selected;
@@ -53,9 +63,7 @@ class _CurrencyViewState extends State<CurrencyView> {
         child: OutlinedButton(
           onPressed: () => setState(() => selected = i),
           style: OutlinedButton.styleFrom(
-            backgroundColor: isSelected
-                ? scheme.surface
-                : scheme.surfaceVariant,
+            backgroundColor: isSelected ? scheme.surface : scheme.surfaceVariant,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
@@ -94,7 +102,6 @@ class _CurrencyViewState extends State<CurrencyView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // X close
                     IconButton(
                       icon: Icon(Icons.close, color: scheme.onSurface),
                       onPressed: () => Navigator.pop(context),
@@ -102,8 +109,6 @@ class _CurrencyViewState extends State<CurrencyView> {
                       constraints: const BoxConstraints(),
                     ),
                     const SizedBox(height: 12),
-
-                    // Title
                     Text(
                       'Preferred Currency',
                       style: text.headlineSmall?.copyWith(
@@ -114,8 +119,6 @@ class _CurrencyViewState extends State<CurrencyView> {
                     const SizedBox(height: 12),
                     Divider(thickness: 2, color: scheme.outlineVariant),
                     const SizedBox(height: 16),
-
-                    // Currency options
                     for (int i = 0; i < _currencies.length; i++) ...[
                       currencyButton(i, _currencies[i]),
                       const SizedBox(height: 20),

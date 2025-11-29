@@ -28,6 +28,12 @@ interface VehicleRatingApi {
         @Header("Authorization") token: String,
         @Path("rating_id") ratingId: String
     ): Response<VehicleRating>
+    
+    @POST("api/vehicle-ratings/batch/stats")
+    suspend fun getBatchRatingStats(
+        @Header("Authorization") token: String,
+        @Body request: BatchRatingStatsRequest
+    ): Response<BatchRatingStatsResponse>
 }
 
 data class VehicleRating(
@@ -38,4 +44,22 @@ data class VehicleRating(
     val rating: Double,
     val comment: String?,
     val created_at: String
+)
+
+data class BatchRatingStatsRequest(
+    val vehicle_ids: List<String>
+)
+
+data class VehicleRatingStats(
+    val vehicle_id: String,
+    val average_rating: Double,
+    val total_ratings: Int,
+    val rating_distribution: Map<Int, Int>
+)
+
+data class BatchRatingStatsResponse(
+    val stats: List<VehicleRatingStats>,
+    val total_processed: Int,
+    val successful: Int,
+    val failed: Int
 )

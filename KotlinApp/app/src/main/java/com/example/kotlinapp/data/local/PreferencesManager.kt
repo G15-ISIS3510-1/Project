@@ -51,7 +51,16 @@ class PreferencesManager(context: Context) {
             .putString(KEY_USER_ROLE, user.role)
             .apply()
     }
-    
+
+    fun getUserId(): String? {
+        return sharedPreferences.getString(KEY_USER_ID, null)
+    }
+
+    fun saveUserId(userId: String) {
+        sharedPreferences.edit()
+            .putString(KEY_USER_ID, userId)
+            .apply()
+    }
 
     fun getUserInfo(): UserResponse? {
         val userId = sharedPreferences.getString(KEY_USER_ID, null)

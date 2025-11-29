@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/loginFragment">
+    app:startDestination="@id/homeFragment">
 
     <!-- Login Fragment -->
     <fragment
@@ -92,6 +92,10 @@
             <action
                 android:id="@+id/action_account_to_metrics"
                 app:destination="@id/metricsFragment" />
+
+            <action
+                android:id="@+id/action_account_to_vehicleSelection"
+                app:destination="@id/vehicleSelectionFragment" />
         </fragment>
 
         <fragment
@@ -112,13 +116,25 @@
             <action
                 android:id="@+id/action_account_to_priceAnalytics"
                 app:destination="@id/priceAnalyticsFragment" />
+            <action
+                android:id="@+id/action_payment_to_insurance"
+                app:destination="@id/insuranceFragment" />
+
+
 
         </fragment>
 
         <fragment
-        android:id="@+id/priceAnalyticsFragment"
-        android:name="com.example.kotlinapp.ui.analytics.PriceAnalyticsFragment"
-        android:label="Análisis de Precios" />
+            android:id="@+id/priceAnalyticsFragment"
+            android:name="com.example.kotlinapp.ui.analytics.PriceAnalyticsFragment"
+            android:label="Análisis de Precios" />
+
+        <fragment
+            android:id="@+id/insuranceFragment"
+            android:name="com.example.kotlinapp.ui.insurance.InsuranceFragment"
+            android:label="Insurance"
+            tools:layout="@layout/fragment_insurance" />
+
 
         <!-- Feedback Form Fragment -->
         <fragment
@@ -148,6 +164,45 @@
     <fragment
         android:id="@+id/metricsFragment"
         android:name="com.example.kotlinapp.ui.metrics.MetricsFragment"
-        android:label="Métricas de Uso" />
+        android:label="Métricas de Uso">
+        <action
+            android:id="@+id/action_metrics_to_batchRatingStats"
+            app:destination="@id/batchRatingStatsFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/batchRatingStatsFragment"
+        android:name="com.example.kotlinapp.ui.ratings.BatchRatingStatsFragment"
+        android:label="Rating Statistics" />
+
+
+
+
+    <fragment
+        android:id="@+id/vehicleSelectionFragment"
+        android:name="com.example.kotlinapp.ui.vehicleSelection.VehicleSelectionFragment"
+        android:label="Select Vehicle">
+        <action
+            android:id="@+id/action_vehicleSelection_to_availabilityManagement"
+            app:destination="@id/availabilityManagementFragment" />
+    </fragment>
+
+
+    <fragment
+        android:id="@+id/availabilityManagementFragment"
+        android:name="com.example.kotlinapp.ui.ownerAvailabilityManager.AvailabilityManagementFragment"
+        android:label="Availability Management">
+        <argument
+            android:name="vehicleId"
+            app:argType="string" />
+        <argument
+            android:name="vehicleName"
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/paginationStatsFragment"
+        android:name="com.example.kotlinapp.ui.stats.PaginationStatsFragment"
+        android:label="Vehicle Analytics" />
 
 </navigation>

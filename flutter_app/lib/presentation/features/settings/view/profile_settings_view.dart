@@ -1,5 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_app/data/repositories/recent_price_updates_repository.dart';
+import 'package:flutter_app/presentation/features/analytics/recent_price_updates/view/recent_price_updates_view.dart';
+import 'package:flutter_app/presentation/features/analytics/recent_price_updates/viewmodel/recent_price_updates_viewmodel.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
@@ -12,6 +15,8 @@ import 'package:flutter_app/presentation/features/analytics/analytics_extended/v
 import 'package:flutter_app/presentation/features/analytics/owner_income/view/owner_income_view.dart';
 import 'package:flutter_app/presentation/features/analytics/analytics_extended/viewmodel/analytics_extended_viewmodel.dart';
 import 'package:flutter_app/presentation/features/analytics/owner_income/viewmodel/owner_income_viewmodel.dart';
+import 'package:flutter_app/presentation/features/analytics/fees_taxes/view/fees_taxes_view.dart';
+import 'package:flutter_app/presentation/features/analytics/fees_taxes/viewmodel/fees_taxes_viewmodel.dart';
 
 import 'package:flutter_app/data/repositories/vehicle_repository.dart';
 import 'package:flutter_app/data/repositories/pricing_repository.dart';
@@ -24,7 +29,16 @@ import 'package:flutter_app/presentation/features/vehicle/view/add_vehicle_view.
 import 'package:flutter_app/data/sources/local/analytics_local_source.dart';
 import 'package:flutter_app/data/sources/local/analytics_extended_local_source.dart';
 import 'package:flutter_app/data/sources/local/owner_income_local_source.dart';
+import 'package:flutter_app/data/repositories/fees_taxes_repository.dart';
+import 'package:flutter_app/presentation/features/app_shell/viewmodel/host_mode_provider.dart';
 
+import '../../analytics/time_analytics/view/time_analytics_view.dart';
+import '../../analytics/time_analytics/viewmodel/time_analytics_viewmodel.dart';
+import '../../analytics/time_analytics/data/time_repository.dart';
+
+import '../../profile/payment/view/credit_cards_view.dart';
+import '../../profile/payment/viewmodel/credit_cards_viewmodel.dart';
+import '../../profile/payment/data/credit_card_repository.dart';
 
 class UserProfile {
   final String id;
@@ -382,6 +396,72 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
                     ),
                     const SizedBox(height: 16),
                     pillButton(
+                      Icons.request_quote_outlined,
+                      'Fees & Taxes Average',
+                      onTap: () {
+                        final repo = context.read<FeesTaxesRepository>();
+                        final userId = context.read<AuthProvider>().userId ?? '';
+                        final asHost =
+                            context.read<HostModeProvider>().isHostMode;
+
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => ChangeNotifierProvider(
+                              create: (_) => FeesTaxesViewModel(
+                                repository: repo,
+                                userId: userId,
+                                asHost: asHost,
+                              )..load(),
+                              child: const FeesTaxesView(),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                      pillButton(
+                        Icons.price_change_outlined,
+                        'Recent Price Updates',
+                        onTap: () {
+                          final repository = RecentPriceUpdatesRepositoryImpl(
+                            remote: AnalyticsRemoteSourceImpl(
+                              client: http.Client(),
+                              baseUrl: kApiBase,
+                            ),
+                          );
+
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => ChangeNotifierProvider(
+                                create: (_) => RecentPriceUpdatesViewModel(repository: repository)
+                                  ..load(),
+                                child: const RecentPriceUpdatesView(),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+
+                    const SizedBox(height: 16),
+                    pillButton(
+                      Icons.timer_outlined,
+                      'App Usage Analytics',
+                      onTap: () {
+                        final repository = TimeRepository();
+
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => ChangeNotifierProvider(
+                              create: (_) => TimeAnalyticsViewModel(repository)..load(),
+                              child: const TimeAnalyticsView(),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+
+                    const SizedBox(height: 16),
+                    pillButton(
                       Icons.access_time,
                       'Booking Reminders',
                       onTap: () async {
@@ -415,7 +495,23 @@ class _ProfileSettingsViewState extends State<ProfileSettingsView> {
                       'Communications',
                     ),
                     const SizedBox(height: 16),
-                    pillButton(Icons.credit_card_rounded, 'Payment'),
+                    pillButton(
+                      Icons.credit_card,
+                      'Payment Methods',
+                      onTap: () {
+                        final repository = CreditCardRepository();
+
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => ChangeNotifierProvider(
+                              create: (_) => CreditCardsViewModel(),
+                              child: const CreditCardsView(),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+
                     const SizedBox(height: 16),
                     Divider(thickness: 2, color: scheme.outlineVariant),
                     const SizedBox(height: 16),
